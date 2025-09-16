@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Out Fashion - Order Management</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Barcode Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        /* Professional & User-Friendly Color Palette */
+        :root {
+            --bg-main: #f8f9fa;
+            --bg-card: #ffffff;
+            --bg-card-section: #f1f3f5;
+            --color-primary: #005A9C; /* A professional, deep blue */
+            --color-primary-hover: #004B80;
+            --color-secondary: #6c757d; /* Muted gray for secondary text */
+            --text-primary: #212529; /* Dark charcoal for primary text */
+            --border-color: #dee2e6;
+            --border-focus: #80bdff;
+            --danger: #d9534f;
+            --danger-hover: #c9302c;
+            --success: #5cb85c;
+            --success-hover: #4cae4c;
+            --warning: #f0ad4e;
+            --warning-hover: #ec971f;
+            --info: #5bc0de;
+            --info-hover: #31b0d5;
+        }
+        
+        /* Background Animation Keyframes */
+        @keyframes subtleGradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* General Styles */
+        html { height: 100%; }
+        body {
+            /* Centering the container */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            
+            /* Animated Background */
+            background: linear-gradient(-45deg, #e7f5ff, #f8f9fa, #e9ecef, #dee2e6);
+            background-size: 400% 400%;
+            animation: subtleGradientAnimation 30s ease infinite;
+
+            color: var(--text-primary);
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .overflow-y-auto::-webkit-scrollbar { width: 8px; }
+        .overflow-y-auto::-webkit-scrollbar-track { background: #e9ecef; }
+        .overflow-y-auto::-webkit-scrollbar-thumb { background: #adb5bd; border-radius: 10px; }
+
+        /* Card and Container Styles */
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            /* Set a max-width to prevent stretching */
+            max-width: 1200px; 
+            width: 100%;
+        }
+        .bg-card-section {
+            background-color: var(--bg-card-section);
+        }
+        .border-theme {
+            border-color: var(--border-color);
+        }
+
+        /* Text and Headers */
+        h1, h2 { color: var(--color-primary); }
+        .text-secondary { color: var(--color-secondary); }
+
+        /* Buttons */
+        .btn { transition: background-color .2s, transform .1s, box-shadow .2s; border: none; }
+        .btn:active { transform: scale(.98); }
+        .btn-primary { background-color: var(--color-primary); color: white; }
+        .btn-primary:hover { background-color: var(--color-primary-hover); }
+        .btn-secondary { background-color: #e9ecef; color: var(--text-primary); border: 1px solid var(--border-color); }
+        .btn-secondary:hover { background-color: #ced4da; }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+        .btn-info { background-color: var(--info); color: white; }
+        .btn-info:hover { background-color: var(--info-hover); }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-success:hover { background-color: var(--success-hover); }
+        .btn-warning { background-color: var(--warning); color: white; }
+        .btn-warning:hover { background-color: var(--warning-hover); }
+
+        /* Inputs and Forms */
+        input, select, textarea {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 0.375rem; /* rounded-lg */
+        }
+        input::placeholder, textarea::placeholder { color: var(--color-secondary); opacity: 0.8; }
+        input:focus, select:focus, textarea:focus {
+             outline: none;
+             border-color: var(--border-focus);
+             box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+
+        /* Status Messages */
+        .status-message { transition: all .4s ease-in-out; opacity: 0; transform: translateY(-15px); max-height: 0; margin-top: 0; }
+        .status-message.show { opacity: 1; transform: translateY(0); max-height: 100px; padding: .75rem; margin-top: .75rem; }
+        .bg-green-status { background-color: #dff0d8; border: 1px solid #d6e9c6; color: #3c763d; }
+        .bg-red-status { background-color: #f2dede; border: 1px solid #ebccd1; color: #a94442; }
+        .auto-save-status { opacity: 0; transition: opacity .5s ease; color: var(--success); }
+        .auto-save-status.show { opacity: 1; }
+        
+        /* Camera Modal */
+        #camera-modal { display: none; }
+        #camera-modal.show { display: flex; }
+
+        /* Print Styles */
+        @media print {
+            body { 
+                display: block; /* Override flex for printing */
+                background: #fff !important; 
+            }
+            .card {
+                box-shadow: none !important;
+                border: none !important;
+                max-width: 100% !important;
+            }
+            body > *:not(#print-area) { display: none !important; }
+            #print-area { display: block !important; position: absolute; left: 0; top: 0; width: 100%; padding: 5mm; box-sizing: border-box; font-family: 'Arial', sans-serif; color: #000; }
+            .no-print { display: none !important; }
+            .print-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 5px; margin-bottom: 10px; }
+            .print-title-group { display: flex; align-items: center; gap: 15px; }
+            .print-header .company-logo { height: 40px; }
+            .print-header .company-name-print { font-family: 'Impact', 'Arial Narrow Bold', sans-serif; font-size: 18pt; letter-spacing: 1px; }
+            .print-header .print-date { font-size: 10pt; font-weight: bold; }
+            #printBarcodeList { column-count: 5; column-gap: 15px; font-size: 9pt; }
+            .print-column { break-inside: avoid; padding-right: 10px; }
+            .print-column div { margin-bottom: 4px; white-space: nowrap; }
+        }
+        @keyframes slideInFromLeft{ from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="p-4 lg:p-8">
+
+    <!-- Main Application -->
+    <div id="app-container" class="card p-6 lg:p-8 rounded-2xl w-full no-print">
+        <header class="flex justify-between items-center mb-6 flex-wrap gap-4 border-b border-theme pb-4">
+            <div class="flex items-center gap-4">
+                <img src="logo.png" alt="Company Logo" class="h-12">
+                <h1 id="appTitle" class="text-2xl lg:text-3xl font-bold"></h1>
+            </div>
+            <div id="live-clock" class="text-lg lg:text-xl font-semibold text-secondary order-3 lg:order-2 w-full lg:w-auto text-center"></div>
+        </header>
+        
+        <main class="flex flex-col lg:flex-row gap-8 mt-4">
+            <!-- Left Column -->
+            <section class="w-full lg:w-3/5 flex flex-col gap-y-6">
+                <p id="scanOrderDescription" class="text-center text-secondary -mt-2"></p>
+                <div class="p-4 bg-blue-50 rounded-lg border border-blue-200 text-center shadow-sm">
+                    <p class="text-xl font-semibold text-primary">
+                        <span id="uniqueOrderCountLabel"></span>:
+                        <span id="uniqueOrderCount" class="text-2xl font-bold">0</span>
+                    </p>
+                </div>
+                <div>
+                     <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="text" id="orderScanInput" class="flex-grow p-3 shadow-sm" />
+                        <button id="addOrderBarcodeBtn" class="px-5 py-3 rounded-lg font-semibold shadow-md btn btn-primary"></button>
+                        <button id="openCameraBtn" class="p-3 rounded-lg font-semibold shadow-md btn btn-info" aria-label="Scan with camera">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="statusMessage" class="status-message rounded-lg text-center font-semibold p-3"></div>
+                </div>
+                <div>
+                    <h2 id="scannedListHeader" class="text-xl font-bold mb-4 border-b-2 border-theme pb-2"></h2>
+                    <div id="orderListContainer" class="bg-card-section p-4 rounded-lg border border-theme max-h-60 lg:max-h-96 overflow-y-auto shadow-inner">
+                        <ul id="scannedOrderBarcodesList" class="space-y-2">
+                            <p id="noOrderBarcodesMessage" class="text-secondary text-center py-4"></p>
+                        </ul>
+                    </div>
+                </div>
+                 <button id="returnToTodayBtn" class="w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-secondary"></button>
+            </section>
+
+            <!-- Right Column -->
+            <aside class="w-full lg:w-2/5 flex flex-col gap-y-8">
+                <div class="p-6 bg-card-section rounded-xl border border-theme shadow-inner h-fit">
+                     <h2 id="exportTitle" class="text-xl font-bold mb-4 border-b-2 border-theme pb-2"></h2>
+                     <button id="saveToSheetBtn" class="w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-warning">
+                        <span id="saveBtnText">Save to Google Sheet</span>
+                        <div id="saveBtnSpinner" class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white mx-auto"></div>
+                     </button>
+                     <p id="sheetStatus" class="text-center text-sm h-4 mt-2"></p>
+                     <hr class="my-4 border-gray-300">
+                     <button id="printScannedOrderBtn" class="w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-info"></button>
+                     <button id="downloadCsvBtn" class="mt-4 w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-success"></button>
+                </div>
+                <div class="p-6 bg-card-section rounded-xl border border-theme shadow-inner h-fit">
+                    <div class="flex justify-between items-center mb-4 pb-2 border-b-2 border-theme">
+                        <h2 id="loadPreviousOrdersTitle" class="text-xl font-bold"></h2>
+                        <span id="autoSaveStatus" class="auto-save-status font-semibold text-sm">✓ Saved</span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="barcodeSearchInput" class="block mb-2 text-sm font-medium text-secondary">Search Barcode</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="barcodeSearchInput" placeholder="Enter barcode to find..." class="w-full p-2">
+                            <button id="barcodeSearchBtn" class="px-4 py-2 rounded-lg font-semibold shadow-md btn btn-info">Search</button>
+                        </div>
+                        <p id="barcodeSearchResult" class="text-center text-sm h-4 mt-2"></p>
+                    </div>
+                    <hr class="my-4 border-gray-300">
+                    
+                    <div id="liveSessionDisplay" class="mb-2 p-3 bg-green-100 rounded-lg text-center border border-green-200 hidden">
+                        <p class="text-sm text-green-800">Live Session:</p>
+                        <p id="liveSessionName" class="font-bold text-lg text-green-900"></p>
+                    </div>
+                    
+                    <button id="manualSaveBtn" class="w-full mb-4 px-6 py-2 rounded-lg font-semibold shadow-md btn btn-success text-sm">
+                        <span id="manualSaveBtnText">Save Current Session</span>
+                        <div id="manualSaveBtnSpinner" class="hidden animate-spin rounded-full h-4 w-4 border-b-2 border-white mx-auto"></div>
+                    </button>
+                    
+                    <div class="mb-4">
+                         <label id="searchByDateLabel" for="searchByDate" class="block mb-2 text-sm font-medium text-secondary"></label>
+                         <div class="flex gap-2">
+                            <input type="date" id="searchByDate" class="w-full p-2">
+                            <button id="resetDateFilterBtn" class="px-4 py-2 rounded-lg font-semibold shadow-md btn btn-secondary text-xs"></button>
+                         </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <select id="savedSessionsSelect" class="flex-grow p-3"><option value=""></option></select>
+                        <button id="loadSelectedSessionBtn" class="px-6 py-3 rounded-lg font-semibold shadow-md btn btn-primary"></button>
+                    </div>
+                    <button id="deleteSelectedSessionBtn" class="mt-4 w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-danger"></button>
+                </div>
+            </aside>
+        </main>
+    </div>
+    
+    <!-- Camera Modal -->
+    <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg">
+            <h3 class="text-lg font-bold mb-4 text-center text-primary">Scan Barcode</h3>
+            <div id="reader" width="100%"></div>
+            <button id="closeCameraBtn" class="mt-4 w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-danger">Close Camera</button>
+        </div>
+    </div>
+
+    <!-- PRINT AREA -->
+    <div id="print-area" class="hidden">
+        <div class="print-header">
+            <div class="print-title-group">
+                <img src="logo.png" alt="Company Logo" class="company-logo">
+                <h1 class="company-name-print">World Out Fashion</h1>
+            </div>
+            <p class="print-date" id="printDate"></p>
+        </div>
+        <div id="printBarcodeList"></div>
+    </div>
+
+    <!-- Local audio files as per original request -->
+    <audio id="successSound" src="play.mp3" preload="auto"></audio>
+    <audio id="errorSound" src="error.mp3" preload="auto"></audio>
+
+    <script>
+        // =========================================================================
+        // === වැදගත්: මෙතනට ඔබගේ Google Apps Script URL එක ඇතුළත් කරන්න ===
+        // =========================================================================
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyuYsSzGAmbFUClFQEWYbPSYyDKeh3CJn8dn5yPZ4AhFxZtBseTCYurxirFRAzJ25KO/exec"; 
+        // =========================================================================
+
+        let scannedBarcodes = [];
+        let currentSessionId = null;
+        let currentlyViewingBarcodes = [];
+        let currentlyViewingSessionId = null;
+        let allSessions = [];
+        let html5QrCode = null;
+
+        const el = {
+            appContainer: document.getElementById('app-container'), appTitle: document.getElementById("appTitle"), scanOrderDescription: document.getElementById("scanOrderDescription"), uniqueOrderCountLabel: document.getElementById("uniqueOrderCountLabel"), uniqueOrderCount: document.getElementById("uniqueOrderCount"), orderScanInput: document.getElementById("orderScanInput"), addOrderBarcodeBtn: document.getElementById("addOrderBarcodeBtn"), statusMessage: document.getElementById("statusMessage"), scannedListHeader: document.getElementById("scannedListHeader"), scannedOrderBarcodesList: document.getElementById("scannedOrderBarcodesList"), noOrderBarcodesMessage: document.getElementById("noOrderBarcodesMessage"), orderListContainer: document.getElementById("orderListContainer"), returnToTodayBtn: document.getElementById("returnToTodayBtn"), exportTitle: document.getElementById("exportTitle"), printScannedOrderBtn: document.getElementById("printScannedOrderBtn"), downloadCsvBtn: document.getElementById("downloadCsvBtn"), loadPreviousOrdersTitle: document.getElementById("loadPreviousOrdersTitle"), autoSaveStatus: document.getElementById("autoSaveStatus"), searchByDateLabel: document.getElementById("searchByDateLabel"), searchByDate: document.getElementById("searchByDate"), resetDateFilterBtn: document.getElementById("resetDateFilterBtn"), savedSessionsSelect: document.getElementById("savedSessionsSelect"), loadSelectedSessionBtn: document.getElementById("loadSelectedSessionBtn"), deleteSelectedSessionBtn: document.getElementById("deleteSelectedSessionBtn"), liveClock: document.getElementById("live-clock"), saveToSheetBtn: document.getElementById('saveToSheetBtn'), saveBtnText: document.getElementById('saveBtnText'), saveBtnSpinner: document.getElementById('saveBtnSpinner'), sheetStatus: document.getElementById('sheetStatus'), liveSessionDisplay: document.getElementById('liveSessionDisplay'), liveSessionName: document.getElementById('liveSessionName'), manualSaveBtn: document.getElementById('manualSaveBtn'), manualSaveBtnText: document.getElementById('manualSaveBtnText'), manualSaveBtnSpinner: document.getElementById('manualSaveBtnSpinner'), barcodeSearchInput: document.getElementById('barcodeSearchInput'), barcodeSearchBtn: document.getElementById('barcodeSearchBtn'), barcodeSearchResult: document.getElementById('barcodeSearchResult'),
+            cameraModal: document.getElementById('camera-modal'), openCameraBtn: document.getElementById('openCameraBtn'), closeCameraBtn: document.getElementById('closeCameraBtn')
+        };
+
+        // --- CORE & HELPER FUNCTIONS ---
+        function setInitialTexts() { el.appTitle.textContent = "Order Management System"; el.scanOrderDescription.textContent = "Scan order items for today's session."; el.uniqueOrderCountLabel.textContent = "Total Scanned"; el.addOrderBarcodeBtn.textContent = "Add"; el.returnToTodayBtn.textContent = "Return to Today's Session"; el.exportTitle.textContent = "Export & Save"; el.printScannedOrderBtn.textContent = "Print Viewed List (A4)"; el.downloadCsvBtn.textContent = "Download Viewed List (CSV)"; el.loadPreviousOrdersTitle.textContent = "View Previous Sessions"; el.searchByDateLabel.textContent = "Filter by Date"; el.resetDateFilterBtn.textContent = "Reset"; el.loadSelectedSessionBtn.textContent = "View"; el.deleteSelectedSessionBtn.textContent = "Delete"; el.orderScanInput.placeholder = "Barcode number..."; el.savedSessionsSelect.innerHTML = `<option value="">Loading...</option>`; }
+        function updateClock() { el.liveClock.textContent = (new Date).toLocaleString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: !0 }); }
+        function showStatusMessage(t, e) { el.statusMessage.textContent = t; el.statusMessage.className = "status-message rounded-lg text-center font-semibold p-3"; el.statusMessage.classList.add("success" === e ? "bg-green-status" : "bg-red-status", "show"); setTimeout(() => el.statusMessage.classList.remove("show"), 2500); }
+        function getTodaySessionId() { const today = new Date(); const yyyy = today.getFullYear(); const mm = String(today.getMonth() + 1).padStart(2, '0'); const dd = String(today.getDate()).padStart(2, '0'); return `SESSION-${yyyy}-${mm}-${dd}`; }
+        
+        // --- API COMMUNICATION ---
+        async function apiCall(action, payload = {}) { try { const response = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'cors', cache: 'no-cache', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action, ...payload }) }); if (!response.ok) throw new Error(`Network response error: ${response.statusText}`); const data = await response.json(); if (data.status !== 'success') throw new Error(data.message || 'Unknown script error.'); return data; } catch (error) { console.error(`API Call Failed for action "${action}":`, error); Swal.fire("API Error", `An error occurred while communicating with the server: ${error.message}`, "error"); throw error; } }
+        
+        // --- UI & STATE MANAGEMENT ---
+        function updateUiFromState() {
+            el.uniqueOrderCount.textContent = currentlyViewingBarcodes.length;
+            el.scannedOrderBarcodesList.innerHTML = "";
+            const hasBarcodes = currentlyViewingBarcodes.length > 0;
+            const isViewingToday = currentlyViewingSessionId === currentSessionId;
+            
+            el.scannedListHeader.textContent = isViewingToday ? "Scanned Barcodes (Today)" : `Viewing Session: ${currentlyViewingSessionId.replace('SESSION-','')}`;
+            el.noOrderBarcodesMessage.textContent = isViewingToday ? "No barcodes scanned yet for today." : "No barcodes were scanned on this day.";
+            el.noOrderBarcodesMessage.style.display = hasBarcodes ? 'none' : 'block';
+            el.returnToTodayBtn.style.display = isViewingToday ? 'none' : 'block';
+            el.orderScanInput.disabled = !isViewingToday; el.addOrderBarcodeBtn.disabled = !isViewingToday; el.openCameraBtn.disabled = !isViewingToday;
+            el.orderScanInput.placeholder = isViewingToday ? "Barcode number..." : "Viewing past session...";
+
+            if (hasBarcodes) {
+                currentlyViewingBarcodes.forEach((barcode, index) => {
+                    const listItem = document.createElement("li");
+                    listItem.style.animation = `slideInFromLeft 0.5s ease-out forwards`;
+                    const scanNumber = currentlyViewingBarcodes.length - index;
+                    if(isViewingToday) {
+                        listItem.className = "flex items-center justify-between p-2 rounded-md text-base bg-white shadow-sm border border-gray-200 text-gray-800";
+                        const leftDiv = document.createElement('div'); leftDiv.className = 'flex items-center';
+                        const numberSpan = document.createElement('span'); numberSpan.className = "font-semibold text-primary w-12 text-left"; numberSpan.textContent = `#${scanNumber}`;
+                        const barcodeSpan = document.createElement('span'); barcodeSpan.textContent = barcode;
+                        leftDiv.appendChild(numberSpan); leftDiv.appendChild(barcodeSpan);
+                        const deleteBtn = document.createElement('button'); deleteBtn.textContent = "Delete"; deleteBtn.className = "btn btn-danger px-3 py-1 text-xs rounded-md font-semibold"; deleteBtn.onclick = () => handleDeleteSingleBarcode(scanNumber - 1);
+                        listItem.appendChild(leftDiv); listItem.appendChild(deleteBtn);
+                    } else {
+                        listItem.className = "flex items-center p-2 text-gray-500";
+                        listItem.textContent = `#${scanNumber}. ${barcode}`;
+                    }
+                    el.scannedOrderBarcodesList.appendChild(listItem);
+                });
+                el.orderListContainer.scrollTop = 0;
+            }
+            el.liveSessionName.textContent = `For ${currentSessionId.replace('SESSION-', '')}`;
+            el.liveSessionDisplay.classList.remove('hidden');
+        }
+        
+        // --- APPLICATION LOGIC ---
+        async function initializeApp() {
+            setInitialTexts(); updateClock(); setInterval(updateClock, 1000);
+            currentSessionId = getTodaySessionId(); document.title = "World Out Fashion - OMS";
+            el.orderScanInput.addEventListener("keypress", (e) => { if (e.key === 'Enter') handleOrderScanAddBarcode(); });
+            el.addOrderBarcodeBtn.addEventListener("click", handleOrderScanAddBarcode);
+            el.returnToTodayBtn.addEventListener("click", returnToTodayView);
+            el.manualSaveBtn.addEventListener("click", handleManualSave);
+            el.loadSelectedSessionBtn.addEventListener("click", loadSelectedSession);
+            el.deleteSelectedSessionBtn.addEventListener("click", deleteSelectedSession);
+            el.searchByDate.addEventListener("input", filterSessionsByDate);
+            el.resetDateFilterBtn.addEventListener("click", () => { el.searchByDate.value = ""; filterSessionsByDate(); });
+            el.barcodeSearchBtn.addEventListener("click", handleBarcodeSearch);
+            el.barcodeSearchInput.addEventListener("keypress", (e) => { if (e.key === 'Enter') handleBarcodeSearch(); });
+            el.saveToSheetBtn.addEventListener("click", saveDataToGoogleSheet);
+            el.printScannedOrderBtn.addEventListener("click", printScannedOrder);
+            el.downloadCsvBtn.addEventListener("click", downloadCsv);
+            el.openCameraBtn.addEventListener("click", startCameraScan);
+            el.closeCameraBtn.addEventListener("click", stopCameraScan);
+            await reloadTodaysData();
+            try { const data = await apiCall("getAllSessions"); allSessions = data.sessions; filterSessionsByDate(); } catch (error) { /* Handled by apiCall */ }
+        }
+        
+        async function reloadTodaysData() {
+             try { const data = await apiCall("getSessionData", { sessionId: currentSessionId }); scannedBarcodes = data.session.data.barcodes || []; } 
+             catch (error) { if (error.message.includes('Session not found')) { scannedBarcodes = []; } }
+            returnToTodayView();
+        }
+        
+        function handleOrderScanAddBarcode() {
+            const barcode = el.orderScanInput.value.trim();
+            if (barcode === "") return;
+            if (scannedBarcodes.includes(barcode)) {
+                showStatusMessage(`Already Scanned: ${barcode}`, "error");
+                const errorAudio = document.getElementById('errorSound');
+                if (errorAudio) { errorAudio.pause(); errorAudio.currentTime = 0; errorAudio.play().catch(console.error); }
+            } else {
+                scannedBarcodes.unshift(barcode);
+                currentlyViewingBarcodes = scannedBarcodes;
+                showStatusMessage(`Success: ${barcode}`, "success");
+                const successAudio = document.getElementById('successSound');
+                if (successAudio) { successAudio.pause(); successAudio.currentTime = 0; successAudio.play().catch(console.error); }
+                updateUiFromState();
+                autoSaveSession();
+            }
+            el.orderScanInput.value = "";
+            el.orderScanInput.focus();
+        }
+        
+        function handleDeleteSingleBarcode(reverseIndex) {
+            const actualIndex = scannedBarcodes.length - 1 - reverseIndex;
+            Swal.fire({ title: 'Are you sure?', text: `Do you want to permanently delete this barcode?`, icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--danger)', confirmButtonText: 'Yes, delete it!', cancelButtonText: 'Cancel'
+            }).then((result) => { if (result.isConfirmed) { scannedBarcodes.splice(actualIndex, 1); currentlyViewingBarcodes = scannedBarcodes; updateUiFromState(); autoSaveSession(); } });
+        }
+        
+        function returnToTodayView() {
+            currentlyViewingSessionId = currentSessionId; currentlyViewingBarcodes = [...scannedBarcodes]; updateUiFromState();
+        }
+        
+        async function loadSelectedSession() {
+            const sessionId = el.savedSessionsSelect.value;
+            if (!sessionId) { return Swal.fire({ title: "Please select a session to view.", icon: 'info' }); }
+            el.loadSelectedSessionBtn.disabled = true; el.loadSelectedSessionBtn.textContent = "Loading...";
+            try { const data = await apiCall("getSessionData", { sessionId: sessionId }); currentlyViewingSessionId = sessionId; currentlyViewingBarcodes = data.session.data.barcodes || []; updateUiFromState(); } 
+            catch (error) { returnToTodayView(); } 
+            finally { el.loadSelectedSessionBtn.disabled = false; el.loadSelectedSessionBtn.textContent = "View"; }
+        }
+
+        async function handleBarcodeSearch() {
+            const barcodeToSearch = el.barcodeSearchInput.value.trim();
+            if (!barcodeToSearch) { el.barcodeSearchResult.textContent = "Please enter a barcode."; el.barcodeSearchResult.style.color = "var(--warning)"; return; }
+            el.barcodeSearchBtn.disabled = true; el.barcodeSearchResult.textContent = "Searching..."; el.barcodeSearchResult.style.color = "var(--info)";
+            try { const data = await apiCall("searchBarcode", { barcode: barcodeToSearch });
+                if (data.found) { el.barcodeSearchResult.textContent = `Found in session: ${data.date}`; el.barcodeSearchResult.style.color = "var(--success)"; } 
+                else { el.barcodeSearchResult.textContent = "Barcode not found in any session."; el.barcodeSearchResult.style.color = "var(--danger)"; }
+            } catch (error) { el.barcodeSearchResult.textContent = "Search failed."; el.barcodeSearchResult.style.color = "var(--danger)"; } 
+            finally { el.barcodeSearchBtn.disabled = false; }
+        }
+        
+        async function handleManualSave() {
+            el.manualSaveBtn.disabled = true; el.manualSaveBtnText.classList.add('hidden'); el.manualSaveBtnSpinner.classList.remove('hidden');
+            try { await autoSaveSession(true); } 
+            catch (error) { Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Save failed!', showConfirmButton: false, timer: 2000 }); } 
+            finally { el.manualSaveBtn.disabled = false; el.manualSaveBtnText.classList.remove('hidden'); el.manualSaveBtnSpinner.classList.add('hidden'); }
+        }
+        
+        async function autoSaveSession(showSuccess = false) {
+            try { await apiCall("saveSession", { sessionId: currentSessionId, barcodes: scannedBarcodes });
+                if (showSuccess) { Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Session saved!', showConfirmButton: false, timer: 2000 }); } 
+                else { el.autoSaveStatus.classList.add("show"); setTimeout(() => { el.autoSaveStatus.classList.remove("show") }, 2000); }
+            } catch (error) { el.autoSaveStatus.textContent = '✗ Save Failed'; el.autoSaveStatus.style.color = 'var(--danger)'; el.autoSaveStatus.classList.add("show"); setTimeout(() => { el.autoSaveStatus.classList.remove("show"); el.autoSaveStatus.textContent = '✓ Saved'; el.autoSaveStatus.style.color = 'var(--success)'; }, 3000); throw error; }
+        }
+        
+        function printScannedOrder(){if(0===currentlyViewingBarcodes.length)return void Swal.fire({title:"No items to print.",icon:"info"});document.getElementById("printDate").textContent=new Date().toLocaleString();const t=document.getElementById("printBarcodeList");t.innerHTML="";const e=[...currentlyViewingBarcodes].reverse();let a=Math.ceil(e.length/40);for(let s=0;s<a;s++){const n=e.slice(s*40,(s+1)*40),o=document.createElement("div");o.className="print-column",n.forEach((t,e)=>{const a=document.createElement("div");a.textContent=`${s*40+e+1}. ${t}`,o.appendChild(a)}),t.appendChild(o)}window.print()}
+        function downloadCsv(){if(0===currentlyViewingBarcodes.length)return void Swal.fire({title:"No items to download.",icon:"info"});const t=[...currentlyViewingBarcodes].reverse();let e="No,Barcode\n";t.forEach((t,a)=>{e+=`${a+1},"${t}"\n`});const a=new Blob([e],{type:"text/csv;charset=utf-8;"}),s=document.createElement("a");s.href=URL.createObjectURL(a),s.download=`scanned_order_${currentlyViewingSessionId}.csv`,s.click()}
+        
+        function filterSessionsByDate(){const t=el.searchByDate.value;let e=allSessions.filter(e=>e.id!==currentSessionId);t&&(e=e.filter(e=>{const a=new Date(e.createdAt).toLocale_string("en-CA");return a===t})),el.savedSessionsSelect.innerHTML=`<option value="">Select a previous session</option>`,e.sort((t,e)=>e.createdAt-t.createdAt).forEach(t=>{const e=document.createElement("option");e.value=t.id,e.textContent=t.name,el.savedSessionsSelect.appendChild(e)})}
+        function deleteSelectedSession(){const t=el.savedSessionsSelect.value;if(!t)return void Swal.fire({title:"Please select a session to delete.",icon:"info"});Swal.fire({title:"Are you sure?",text:"This will permanently delete the selected session!",icon:"warning",showCancelButton:!0,confirmButtonColor:"var(--danger)",confirmButtonText:"Yes, delete it"}).then(e=>{e.isConfirmed&&apiCall("deleteSession",{sessionId:t}).then(()=>{Swal.fire("Deleted!","The session has been deleted.","success"),allSessions=allSessions.filter(e=>e.id!==t),filterSessionsByDate(),currentlyViewingSessionId===t&&returnToTodayView()}).catch(()=>{})})}
+        function saveDataToGoogleSheet() { if (scannedBarcodes.length === 0) { return Swal.fire("No Data", "There are no barcodes for today to save.", "warning"); } el.saveToSheetBtn.disabled = true; el.saveBtnText.classList.add('hidden'); el.saveBtnSpinner.classList.remove('hidden'); el.sheetStatus.textContent = "Saving..."; el.sheetStatus.style.color = "var(--info)"; const payload = { barcodes: [...scannedBarcodes].reverse(), sessionId: currentSessionId }; apiCall("saveData", payload).then(() => { el.sheetStatus.textContent = "Data saved successfully!"; el.sheetStatus.style.color = "var(--success)"; Swal.fire("Success!", "Today's data has been saved to the daily sheet.", "success"); }).catch(() => { el.sheetStatus.textContent = "Save failed."; el.sheetStatus.style.color = "var(--danger)"; }).finally(() => { el.saveToSheetBtn.disabled = false; el.saveBtnText.classList.remove('hidden'); el.saveBtnSpinner.classList.add('hidden'); setTimeout(() => { el.sheetStatus.textContent = "" }, 5000); }); }
+
+        // --- Camera Scan Logic ---
+        function onScanSuccess(decodedText, decodedResult) {
+            el.orderScanInput.value = decodedText; handleOrderScanAddBarcode(); stopCameraScan();
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Barcode Scanned!', showConfirmButton: false, timer: 1500 });
+        }
+        function onScanFailure(error) { /* Do nothing to avoid console spam */ }
+        function startCameraScan() {
+            el.cameraModal.classList.add('show');
+            if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); }
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
+                .catch(err => { Swal.fire("Camera Error", "Could not start the camera. Please check permissions.", "error"); stopCameraScan(); });
+        }
+        function stopCameraScan() {
+            if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().catch(err => {}); }
+            el.cameraModal.classList.remove('show');
+        }
+        
+        document.addEventListener("DOMContentLoaded", initializeApp);
+    </script>
+</body>
+</html>
