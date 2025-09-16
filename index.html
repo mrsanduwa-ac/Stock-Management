@@ -405,11 +405,6 @@
             max-height: 300px;
             overflow-y: auto;
         }
-
-        .modal-content {
-    max-height: 90vh;  /* Modal එකේ උපරිම උස තිරයෙන් 90%කට සීමා කරයි */
-    overflow-y: auto; /* අන්තර්ගතය දිගු වූ විට scroll bar එකක් එක් කරයි */
-}
         
         .scrollable-grid {
             max-height: 60vh;
@@ -1578,10 +1573,54 @@
                     editItemBtn.parentNode.insertBefore(cancelBtn, editItemBtn.nextSibling);
                 }
             } else {
-                // Save changes and exit edit mode
-                saveStockChanges();
-                editItemBtn.innerHTML = '<i class="fas fa-edit"></i> Edit Item';
-                renderStockTable(currentItem, false);
+                // Save stock changes from edit mode
+async function saveStockChanges() { // 'async' එකතු කළා
+    const inputs = document.querySelectorAll('.editable-cell');
+    let totalStock = 0;
+
+    inputs.forEach(input => {
+        const color = input.getAttribute('data-color');
+        const size = input.getAttribute('data-size');
+        const value = parseInt(input.value) || 0;
+
+        // Update the stock for this color and size in the local object
+        currentItem.stockByColorSize[color][size] = value;
+    });
+
+    // Recalculate total stock
+    Object.values(currentItem.stockByColorSize).forEach(sizes => {
+        Object.values(sizes).forEach(qty => {
+            totalStock += qty;
+        });
+    });
+
+    currentItem.stock = totalStock;
+
+    // Update the display
+    document.getElementById('currentStock').textContent = totalStock;
+
+    // --- අලුතින් එකතු කළ කොටස ---
+    // Save changes to Firebase
+    try {
+        if (isOnline) {
+            // Update the item in Firebase
+            await db.collection("items").doc(currentItem.id).update({
+                stockByColorSize: currentItem.stockByColorSize,
+                stock: totalStock,
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast('Stock updated successfully in database', 'success');
+        } else {
+            // Save locally for offline use (this was already there)
+            saveData();
+            showToast('Stock updated offline. Will sync when connected.', 'warning');
+        }
+    } catch (error) {
+        console.error('Error updating stock in Firebase:', error);
+        showToast('Error updating stock', 'error');
+    }
+    // --- අලුත් කොටස අවසන් ---
+}
                 
                 // Remove cancel button
                 const cancelBtn = document.getElementById('cancelEditBtn');
