@@ -1549,131 +1549,93 @@
             table.innerHTML += totalRow;
         }
 
-  // Toggle edit mode
-function toggleEditMode() {
-    isEditing = !isEditing;
-    
-    const saveButton = document.getElementById('editItemBtn'); // Save බොත්තම ලබාගන්නවා
-    
-    if (isEditing) {
-        // Switch to edit mode
-        saveButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
-        renderStockTable(currentItem, true);
-        
-        // Add cancel button if it doesn't exist
-        if (!document.getElementById('cancelEditBtn')) {
-            const cancelBtn = document.createElement('button');
-            cancelBtn.id = 'cancelEditBtn';
-            cancelBtn.className = 'btn btn-secondary';
-            cancelBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
-            cancelBtn.addEventListener('click', () => {
-                isEditing = false;
+          // Toggle edit mode
+        function toggleEditMode() {
+            isEditing = !isEditing;
+            
+            const saveButton = document.getElementById('editItemBtn');
+            
+            if (isEditing) {
+                // Switch to edit mode
+                saveButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+                renderStockTable(currentItem, true);
+                
+                // Add cancel button if it doesn't exist
+                if (!document.getElementById('cancelEditBtn')) {
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.id = 'cancelEditBtn';
+                    cancelBtn.className = 'btn btn-secondary';
+                    cancelBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
+                    cancelBtn.addEventListener('click', () => {
+                        isEditing = false;
+                        saveButton.innerHTML = '<i class="fas fa-edit"></i> Edit Item';
+                        renderStockTable(currentItem, false);
+                        cancelBtn.remove();
+                    });
+                    saveButton.parentNode.insertBefore(cancelBtn, saveButton.nextSibling);
+                }
+            } else {
+                // Save changes and exit edit mode
+                saveStockChanges(); // saveStockChanges() function එක මෙතනදී call කරනවා
+                
                 saveButton.innerHTML = '<i class="fas fa-edit"></i> Edit Item';
                 renderStockTable(currentItem, false);
-                cancelBtn.remove();
-            });
-            saveButton.parentNode.insertBefore(cancelBtn, saveButton.nextSibling);
-        }
-    } else {
-        // --- මෙම කොටස සම්පූර්ණයෙන්ම වෙනස් කර ඇත ---
-        // Save changes and exit edit mode
-        saveStockChanges(); // saveStockChanges() function එක මෙතනදී call කරනවා
-        
-        saveButton.innerHTML = '<i class="fas fa-edit"></i> Edit Item';
-        renderStockTable(currentItem, false);
-        
-        // Remove cancel button
-        const cancelBtn = document.getElementById('cancelEditBtn');
-        if (cancelBtn) cancelBtn.remove();
-    }
-}ෂ්
-                // Save stock changes from edit mode
-async function saveStockChanges() { // 'async' එකතු කළා
- console.log("Save button was clicked and function started!");
-    
- const inputs = document.querySelectorAll('.editable-cell');
-    let totalStock = 0;
-
-    inputs.forEach(input => {
-        const color = input.getAttribute('data-color');
-        const size = input.getAttribute('data-size');
-        const value = parseInt(input.value) || 0;
-
-        // Update the stock for this color and size in the local object
-        currentItem.stockByColorSize[color][size] = value;
-    });
-
-    // Recalculate total stock
-    Object.values(currentItem.stockByColorSize).forEach(sizes => {
-        Object.values(sizes).forEach(qty => {
-            totalStock += qty;
-        });
-    });
-
-    currentItem.stock = totalStock;
-
-    // Update the display
-    document.getElementById('currentStock').textContent = totalStock;
-
-    // --- අලුතින් එකතු කළ කොටස ---
-    // Save changes to Firebase
-    try {
-        if (isOnline) {
-            // Update the item in Firebase
-            await db.collection("items").doc(currentItem.id).update({
-                stockByColorSize: currentItem.stockByColorSize,
-                stock: totalStock,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            showToast('Stock updated successfully in database', 'success');
-        } else {
-            // Save locally for offline use (this was already there)
-            saveData();
-            showToast('Stock updated offline. Will sync when connected.', 'warning');
-        }
-    } catch (error) {
-        console.error('Error updating stock in Firebase:', error);
-        showToast('Error updating stock', 'error');
-    }
-    // --- අලුත් කොටස අවසන් ---
-}
                 
                 // Remove cancel button
                 const cancelBtn = document.getElementById('cancelEditBtn');
-                if (cancelBtn) cancelBtn.remove();
+                if (cancelBtn) {
+                    cancelBtn.remove();
+                }
             }
         }
 
         // Save stock changes from edit mode
-        function saveStockChanges() {
+        async function saveStockChanges() { // 'async' එකතු කළා
+            console.log("Save button was clicked and function started!");
+            
             const inputs = document.querySelectorAll('.editable-cell');
             let totalStock = 0;
-            
+
             inputs.forEach(input => {
                 const color = input.getAttribute('data-color');
                 const size = input.getAttribute('data-size');
                 const value = parseInt(input.value) || 0;
-                
-                // Update the stock for this color and size
+
+                // Update the stock for this color and size in the local object
                 currentItem.stockByColorSize[color][size] = value;
             });
-            
+
             // Recalculate total stock
             Object.values(currentItem.stockByColorSize).forEach(sizes => {
                 Object.values(sizes).forEach(qty => {
                     totalStock += qty;
                 });
             });
-            
+
             currentItem.stock = totalStock;
-            
+
             // Update the display
             document.getElementById('currentStock').textContent = totalStock;
-            
-            // Save to localStorage
-            saveData();
-            
-            showToast('Stock updated successfully', 'success');
+
+            // Save changes to Firebase
+            try {
+                if (isOnline) {
+                    // Update the item in Firebase
+                    await db.collection("items").doc(currentItem.id).update({
+                        stockByColorSize: currentItem.stockByColorSize,
+                        stock: totalStock,
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    showToast('Stock updated successfully in database', 'success');
+                } else {
+                    // Save locally for offline use
+                    saveData();
+                    showToast('Stock updated offline. Will sync when connected.', 'warning');
+                }
+            } catch (error) {
+                console.error('Error updating stock in Firebase:', error);
+                showToast('Error updating stock', 'error');
+            }
         }
 
         // Handle search
