@@ -212,6 +212,21 @@
         .flip-digit.current {
             transform: translateY(0%);
         }
+
+        /* NEW: Sync Progress Bar Styles */
+        #syncProgressBarContainer {
+            height: 4px;
+            background-color: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        #syncProgressBar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--color-primary); /* Use theme primary color for progress */
+            transition: width 1s linear; /* Smooth transition for 1 second intervals */
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
@@ -277,6 +292,21 @@
                             <div id="animatedCounter" class="flex justify-center items-center h-14">
                                 <!-- Digits will be added here by JS -->
                             </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4 border-gray-300">
+
+                    <!-- NEW: Auto Sync Toggle Button & Progress Bar -->
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-sm text-secondary">Multi-Device Sync (1 min):</span>
+                            <button id="toggleAutoSyncBtn" class="px-3 py-1 text-sm rounded-lg font-semibold shadow-md transition-colors">
+                                <!-- Text and class updated by JS -->
+                            </button>
+                        </div>
+                        <div id="syncProgressBarContainer">
+                            <div id="syncProgressBar"></div>
                         </div>
                     </div>
                 </div>
@@ -357,6 +387,7 @@
     </div>
 
     <!-- Local audio files as per original request -->
+    <!-- Re-added the original audio tags -->
     <audio id="successSound" src="play.mp3" preload="auto"></audio>
     <audio id="errorSound" src="error.mp3" preload="auto"></audio>
 
@@ -377,6 +408,11 @@
         // Time Alert Variables
         let minuteBeepTimeout = null;
         let isBeepingActive = false;
+        
+        // NEW: Auto-Sync Variables
+        let autoSyncInterval = null;
+        let isAutoSyncEnabled = false; // <<< DEFAULT IS NOW FALSE (OFF)
+        let syncProgressTimeout = null;
 
         const el = {
             appContainer: document.getElementById('app-container'), appTitle: document.getElementById("appTitle"), scanOrderDescription: document.getElementById("scanOrderDescription"), uniqueOrderCountLabel: document.getElementById("uniqueOrderCountLabel"), orderScanInput: document.getElementById("orderScanInput"), addOrderBarcodeBtn: document.getElementById("addOrderBarcodeBtn"), statusMessage: document.getElementById("statusMessage"), scannedListHeader: document.getElementById("scannedListHeader"), scannedOrderBarcodesList: document.getElementById("scannedOrderBarcodesList"), noOrderBarcodesMessage: document.getElementById("noOrderBarcodesMessage"), orderListContainer: document.getElementById("orderListContainer"), returnToTodayBtn: document.getElementById("returnToTodayBtn"), exportTitle: document.getElementById("exportTitle"), printScannedOrderBtn: document.getElementById("printScannedOrderBtn"), downloadCsvBtn: document.getElementById("downloadCsvBtn"), loadPreviousOrdersTitle: document.getElementById("loadPreviousOrdersTitle"), autoSaveStatus: document.getElementById("autoSaveStatus"), searchByDateLabel: document.getElementById("searchByDateLabel"), searchByDate: document.getElementById("searchByDate"), resetDateFilterBtn: document.getElementById("resetDateFilterBtn"), savedSessionsSelect: document.getElementById("savedSessionsSelect"), loadSelectedSessionBtn: document.getElementById("loadSelectedSessionBtn"), deleteSelectedSessionBtn: document.getElementById("deleteSelectedSessionBtn"), liveClock: document.getElementById("live-clock"), saveToSheetBtn: document.getElementById('saveToSheetBtn'), saveBtnText: document.getElementById('saveBtnText'), saveBtnSpinner: document.getElementById('saveBtnSpinner'), sheetStatus: document.getElementById('sheetStatus'), liveSessionDisplay: document.getElementById('liveSessionDisplay'), liveSessionName: document.getElementById('liveSessionName'), manualSaveBtn: document.getElementById('manualSaveBtn'), manualSaveBtnText: document.getElementById('manualSaveBtnText'), manualSaveBtnSpinner: document.getElementById('manualSaveBtnSpinner'), barcodeSearchInput: document.getElementById('barcodeSearchInput'), barcodeSearchBtn: document.getElementById('barcodeSearchBtn'), barcodeSearchResult: document.getElementById('barcodeSearchResult'),
@@ -385,8 +421,12 @@
             connectionStatus: document.getElementById('connectionStatus'),
             networkIcon: document.getElementById('networkIcon'),
             networkText: document.getElementById('networkText'),
-            // NEW: Animated Counter Element
+            // Animated Counter Element
             animatedCounter: document.getElementById('animatedCounter'),
+            // NEW: Auto Sync Toggle Button
+            toggleAutoSyncBtn: document.getElementById('toggleAutoSyncBtn'),
+            // NEW: Progress Bar Elements
+            syncProgressBar: document.getElementById('syncProgressBar'),
         };
 
         // --- NEW: ANIMATED FLIP COUNTER LOGIC ---
@@ -478,6 +518,91 @@
             }
         };
 
+        // --- NEW: AUTO SYNC CONTROL LOGIC ---
+        const SYNC_INTERVAL_MS = 60000; // 60 seconds
+
+        function updateSyncButton() {
+            if (isAutoSyncEnabled) {
+                el.toggleAutoSyncBtn.textContent = "Sync ON";
+                el.toggleAutoSyncBtn.className = "px-3 py-1 text-sm rounded-lg font-semibold shadow-md transition-colors btn btn-success";
+                el.toggleAutoSyncBtn.setAttribute('title', 'Auto-sync is active. Data refreshes every minute from the server.');
+                startSyncProgress();
+            } else {
+                el.toggleAutoSyncBtn.textContent = "Sync OFF";
+                el.toggleAutoSyncBtn.className = "px-3 py-1 text-sm rounded-lg font-semibold shadow-md transition-colors btn btn-danger";
+                el.toggleAutoSyncBtn.setAttribute('title', 'Auto-sync is disabled. Refresh manually to get data from other devices.');
+                stopSyncProgress();
+            }
+        }
+
+        function startSyncProgress() {
+            stopSyncProgress();
+            el.syncProgressBar.style.transition = 'none';
+            el.syncProgressBar.style.width = '0%';
+            
+            let progress = 0;
+            const step = (100 / (SYNC_INTERVAL_MS / 1000)); // 1.666% per second
+            
+            // Set transition for smooth filling
+            requestAnimationFrame(() => {
+                el.syncProgressBar.style.transition = 'width 1s linear';
+            });
+            
+            syncProgressTimeout = setInterval(() => {
+                if (progress < 100) {
+                    progress += step;
+                    el.syncProgressBar.style.width = `${progress}%`;
+                } else {
+                    // Reset to 0 just before the actual data refresh, but keep the animation smooth
+                    progress = 0;
+                    el.syncProgressBar.style.transition = 'none';
+                    el.syncProgressBar.style.width = '0%';
+                    requestAnimationFrame(() => {
+                         el.syncProgressBar.style.transition = 'width 1s linear';
+                    });
+                }
+            }, 1000); // Update every second
+        }
+
+        function stopSyncProgress() {
+            if (syncProgressTimeout) {
+                clearInterval(syncProgressTimeout);
+                syncProgressTimeout = null;
+            }
+            el.syncProgressBar.style.transition = 'none';
+            el.syncProgressBar.style.width = '0%';
+        }
+
+
+        function startAutoSync() {
+            if (!autoSyncInterval) {
+                autoSyncInterval = setInterval(async () => {
+                    if (navigator.onLine && currentlyViewingSessionId === currentSessionId) {
+                        // isSync = true, so status message shows 'Synced' briefly
+                        await reloadTodaysData(true); 
+                    }
+                }, SYNC_INTERVAL_MS); 
+            }
+        }
+
+        function stopAutoSync() {
+            if (autoSyncInterval) {
+                clearInterval(autoSyncInterval);
+                autoSyncInterval = null;
+            }
+        }
+
+        function toggleAutoSync() {
+            isAutoSyncEnabled = !isAutoSyncEnabled;
+            updateSyncButton();
+            if (isAutoSyncEnabled) {
+                startAutoSync();
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Auto-Sync ON', showConfirmButton: false, timer: 1500 });
+            } else {
+                stopAutoSync();
+                Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Auto-Sync OFF', showConfirmButton: false, timer: 1500 });
+            }
+        }
 
         // --- CORE & HELPER FUNCTIONS ---
         function setInitialTexts() { 
@@ -522,14 +647,22 @@
             updateBeepAlert(isAlertTime && hour < 20, now);
         }
 
-        // NEW: Beep Sound Logic
-        function playBeepSound() {
-            // Using errorSound as the beep sound for the alert
-            const beepAudio = document.getElementById('errorSound');
-            if (beepAudio) { 
-                beepAudio.pause(); 
-                beepAudio.currentTime = 0; 
-                beepAudio.play().catch(console.error); 
+        // Re-enabled audio playback with error handling
+        function playSuccessSound() {
+            const successAudio = document.getElementById('successSound');
+            if (successAudio) { 
+                successAudio.pause(); 
+                successAudio.currentTime = 0; 
+                successAudio.play().catch(error => console.error("Success sound playback failed:", error)); 
+            }
+        }
+
+        function playErrorSound() {
+            const errorAudio = document.getElementById('errorSound');
+            if (errorAudio) { 
+                errorAudio.pause(); 
+                errorAudio.currentTime = 0; 
+                errorAudio.play().catch(error => console.error("Error sound playback failed:", error)); 
             }
         }
         
@@ -543,7 +676,7 @@
                 
                 // Set the initial beep after the calculated time
                 minuteBeepTimeout = setTimeout(() => {
-                    playBeepSound();
+                    playErrorSound(); // Use error sound for the alert beep
                     
                     // Set up interval for subsequent beeps (every 60 seconds)
                     minuteBeepTimeout = setInterval(() => {
@@ -554,7 +687,7 @@
                         const isStillAlertTime = (currentHour === 19 && currentMinute >= 15) || (currentHour === 20 && currentMinute === 0);
 
                         if (isStillAlertTime && currentHour < 20) {
-                           playBeepSound();
+                           playErrorSound();
                         } else {
                             // Stop Beeping when the window closes (at 20:00:00)
                             clearInterval(minuteBeepTimeout);
@@ -598,12 +731,20 @@
             } catch (error) {
                 console.error(`API Call Failed for action "${action}":`, error);
                 
-                // FIX: "Session not found" දෝෂය ඇතිවිට පමණක් pop-up එක පෙන්වීම වළක්වයි
-                if (!error.message.includes('Session not found') && error.message !== 'Offline') {
+                // FIX: Removed the generic pop-up for API errors to stop "Failed to fetch" spam. 
+                // We keep the console log and the more specific pop-ups (e.g., Session not found, Offline).
+
+                if (error.message.includes('Failed to fetch')) {
+                    // Specific silent handling for common 'Failed to fetch' error (often due to CORS/network setup)
+                    console.warn(`Silent API Warning: Failed to communicate with script URL. Check URL or network.`);
+                }
+                
+                if (!error.message.includes('Session not found') && error.message !== 'Offline' && !error.message.includes('Failed to fetch')) {
+                    // Only show specific, relevant errors to the user
                     Swal.fire("API Error", `An error occurred while communicating with the server: ${error.message}`, "error");
                 }
                 
-                throw error; // අනෙක් functions වලට දෝෂය හැසිරවීමට ඉඩ සලසයි
+                throw error; // Propagate error for calling functions to handle
             }
         }
         
@@ -693,6 +834,12 @@
             updateClock(); 
             // Update clock and check for time alert every second
             setInterval(updateClock, 1000); 
+            
+            // Auto-sync initialization and event listener
+            el.toggleAutoSyncBtn.addEventListener('click', toggleAutoSync);
+            // Default Sync is OFF, so we initialize the button state and do NOT start the sync interval
+            updateSyncButton(); 
+            // stopAutoSync() is implicitly called because isAutoSyncEnabled is false
 
             currentSessionId = getTodaySessionId(); document.title = "World Out Fashion - OMS";
             el.orderScanInput.addEventListener("keypress", (e) => { if (e.key === 'Enter') handleOrderScanAddBarcode(); });
@@ -723,10 +870,35 @@
             try { const data = await apiCall("getAllSessions"); allSessions = data.sessions; filterSessionsByDate(); } catch (error) { /* Handled by apiCall */ }
         }
         
-        async function reloadTodaysData() {
-             try { const data = await apiCall("getSessionData", { sessionId: currentSessionId }); scannedBarcodes = data.session.data.barcodes || []; } 
-             catch (error) { if (error.message.includes('Session not found')) { scannedBarcodes = []; } }
-            returnToTodayView();
+        async function reloadTodaysData(isSync = false) {
+             try { 
+                 const data = await apiCall("getSessionData", { sessionId: currentSessionId }); 
+                 const newBarcodes = data.session.data.barcodes || [];
+                 
+                 // Only update if there's a difference to avoid unnecessary UI redraws
+                 if (JSON.stringify(scannedBarcodes) !== JSON.stringify(newBarcodes)) {
+                    scannedBarcodes = newBarcodes;
+                    // Only update viewing list if we are currently viewing today's session
+                    if (currentlyViewingSessionId === currentSessionId) {
+                        currentlyViewingBarcodes = [...scannedBarcodes];
+                        updateUiFromState();
+                        if (isSync) {
+                            // Show a brief sync status
+                            el.autoSaveStatus.textContent = '✓ Synced'; el.autoSaveStatus.style.color = 'var(--info)'; el.autoSaveStatus.classList.add("show"); 
+                            setTimeout(() => { el.autoSaveStatus.classList.remove("show"); el.autoSaveStatus.textContent = '✓ Saved'; el.autoSaveStatus.style.color = 'var(--success)'; }, 1500);
+                        }
+                    }
+                 }
+             } 
+             catch (error) { 
+                 if (error.message.includes('Session not found')) { 
+                     scannedBarcodes = []; 
+                 }
+                 // Do not show general API error for sync attempts
+             }
+             if (!isSync) {
+                 returnToTodayView();
+             }
         }
         
         function handleOrderScanAddBarcode() {
@@ -734,14 +906,12 @@
             if (barcode === "") return;
             if (scannedBarcodes.includes(barcode)) {
                 showStatusMessage(`Already Scanned: ${barcode}`, "error");
-                const errorAudio = document.getElementById('errorSound');
-                if (errorAudio) { errorAudio.pause(); errorAudio.currentTime = 0; errorAudio.play().catch(console.error); }
+                playErrorSound();
             } else {
                 scannedBarcodes.unshift(barcode);
                 currentlyViewingBarcodes = scannedBarcodes;
                 showStatusMessage(`Success: ${barcode}`, "success");
-                const successAudio = document.getElementById('successSound');
-                if (successAudio) { successAudio.pause(); successAudio.currentTime = 0; successAudio.play().catch(console.error); }
+                playSuccessSound();
                 updateUiFromState();
                 autoSaveSession();
             }
