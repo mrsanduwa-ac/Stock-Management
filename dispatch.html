@@ -42,7 +42,8 @@
         body {
             /* Centering the container */
             display: flex;
-            justify-content: center;
+            flex-direction: column; /* Allow footer to attach to the bottom */
+            justify-content: space-between;
             align-items: center;
             min-height: 100vh;
             
@@ -53,6 +54,18 @@
 
             color: var(--text-primary);
             font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            padding: 0; /* Remove default body padding */
+        }
+        
+        .main-content-wrapper {
+            /* Ensures main app card takes up most space and stays centered */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            flex-grow: 1;
+            width: 100%;
+            padding: 1rem; /* p-4 */
+            max-width: 1200px; 
         }
 
         .overflow-y-auto::-webkit-scrollbar { width: 8px; }
@@ -64,8 +77,6 @@
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            /* Set a max-width to prevent stretching */
-            max-width: 1200px; 
             width: 100%;
         }
         .bg-card-section {
@@ -120,8 +131,18 @@
         /* Camera Modal */
         #camera-modal { display: none; }
         #camera-modal.show { display: flex; }
+        
+        /* Recycle Bin Modal */
+        #recycle-bin-modal { display: none; }
+        #recycle-bin-modal.show { display: flex; }
 
         /* Print Styles */
+        /* --- CRITICAL: Remove URL/Page Numbers/Margins added by browser --- */
+        @page { 
+            size: auto; 
+            margin: 0; /* Remove default browser print margin */
+        }
+        
         @media print {
             body { 
                 display: block; /* Override flex for printing */
@@ -132,17 +153,128 @@
                 border: none !important;
                 max-width: 100% !important;
             }
-            body > *:not(#print-area) { display: none !important; }
-            #print-area { display: block !important; position: absolute; left: 0; top: 0; width: 100%; padding: 5mm; box-sizing: border-box; font-family: 'Arial', sans-serif; color: #000; }
+            /* Hide everything except the print area */
+            body > *:not(#print-area):not(footer) { display: none !important; }
+            
+            #print-area { 
+                display: block !important; 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 100%; 
+                padding: 0; /* Page content padding is inside print-page */
+                box-sizing: border-box; 
+                font-family: 'Arial', sans-serif; 
+                color: #000; 
+            }
+            
+            /* Hide the main footer during print */
+            footer { display: none !important; }
+
             .no-print { display: none !important; }
-            .print-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 5px; margin-bottom: 10px; }
-            .print-title-group { display: flex; align-items: center; gap: 15px; }
-            .print-header .company-logo { height: 40px; }
-            .print-header .company-name-print { font-family: 'Impact', 'Arial Narrow Bold', sans-serif; font-size: 18pt; letter-spacing: 1px; }
-            .print-header .print-date { font-size: 10pt; font-weight: bold; }
-            #printBarcodeList { column-count: 5; column-gap: 15px; font-size: 9pt; }
-            .print-column { break-inside: avoid; padding-right: 10px; }
-            .print-column div { margin-bottom: 4px; white-space: nowrap; }
+            
+            /* --- Custom Print Styles for Barcode Layout --- */
+            .print-page {
+                position: relative; /* For the watermark */
+                page-break-after: always;
+                /* Maximize space within print margins (A4 is 297mm high) */
+                min-height: 297mm; 
+                padding: 5mm 10mm 10mm 10mm; /* Reduced top/bottom padding for more space */
+                box-sizing: border-box;
+            }
+            .print-page:last-child {
+                page-break-after: avoid;
+            }
+            
+            .print-header { 
+                /* NEW: Change to block and text-align center */
+                display: block; 
+                text-align: center;
+                border-bottom: 2px solid #333; 
+                padding-bottom: 5px; 
+                margin-bottom: 5px; /* Reduced header margin */
+            }
+            .print-title-group { 
+                /* NEW: Center the logo and name group */
+                display: flex; 
+                justify-content: center; /* Center the group */
+                align-items: center; 
+                gap: 15px; 
+                margin-bottom: 5px; 
+            }
+            .print-header .company-logo { height: 35px; /* Slightly smaller logo */ }
+            .print-header .company-name-print { font-family: 'Impact', 'Arial Narrow Bold', sans-serif; font-size: 16pt; /* Slightly smaller font */ letter-spacing: 1px; }
+            .print-header .print-date { 
+                /* NEW: Center the date/time */
+                font-size: 9pt; /* Smaller date font */
+                font-weight: bold; 
+                display: block; 
+                text-align: center;
+            }
+            
+            .print-list-container {
+                column-count: 5; 
+                column-gap: 12px; /* Reduced column gap */
+                font-size: 8.5pt; /* Smaller list font */
+                max-width: 100%;
+                margin-top: 10px;
+            }
+
+            .print-column { 
+                break-inside: avoid; 
+                padding-right: 8px; /* Reduced padding */
+            }
+            .print-column div { 
+                margin-bottom: 1px; /* CRITICAL: Reduced to 1px for maximum fit */
+                white-space: nowrap; 
+            }
+            
+            /* --- Signature Area --- */
+            .signature-area {
+                clear: both; 
+                margin-top: 30px; /* Reduced top margin */
+                padding-top: 10px;
+                border-top: 1px solid #ccc;
+                width: 30%; 
+                margin-left: auto; 
+                font-size: 8pt; /* Smaller signature font */
+            }
+            .signature-area p {
+                text-align: center;
+                margin-top: 30px; /* Reduced space for the signature */
+                font-size: inherit;
+                font-weight: bold;
+            }
+            
+            /* --- Print Watermark --- */
+            .print-watermark-overlay {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                opacity: 0.25; 
+                pointer-events: none;
+                z-index: -1;
+            }
+            .print-watermark-overlay img {
+                width: 300px; 
+                height: auto;
+            }
+            
+            /* --- Print Footer Watermark (The required text) --- */
+            .print-footer-watermark {
+                position: absolute;
+                /* Attach to the bottom of the content area within the page padding */
+                bottom: 5mm; 
+                left: 10mm;
+                right: 10mm;
+                text-align: center;
+                font-size: 7pt;
+                color: #888;
+                /* Remove border as per user's image, only necessary for separation */
+                /* border-top: 1px solid #eee; */
+                padding-top: 3px;
+            }
         }
         @keyframes slideInFromLeft{ from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
 
@@ -212,157 +344,147 @@
         .flip-digit.current {
             transform: translateY(0%);
         }
-
-        /* NEW: Sync Progress Bar Styles */
-        #syncProgressBarContainer {
-            height: 4px;
-            background-color: #e9ecef;
-            border-radius: 2px;
-            overflow: hidden;
-            margin-top: 4px;
+        
+        /* NEW: Flip Counter Blinking Animation (on auto-save success) */
+        @keyframes flipCounterSuccessBlink {
+            0%, 100% { background-color: #212529; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
+            50% { background-color: var(--success); box-shadow: 0 0 10px var(--success); }
         }
-        #syncProgressBar {
-            height: 100%;
-            width: 0%;
-            background-color: var(--color-primary); /* Use theme primary color for progress */
-            transition: width 1s linear; /* Smooth transition for 1 second intervals */
+        .flip-counter.success-blink .flip-digit-container {
+             /* 5 blinks over 1 second (0.2s * 5) */
+             animation: flipCounterSuccessBlink 0.2s ease-in-out 5; 
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="p-4 lg:p-8">
-
-    <!-- Main Application -->
-    <div id="app-container" class="card p-6 lg:p-8 rounded-2xl w-full no-print">
-        <header class="flex justify-between items-center mb-6 flex-wrap gap-4 border-b border-theme pb-4">
-            <div class="flex items-center gap-4">
-                <img src="logo.png" alt="Company Logo" class="h-12">
-                <h1 id="appTitle" class="text-2xl lg:text-3xl font-bold"></h1>
-            </div>
-            <div id="live-clock" class="text-lg lg:text-xl font-semibold text-secondary order-3 lg:order-2 w-full lg:w-auto text-center"></div>
-        </header>
-        
-        <main class="flex flex-col lg:flex-row gap-8 mt-4">
-            <!-- Left Column -->
-            <section class="w-full lg:w-3/5 flex flex-col gap-y-6">
-                <p id="scanOrderDescription" class="text-center text-secondary -mt-2"></p>
-                
-                <!-- Removed: Simple Unique Order Count Display was here -->
-
-                <div>
-                     <div class="flex flex-col sm:flex-row gap-2">
-                        <input type="text" id="orderScanInput" class="flex-grow p-3 shadow-sm" />
-                        <button id="addOrderBarcodeBtn" class="px-5 py-3 rounded-lg font-semibold shadow-md btn btn-primary"></button>
-                        <button id="openCameraBtn" class="p-3 rounded-lg font-semibold shadow-md btn btn-info" aria-label="Scan with camera">
-                           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div id="statusMessage" class="status-message rounded-lg text-center font-semibold p-3"></div>
+<body>
+    
+    <!-- Main Application Content Wrapper -->
+    <div class="main-content-wrapper">
+        <div id="app-container" class="card p-6 lg:p-8 rounded-2xl w-full no-print">
+            <header class="flex justify-between items-center mb-6 flex-wrap gap-4 border-b border-theme pb-4">
+                <div class="flex items-center gap-4">
+                    <img src="logo.png" alt="Company Logo" class="h-12">
+                    <h1 id="appTitle" class="text-2xl lg:text-3xl font-bold"></h1>
                 </div>
-                <div>
-                    <h2 id="scannedListHeader" class="text-xl font-bold mb-4 border-b-2 border-theme pb-2"></h2>
-                    <div id="orderListContainer" class="bg-card-section p-4 rounded-lg border border-theme max-h-60 lg:max-h-96 overflow-y-auto shadow-inner">
-                        <ul id="scannedOrderBarcodesList" class="space-y-2">
-                            <p id="noOrderBarcodesMessage" class="text-secondary text-center py-4"></p>
-                        </ul>
-                    </div>
-                </div>
-                 <button id="returnToTodayBtn" class="w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-secondary"></button>
-            </section>
-
-            <!-- Right Column -->
-            <aside class="w-full lg:w-2/5 flex flex-col gap-y-8">
-                <!-- Network Status Display and Animated Counter -->
-                <div class="p-6 bg-card-section rounded-xl border border-theme shadow-inner h-fit">
-                    <div class="mb-4">
-                        <!-- Connection Status -->
-                        <div id="connectionStatus" class="flex items-center justify-center gap-2 mb-2 p-2 rounded-lg border border-gray-300">
-                            <span class="font-semibold text-sm text-secondary">Connection:</span>
-                            <!-- Icon and Text will be updated by JavaScript -->
-                            <span id="networkIcon" class="text-xl"></span>
-                            <span id="networkText" class="font-bold">Checking...</span>
+                <div id="live-clock" class="text-lg lg:text-xl font-semibold text-secondary order-3 lg:order-2 w-full lg:w-auto text-center"></div>
+            </header>
+            
+            <main class="flex flex-col lg:flex-row gap-8 mt-4">
+                <!-- Left Column -->
+                <section class="w-full lg:w-3/5 flex flex-col gap-y-6">
+                    <p id="scanOrderDescription" class="text-center text-secondary -mt-2"></p>
+                    
+                    <div>
+                         <div class="flex flex-col sm:flex-row gap-2">
+                            <!-- Input will gain focus from scanner or number pad entry -->
+                            <input type="text" id="orderScanInput" class="flex-grow p-3 shadow-sm" />
+                            <button id="addOrderBarcodeBtn" class="px-5 py-3 rounded-lg font-semibold shadow-md btn btn-primary"></button>
+                            <button id="openCameraBtn" class="p-3 rounded-lg font-semibold shadow-md btn btn-info" aria-label="Scan with camera">
+                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </button>
                         </div>
+                        <div id="statusMessage" class="status-message rounded-lg text-center font-semibold p-3"></div>
+                    </div>
+                    <div>
+                        <h2 id="scannedListHeader" class="text-xl font-bold mb-4 border-b-2 border-theme pb-2"></h2>
+                        <div id="orderListContainer" class="bg-card-section p-4 rounded-lg border border-theme max-h-60 lg:max-h-96 overflow-y-auto shadow-inner">
+                            <ul id="scannedOrderBarcodesList" class="space-y-2">
+                                <p id="noOrderBarcodesMessage" class="text-secondary text-center py-4"></p>
+                            </ul>
+                        </div>
+                    </div>
+                     <button id="returnToTodayBtn" class="w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-secondary"></button>
+                </section>
 
-                        <!-- NEW: Animated Barcode Count Display -->
-                        <div class="p-3 bg-blue-50 rounded-lg border border-blue-200 text-center shadow-inner mt-4">
-                            <p class="text-lg font-semibold text-primary mb-2" id="uniqueOrderCountLabel"></p>
-                            <div id="animatedCounter" class="flex justify-center items-center h-14">
-                                <!-- Digits will be added here by JS -->
+                <!-- Right Column -->
+                <aside class="w-full lg:w-2/5 flex flex-col gap-y-8">
+                    <!-- Network Status Display and Animated Counter -->
+                    <div class="p-6 bg-card-section rounded-xl border border-theme shadow-inner h-fit">
+                        <div class="mb-4">
+                            <!-- Connection Status -->
+                            <div id="connectionStatus" class="flex items-center justify-center gap-2 mb-2 p-2 rounded-lg border border-gray-300">
+                                <span class="font-semibold text-sm text-secondary">Connection:</span>
+                                <!-- Icon and Text will be updated by JavaScript -->
+                                <span id="networkIcon" class="text-xl"></span>
+                                <span id="networkText" class="font-bold">Checking...</span>
+                            </div>
+
+                            <!-- NEW: Animated Barcode Count Display -->
+                            <div class="p-3 bg-blue-50 rounded-lg border border-blue-200 text-center shadow-inner mt-4">
+                                <p class="text-lg font-semibold text-primary mb-2" id="uniqueOrderCountLabel"></p>
+                                <div id="animatedCounter" class="flex justify-center items-center h-14">
+                                    <!-- Digits will be added here by JS -->
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <hr class="my-4 border-gray-300">
 
-                    <!-- NEW: Auto Sync Toggle Button & Progress Bar -->
-                    <div>
-                        <div class="flex justify-between items-center">
-                            <span class="font-semibold text-sm text-secondary">Multi-Device Sync (1 min):</span>
-                            <button id="toggleAutoSyncBtn" class="px-3 py-1 text-sm rounded-lg font-semibold shadow-md transition-colors">
-                                <!-- Text and class updated by JS -->
-                            </button>
-                        </div>
-                        <div id="syncProgressBarContainer">
-                            <div id="syncProgressBar"></div>
-                        </div>
+                    <div class="p-6 bg-card-section rounded-xl border border-theme shadow-inner h-fit -mt-4">
+                         <h2 id="exportTitle" class="text-xl font-bold mb-4 border-b-2 border-theme pb-2"></h2>
+                         <button id="saveToSheetBtn" class="w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-warning">
+                            <span id="saveBtnText">Save to Google Sheet</span>
+                            <div id="saveBtnSpinner" class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white mx-auto"></div>
+                         </button>
+                         <p id="sheetStatus" class="text-center text-sm h-4 mt-2"></p>
+                         <hr class="my-4 border-gray-300">
+                         <button id="printScannedOrderBtn" class="w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-info"></button>
+                         <button id="downloadCsvBtn" class="mt-4 w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-success"></button>
                     </div>
-                </div>
+                    <div class="p-6 bg-card-section rounded-xl border border-theme shadow-inner h-fit">
+                        <div class="flex justify-between items-center mb-4 pb-2 border-b-2 border-theme">
+                            <h2 id="loadPreviousOrdersTitle" class="text-xl font-bold"></h2>
+                            <!-- This status changes color for errors (red) or shows success (green) -->
+                            <span id="autoSaveStatus" class="auto-save-status font-semibold text-sm">✓ Saved</span>
+                        </div>
+                        
+                        <!-- NEW: Recycle Bin Button -->
+                        <button id="openRecycleBinBtn" class="w-full mb-4 px-6 py-2 rounded-lg font-semibold shadow-md btn btn-secondary flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" />
+                            </svg>
+                            <span id="recycleBinCount">Recycle Bin (0)</span>
+                        </button>
 
-                <div class="p-6 bg-card-section rounded-xl border border-theme shadow-inner h-fit -mt-4">
-                     <h2 id="exportTitle" class="text-xl font-bold mb-4 border-b-2 border-theme pb-2"></h2>
-                     <button id="saveToSheetBtn" class="w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-warning">
-                        <span id="saveBtnText">Save to Google Sheet</span>
-                        <div id="saveBtnSpinner" class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white mx-auto"></div>
-                     </button>
-                     <p id="sheetStatus" class="text-center text-sm h-4 mt-2"></p>
-                     <hr class="my-4 border-gray-300">
-                     <button id="printScannedOrderBtn" class="w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-info"></button>
-                     <button id="downloadCsvBtn" class="mt-4 w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-success"></button>
-                </div>
-                <div class="p-6 bg-card-section rounded-xl border border-theme shadow-inner h-fit">
-                    <div class="flex justify-between items-center mb-4 pb-2 border-b-2 border-theme">
-                        <h2 id="loadPreviousOrdersTitle" class="text-xl font-bold"></h2>
-                        <span id="autoSaveStatus" class="auto-save-status font-semibold text-sm">✓ Saved</span>
-                    </div>
-
-                    <div class="mb-4">
-                        <label for="barcodeSearchInput" class="block mb-2 text-sm font-medium text-secondary">Search Barcode</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="barcodeSearchInput" placeholder="Enter barcode to find..." class="w-full p-2">
-                            <button id="barcodeSearchBtn" class="px-4 py-2 rounded-lg font-semibold shadow-md btn btn-info">Search</button>
+                        <div class="mb-4">
+                            <label for="barcodeSearchInput" class="block mb-2 text-sm font-medium text-secondary">Search Barcode</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="barcodeSearchInput" placeholder="Enter barcode to find..." class="w-full p-2">
+                                <button id="barcodeSearchBtn" class="px-4 py-2 rounded-lg font-semibold shadow-md btn btn-info">Search</button>
+                            </div>
+                            <p id="barcodeSearchResult" class="text-center text-sm h-4 mt-2"></p>
                         </div>
-                        <p id="barcodeSearchResult" class="text-center text-sm h-4 mt-2"></p>
+                        <hr class="my-4 border-gray-300">
+                        
+                        <div id="liveSessionDisplay" class="mb-2 p-3 bg-green-100 rounded-lg text-center border border-green-200 hidden">
+                            <p class="text-sm text-green-800">Live Session:</p>
+                            <p id="liveSessionName" class="font-bold text-lg text-green-900"></p>
+                        </div>
+                        
+                        <button id="manualSaveBtn" class="w-full mb-4 px-6 py-2 rounded-lg font-semibold shadow-md btn btn-success text-sm">
+                            <span id="manualSaveBtnText">Save Current Session</span>
+                            <div id="manualSaveBtnSpinner" class="hidden animate-spin rounded-full h-4 w-4 border-b-2 border-white mx-auto"></div>
+                        </button>
+                        
+                        <div class="mb-4">
+                             <label id="searchByDateLabel" for="searchByDate" class="block mb-2 text-sm font-medium text-secondary"></label>
+                             <div class="flex gap-2">
+                                <input type="date" id="searchByDate" class="w-full p-2">
+                                <button id="resetDateFilterBtn" class="px-4 py-2 rounded-lg font-semibold shadow-md btn btn-secondary text-xs"></button>
+                             </div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <select id="savedSessionsSelect" class="flex-grow p-3"><option value=""></option></select>
+                            <button id="loadSelectedSessionBtn" class="px-6 py-3 rounded-lg font-semibold shadow-md btn btn-primary"></button>
+                        </div>
+                        <button id="deleteSelectedSessionBtn" class="mt-4 w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-danger"></button>
                     </div>
-                    <hr class="my-4 border-gray-300">
-                    
-                    <div id="liveSessionDisplay" class="mb-2 p-3 bg-green-100 rounded-lg text-center border border-green-200 hidden">
-                        <p class="text-sm text-green-800">Live Session:</p>
-                        <p id="liveSessionName" class="font-bold text-lg text-green-900"></p>
-                    </div>
-                    
-                    <button id="manualSaveBtn" class="w-full mb-4 px-6 py-2 rounded-lg font-semibold shadow-md btn btn-success text-sm">
-                        <span id="manualSaveBtnText">Save Current Session</span>
-                        <div id="manualSaveBtnSpinner" class="hidden animate-spin rounded-full h-4 w-4 border-b-2 border-white mx-auto"></div>
-                    </button>
-                    
-                    <div class="mb-4">
-                         <label id="searchByDateLabel" for="searchByDate" class="block mb-2 text-sm font-medium text-secondary"></label>
-                         <div class="flex gap-2">
-                            <input type="date" id="searchByDate" class="w-full p-2">
-                            <button id="resetDateFilterBtn" class="px-4 py-2 rounded-lg font-semibold shadow-md btn btn-secondary text-xs"></button>
-                         </div>
-                    </div>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <select id="savedSessionsSelect" class="flex-grow p-3"><option value=""></option></select>
-                        <button id="loadSelectedSessionBtn" class="px-6 py-3 rounded-lg font-semibold shadow-md btn btn-primary"></button>
-                    </div>
-                    <button id="deleteSelectedSessionBtn" class="mt-4 w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-danger"></button>
-                </div>
-            </aside>
-        </main>
+                </aside>
+            </main>
+        </div>
     </div>
     
     <!-- Camera Modal -->
@@ -373,17 +495,36 @@
             <button id="closeCameraBtn" class="mt-4 w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-danger">Close Camera</button>
         </div>
     </div>
-
-    <!-- PRINT AREA -->
-    <div id="print-area" class="hidden">
-        <div class="print-header">
-            <div class="print-title-group">
-                <img src="logo.png" alt="Company Logo" class="company-logo">
-                <h1 class="company-name-print">World Out Fashion</h1>
+    
+    <!-- NEW: Recycle Bin Modal -->
+    <div id="recycle-bin-modal" class="fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg">
+            <h3 class="text-lg font-bold mb-4 text-center text-primary flex justify-center items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" />
+                </svg>
+                Recycle Bin
+            </h3>
+            <div id="recycleBinListContainer" class="bg-card-section p-4 rounded-lg border border-theme max-h-80 overflow-y-auto shadow-inner">
+                <ul id="recycleBinList" class="space-y-2">
+                    <p id="noRecycleItems" class="text-secondary text-center py-4">Recycle bin is empty.</p>
+                </ul>
             </div>
-            <p class="print-date" id="printDate"></p>
+            <div class="flex gap-4 mt-4">
+                 <button id="restoreSelectedBtn" class="px-5 py-2 rounded-lg font-semibold shadow-md btn btn-success flex-grow">Restore Selected</button>
+                 <button id="closeRecycleBinBtn" class="px-5 py-2 rounded-lg font-semibold shadow-md btn btn-secondary flex-grow">Close</button>
+            </div>
         </div>
-        <div id="printBarcodeList"></div>
+    </div>
+
+    <!-- NEW: Web Application Footer Watermark -->
+    <footer class="w-full p-2 text-center text-xs text-gray-500 bg-white bg-opacity-70 border-t border-gray-200 no-print">
+        © 2025 DesignVerse by Sandusha Avishkha. All rights reserved. Crafted with passion in Minuwangoda, Sri Lanka.
+    </footer>
+
+    <!-- PRINT AREA (Hidden in UI) -->
+    <div id="print-area" class="hidden">
+        <!-- Print content will be generated here by JavaScript -->
     </div>
 
     <!-- Local audio files as per original request -->
@@ -408,11 +549,32 @@
         let minuteBeepTimeout = null;
         let isBeepingActive = false;
         
-        // NEW: Auto-Sync Variables
-        let autoSyncInterval = null;
-        let isAutoSyncEnabled = false; // <<< DEFAULT IS NOW FALSE (OFF)
-        let syncProgressTimeout = null;
-
+        // NEW: TTS Object and Voice Setup
+        const tts = window.speechSynthesis;
+        let ttsVoice = null;
+        
+        // NEW: Recycle Bin Storage
+        let recycleBin = [];
+        
+        // --- TTS Voice Setup (Find a female voice) ---
+        function setTtsVoice() {
+            const voices = tts.getVoices();
+            // Try to find a female voice using common keywords (sinhala is not supported, so using english/default female if available)
+            ttsVoice = voices.find(voice => voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('girl') || voice.default && (voice.lang.startsWith('en') || voice.lang.startsWith('si'))); 
+            // Fallback to the first available voice if none found
+            if (!ttsVoice && voices.length > 0) {
+                 // Trying to select a common English voice as a fallback
+                 ttsVoice = voices.find(voice => voice.lang === 'en-US' && voice.name.includes('Google')) || voices[0];
+            }
+        }
+        
+        // Load voices once they are available
+        if (tts.onvoiceschanged !== undefined) {
+             tts.onvoiceschanged = setTtsVoice;
+        } else {
+             setTtsVoice(); // Fallback for browsers that fire immediately
+        }
+        
         const el = {
             appContainer: document.getElementById('app-container'), appTitle: document.getElementById("appTitle"), scanOrderDescription: document.getElementById("scanOrderDescription"), uniqueOrderCountLabel: document.getElementById("uniqueOrderCountLabel"), orderScanInput: document.getElementById("orderScanInput"), addOrderBarcodeBtn: document.getElementById("addOrderBarcodeBtn"), statusMessage: document.getElementById("statusMessage"), scannedListHeader: document.getElementById("scannedListHeader"), scannedOrderBarcodesList: document.getElementById("scannedOrderBarcodesList"), noOrderBarcodesMessage: document.getElementById("noOrderBarcodesMessage"), orderListContainer: document.getElementById("orderListContainer"), returnToTodayBtn: document.getElementById("returnToTodayBtn"), exportTitle: document.getElementById("exportTitle"), printScannedOrderBtn: document.getElementById("printScannedOrderBtn"), downloadCsvBtn: document.getElementById("downloadCsvBtn"), loadPreviousOrdersTitle: document.getElementById("loadPreviousOrdersTitle"), autoSaveStatus: document.getElementById("autoSaveStatus"), searchByDateLabel: document.getElementById("searchByDateLabel"), searchByDate: document.getElementById("searchByDate"), resetDateFilterBtn: document.getElementById("resetDateFilterBtn"), savedSessionsSelect: document.getElementById("savedSessionsSelect"), loadSelectedSessionBtn: document.getElementById("loadSelectedSessionBtn"), deleteSelectedSessionBtn: document.getElementById("deleteSelectedSessionBtn"), liveClock: document.getElementById("live-clock"), saveToSheetBtn: document.getElementById('saveToSheetBtn'), saveBtnText: document.getElementById('saveBtnText'), saveBtnSpinner: document.getElementById('saveBtnSpinner'), sheetStatus: document.getElementById('sheetStatus'), liveSessionDisplay: document.getElementById('liveSessionDisplay'), liveSessionName: document.getElementById('liveSessionName'), manualSaveBtn: document.getElementById('manualSaveBtn'), manualSaveBtnText: document.getElementById('manualSaveBtnText'), manualSaveBtnSpinner: document.getElementById('manualSaveBtnSpinner'), barcodeSearchInput: document.getElementById('barcodeSearchInput'), barcodeSearchBtn: document.getElementById('barcodeSearchBtn'), barcodeSearchResult: document.getElementById('barcodeSearchResult'),
             cameraModal: document.getElementById('camera-modal'), openCameraBtn: document.getElementById('openCameraBtn'), closeCameraBtn: document.getElementById('closeCameraBtn'),
@@ -422,10 +584,15 @@
             networkText: document.getElementById('networkText'),
             // Animated Counter Element
             animatedCounter: document.getElementById('animatedCounter'),
-            // NEW: Auto Sync Toggle Button
-            toggleAutoSyncBtn: document.getElementById('toggleAutoSyncBtn'),
-            // NEW: Progress Bar Elements
-            syncProgressBar: document.getElementById('syncProgressBar'),
+            printArea: document.getElementById('print-area'),
+            // NEW: Recycle Bin Elements
+            openRecycleBinBtn: document.getElementById('openRecycleBinBtn'),
+            recycleBinCount: document.getElementById('recycleBinCount'),
+            recycleBinModal: document.getElementById('recycle-bin-modal'),
+            closeRecycleBinBtn: document.getElementById('closeRecycleBinBtn'),
+            recycleBinList: document.getElementById('recycleBinList'),
+            noRecycleItems: document.getElementById('noRecycleItems'),
+            restoreSelectedBtn: document.getElementById('restoreSelectedBtn'),
         };
 
         // --- NEW: ANIMATED FLIP COUNTER LOGIC ---
@@ -469,6 +636,15 @@
                         this.animateDigit(container, oldDigit, newDigit, noAnimation);
                     }
                 }
+            },
+            
+            // NEW: Success Blink Effect
+            blinkSuccess: function() {
+                el.animatedCounter.classList.add('success-blink');
+                // The animation lasts 1 second (0.2s * 5 iterations in CSS), so we remove the class after that
+                setTimeout(() => {
+                    el.animatedCounter.classList.remove('success-blink');
+                }, 1000); 
             },
             
             animateDigit: function(container, oldDigit, newDigit, noAnimation) {
@@ -517,104 +693,12 @@
             }
         };
 
-        // --- NEW: LOCAL AUTO SYNC CONTROL LOGIC (Reverted to Local Control) ---
-        const SYNC_INTERVAL_MS = 60000; // 60 seconds
-
-        function updateSyncButton() {
-            if (isAutoSyncEnabled) {
-                el.toggleAutoSyncBtn.textContent = "Sync ON";
-                el.toggleAutoSyncBtn.className = "px-3 py-1 text-sm rounded-lg font-semibold shadow-md transition-colors btn btn-success";
-                el.toggleAutoSyncBtn.setAttribute('title', 'Auto-sync is active. Data refreshes every minute from the server.');
-                startSyncProgress();
-            } else {
-                el.toggleAutoSyncBtn.textContent = "Sync OFF";
-                el.toggleAutoSyncBtn.className = "px-3 py-1 text-sm rounded-lg font-semibold shadow-md transition-colors btn btn-danger";
-                el.toggleAutoSyncBtn.setAttribute('title', 'Auto-sync is disabled. Refresh manually to get data from other devices.');
-                stopSyncProgress();
-            }
-        }
-
-        function startSyncProgress() {
-            stopSyncProgress();
-            el.syncProgressBar.style.transition = 'none';
-            el.syncProgressBar.style.width = '0%';
-            
-            let progress = 0;
-            const step = (100 / (SYNC_INTERVAL_MS / 1000)); // 1.666% per second
-            
-            // Set transition for smooth filling
-            requestAnimationFrame(() => {
-                el.syncProgressBar.style.transition = 'width 1s linear';
-            });
-            
-            syncProgressTimeout = setInterval(() => {
-                if (progress < 100) {
-                    progress += step;
-                    el.syncProgressBar.style.width = `${progress}%`;
-                } else {
-                    // Reset to 0 just before the actual data refresh, but keep the animation smooth
-                    progress = 0;
-                    el.syncProgressBar.style.transition = 'none';
-                    el.syncProgressBar.style.width = '0%';
-                    requestAnimationFrame(() => {
-                         el.syncProgressBar.style.transition = 'width 1s linear';
-                    });
-                }
-            }, 1000); // Update every second
-        }
-
-        function stopSyncProgress() {
-            if (syncProgressTimeout) {
-                clearInterval(syncProgressTimeout);
-                syncProgressTimeout = null;
-            }
-            el.syncProgressBar.style.transition = 'none';
-            el.syncProgressBar.style.width = '0%';
-        }
-
-        function startAutoSync() {
-            if (!autoSyncInterval) {
-                // Initial sync is done immediately when turned ON
-                reloadTodaysData(true); 
-
-                autoSyncInterval = setInterval(async () => {
-                    if (navigator.onLine && currentlyViewingSessionId === currentSessionId) {
-                        await reloadTodaysData(true); 
-                    }
-                }, SYNC_INTERVAL_MS); 
-            }
-        }
-
-        function stopAutoSync() {
-            if (autoSyncInterval) {
-                clearInterval(autoSyncInterval);
-                autoSyncInterval = null;
-            }
-        }
-
-        async function toggleAutoSync() {
-            if (!navigator.onLine) {
-                 Swal.fire("Offline Error", "Cannot change Sync state while offline.", "error");
-                 return;
-            }
-
-            isAutoSyncEnabled = !isAutoSyncEnabled;
-            
-            updateSyncButton();
-            if (isAutoSyncEnabled) {
-                startAutoSync();
-                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Auto-Sync ON', showConfirmButton: false, timer: 1500 });
-            } else {
-                stopAutoSync();
-                Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Auto-Sync OFF', showConfirmButton: false, timer: 1500 });
-            }
-        }
 
         // --- CORE & HELPER FUNCTIONS ---
         function setInitialTexts() { 
             el.appTitle.textContent = "Order Management System"; 
             el.scanOrderDescription.textContent = "Scan order items for today's session."; 
-            el.uniqueOrderCountLabel.textContent = "Total Scanned"; // Used for the new counter label
+            el.uniqueOrderCountLabel.textContent = "Total Scanned"; 
             el.addOrderBarcodeBtn.textContent = "Add"; 
             el.returnToTodayBtn.textContent = "Return to Today's Session"; 
             el.exportTitle.textContent = "Export & Save"; 
@@ -643,60 +727,37 @@
             
             if (isAlertTime && hour < 20) {
                 el.liveClock.classList.add('blinking-alert');
-                el.appTitle.classList.add('blinking-alert'); // Also blink the title for visibility
+                el.appTitle.classList.add('blinking-alert'); 
             } else {
                 el.liveClock.classList.remove('blinking-alert');
                 el.appTitle.classList.remove('blinking-alert');
             }
             
-            // Check if beep system needs to be started or stopped
+            // Check if TTS system needs to be started or stopped
             updateBeepAlert(isAlertTime && hour < 20, now);
         }
 
-        // Re-enabled audio playback with error handling
-        function playSuccessSound() {
-            const successAudio = document.getElementById('successSound');
-            if (successAudio) { 
-                successAudio.pause(); 
-                successAudio.currentTime = 0; 
-                successAudio.play().catch(error => console.error("Success sound playback failed:", error)); 
-            }
-        }
-        
-        // --- NEW: Time Pronunciation Logic ---
-        function announceTime() {
-            if ('speechSynthesis' in window) {
+        // NEW: Time Announcement Logic (Replaces the Beep Sound)
+        function speakTime() {
+            // Check if speech is already running or if voice is unavailable
+            if (!tts.speaking && ttsVoice) {
                 const now = new Date();
-                // Format the time for clear speech (e.g., "7 35 P M")
-                const timeString = now.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
-                const utterance = new SpeechSynthesisUtterance(timeString);
-                utterance.lang = 'en-US'; 
+                const hr = now.getHours() % 12 || 12;
+                const min = now.getMinutes();
+                const ampm = now.getHours() >= 12 ? 'P M' : 'A M';
+                const timeText = `The time is ${hr} ${min === 0 ? '' : min} ${ampm}`;
+                
+                const utterance = new SpeechSynthesisUtterance(timeText);
+                utterance.voice = ttsVoice;
                 utterance.rate = 1.0; 
                 utterance.pitch = 1.0; 
-
-                // Stop any previous speech and start the new one
-                window.speechSynthesis.cancel();
-                window.speechSynthesis.speak(utterance);
-            } else {
-                // Fallback if Speech API is not supported (e.g., just use the console log or a small beep)
-                console.warn("Speech Synthesis API not supported. Falling back to console log.");
-                // Since user uploaded error.mp3, we can use it as a silent fallback signal
-                playErrorSound(); 
-            }
-        }
-
-        function playErrorSound() {
-             const errorAudio = document.getElementById('errorSound');
-            if (errorAudio) { 
-                errorAudio.pause(); 
-                errorAudio.currentTime = 0; 
-                errorAudio.play().catch(error => console.error("Error sound playback failed:", error)); 
+                tts.speak(utterance);
             }
         }
         
         function updateBeepAlert(isAlertTime, now) {
             if (isAlertTime && !isBeepingActive) {
-                // START Time Pronunciation
+                // START Announcement
                 isBeepingActive = true;
                 
                 // Calculate time until the next minute start
@@ -704,37 +765,34 @@
                 
                 // Set the initial announcement after the calculated time
                 minuteBeepTimeout = setTimeout(() => {
-                    announceTime(); // Announce time instead of beeping
+                    speakTime();
                     
                     // Set up interval for subsequent announcements (every 60 seconds)
                     minuteBeepTimeout = setInterval(() => {
-                        // Check time again before announcing to ensure we stop at 20:00:00
                         const current = new Date();
                         const currentHour = current.getHours();
-                        
+                        // Check time again before speaking to ensure we don't speak at exactly 20:00:00
                         if (currentHour < 20) {
-                           announceTime();
+                           speakTime();
                         } else {
                             // Stop Announcement when the window closes (at 20:00:00)
                             clearInterval(minuteBeepTimeout);
                             isBeepingActive = false;
-                            window.speechSynthesis.cancel(); // Stop any pending speech
                         }
                     }, 60000); // 60 seconds
                     
                 }, secondsToNextMinute * 1000);
 
             } else if (!isAlertTime && isBeepingActive) {
-                // STOP Announcement (If outside the window)
+                // STOP Announcement (If outside the window but interval is still running)
                 clearTimeout(minuteBeepTimeout);
                 clearInterval(minuteBeepTimeout);
                 isBeepingActive = false;
-                window.speechSynthesis.cancel(); // Stop any speech
             }
         }
 
         function showStatusMessage(t, e) { el.statusMessage.textContent = t; el.statusMessage.className = "status-message rounded-lg text-center font-semibold p-3"; el.statusMessage.classList.add("success" === e ? "bg-green-status" : "bg-red-status", "show"); setTimeout(() => el.statusMessage.classList.remove("show"), 2500); }
-        function getTodaySessionId() { const today = new Date(); const mm = String(today.getMonth() + 1).padStart(2, '0'); const dd = String(today.getDate()).padStart(2, '0'); return `SESSION-${today.getFullYear()}-${mm}-${dd}`; }
+        function getTodaySessionId() { const today = new Date(); const yyyy = today.getFullYear(); const mm = String(today.getMonth() + 1).padStart(2, '0'); const dd = String(today.getDate()).padStart(2, '0'); return `SESSION-${yyyy}-${mm}-${dd}`; }
         
         // --- API COMMUNICATION ---
        async function apiCall(action, payload = {}) {
@@ -759,13 +817,107 @@
             } catch (error) {
                 console.error(`API Call Failed for action "${action}":`, error);
                 
-                // Only show specific, relevant errors to the user
-                if (!error.message.includes('Session not found') && error.message !== 'Offline' && !error.message.includes('Failed to fetch')) {
+                // --- NEW FIX: Handle CORS/Fetch failure error message specifically ---
+                let errorMessage = error.message;
+                if (error instanceof TypeError && error.message === 'Failed to fetch') {
+                    // This is the common error when CORS blocks a request from a local file (null origin)
+                    errorMessage = "CORS/Network Error: Cannot connect to Google Script. Ensure your file is hosted on a secure server (HTTPS) and the script URL is correct. Check your browser console for details.";
+                    Swal.fire("Critical API Error", errorMessage, "error");
+                } else if (!error.message.includes('Session not found') && error.message !== 'Offline') {
+                    // Existing error handling for non-critical errors
                     Swal.fire("API Error", `An error occurred while communicating with the server: ${error.message}`, "error");
                 }
                 
-                throw error; // Propagate error for calling functions to handle
+                throw new Error(errorMessage); // Throw the error with a potentially clearer message
             }
+        }
+        
+        // --- RECYCLE BIN LOGIC (using Local Storage) ---
+        function loadRecycleBin() {
+            try {
+                const storedBin = localStorage.getItem('recycleBin');
+                recycleBin = storedBin ? JSON.parse(storedBin) : [];
+            } catch (e) {
+                console.error("Could not load Recycle Bin from localStorage:", e);
+                recycleBin = [];
+            }
+        }
+
+        function saveRecycleBin() {
+            try {
+                localStorage.setItem('recycleBin', JSON.stringify(recycleBin));
+                updateRecycleBinUi();
+            } catch (e) {
+                console.error("Could not save Recycle Bin to localStorage:", e);
+            }
+        }
+        
+        function updateRecycleBinUi() {
+            el.recycleBinCount.textContent = `Recycle Bin (${recycleBin.length})`;
+            el.recycleBinList.innerHTML = '';
+            el.noRecycleItems.style.display = recycleBin.length > 0 ? 'none' : 'block';
+            el.restoreSelectedBtn.disabled = recycleBin.length === 0;
+
+            recycleBin.forEach((item, index) => {
+                const listItem = document.createElement("li");
+                listItem.className = "flex items-center justify-between p-2 rounded-md text-sm bg-white shadow-sm border border-gray-200 text-gray-700";
+                
+                // Checkbox for selection
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = item.barcode;
+                checkbox.id = `rb-item-${index}`;
+                checkbox.className = 'mr-3 h-4 w-4 text-primary rounded focus:ring-primary';
+
+                // Barcode text and deletion time
+                const textDiv = document.createElement('label');
+                textDiv.htmlFor = `rb-item-${index}`;
+                textDiv.className = 'flex-grow cursor-pointer';
+                const deleteTime = new Date(item.deletedAt).toLocaleTimeString('en-US');
+                textDiv.innerHTML = `
+                    <span class="font-semibold">${item.barcode}</span>
+                    <span class="text-xs text-secondary ml-2"> (Deleted: ${deleteTime})</span>
+                `;
+
+                listItem.appendChild(checkbox);
+                listItem.appendChild(textDiv);
+                el.recycleBinList.appendChild(listItem);
+            });
+        }
+        
+        function openRecycleBin() {
+            loadRecycleBin();
+            updateRecycleBinUi();
+            el.recycleBinModal.style.display = 'flex';
+        }
+        
+        function closeRecycleBin() {
+            el.recycleBinModal.style.display = 'none';
+        }
+
+        function handleRestoreSelected() {
+            const selected = Array.from(el.recycleBinList.querySelectorAll('input:checked')).map(cb => cb.value);
+            if (selected.length === 0) {
+                return Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'No items selected!', showConfirmButton: false, timer: 1500 });
+            }
+
+            // Move items back to scannedBarcodes (at the top, newest first)
+            selected.forEach(barcode => {
+                if (!scannedBarcodes.includes(barcode)) {
+                    scannedBarcodes.unshift(barcode);
+                }
+            });
+            
+            // Remove restored items from recycleBin
+            recycleBin = recycleBin.filter(item => !selected.includes(item.barcode));
+            saveRecycleBin();
+            
+            // Update the main UI
+            returnToTodayView(); 
+            closeRecycleBin();
+            autoSaveSession();
+            
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `${selected.length} item(s) restored!`, showConfirmButton: false, timer: 2000 });
         }
         
         // --- NETWORK STATUS LOGIC ---
@@ -779,39 +931,29 @@
 
         function updateNetworkStatus() {
             if (navigator.onLine) {
-                el.networkIcon.innerHTML = getWifiIcon("icon-online"); // Green Wi-Fi Icon
+                el.networkIcon.innerHTML = getWifiIcon("icon-online"); 
                 el.networkText.textContent = "Online";
                 el.networkText.className = "font-bold text-success-hover";
             } else {
-                el.networkIcon.innerHTML = getWifiIcon("icon-offline"); // Red Wi-Fi Icon
+                el.networkIcon.innerHTML = getWifiIcon("icon-offline"); 
                 el.networkText.textContent = "Offline";
                 el.networkText.className = "font-bold text-danger-hover";
-                // Only show SweetAlert on state change to prevent spam
                 if(el.networkText.textContent !== "Offline") {
                      Swal.fire("Offline Mode", "The application is currently offline. Data saving to Google Sheet is disabled.", "warning");
                 }
             }
-            // Disable saving to sheet when offline
             el.saveToSheetBtn.disabled = !navigator.onLine;
             el.manualSaveBtn.disabled = !navigator.onLine;
-            
-            // If offline, stop auto sync to prevent constant API errors
-            if (!navigator.onLine && isAutoSyncEnabled) {
-                stopAutoSync();
-                // Update button state visually
-                isAutoSyncEnabled = false; 
-                updateSyncButton();
-            }
         }
 
         // --- UI & STATE MANAGEMENT ---
         function updateUiFromState() {
             const currentCount = currentlyViewingBarcodes.length;
             
-            // FIX: Check if FlipCounter is initialized before calling update
             if (FlipCounter.element) {
                 FlipCounter.update(currentCount); 
             }
+            updateRecycleBinUi();
 
             el.scannedOrderBarcodesList.innerHTML = "";
             const hasBarcodes = currentCount > 0;
@@ -825,18 +967,27 @@
             el.orderScanInput.placeholder = isViewingToday ? "Barcode number..." : "Viewing past session...";
 
             if (hasBarcodes) {
+                // Barcodes are stored in reverse order (newest first). Display them in reverse (newest at top) but number them 1-based (newest is #1)
                 currentlyViewingBarcodes.forEach((barcode, index) => {
                     const listItem = document.createElement("li");
                     listItem.style.animation = `slideInFromLeft 0.5s ease-out forwards`;
-                    const scanNumber = currentlyViewingBarcodes.length - index;
+                    // Calculate scan number based on current length - index (since it's newest first)
+                    const scanNumber = currentCount - index; 
                     if(isViewingToday) {
                         listItem.className = "flex items-center justify-between p-2 rounded-md text-base bg-white shadow-sm border border-gray-200 text-gray-800";
                         const leftDiv = document.createElement('div'); leftDiv.className = 'flex items-center';
                         const numberSpan = document.createElement('span'); numberSpan.className = "font-semibold text-primary w-12 text-left"; numberSpan.textContent = `#${scanNumber}`;
                         const barcodeSpan = document.createElement('span'); barcodeSpan.textContent = barcode;
                         leftDiv.appendChild(numberSpan); leftDiv.appendChild(barcodeSpan);
-                        const deleteBtn = document.createElement('button'); deleteBtn.textContent = "Delete"; deleteBtn.className = "btn btn-danger px-3 py-1 text-xs rounded-md font-semibold"; deleteBtn.onclick = () => handleDeleteSingleBarcode(scanNumber - 1);
-                        listItem.appendChild(leftDiv); listItem.appendChild(deleteBtn);
+                        
+                        // Pass the actual index in the currentlyViewingBarcodes array (which is scannedBarcodes)
+                        const deleteBtn = document.createElement('button'); 
+                        deleteBtn.textContent = "Delete"; 
+                        deleteBtn.className = "btn btn-danger px-3 py-1 text-xs rounded-md font-semibold"; 
+                        deleteBtn.onclick = () => handleDeleteSingleBarcode(index); 
+                        
+                        listItem.appendChild(leftDiv); 
+                        listItem.appendChild(deleteBtn);
                     } else {
                         listItem.className = "flex items-center p-2 text-gray-500";
                         listItem.textContent = `#${scanNumber}. ${barcode}`;
@@ -848,29 +999,43 @@
             el.liveSessionName.textContent = `For ${currentSessionId.replace('SESSION-', '')}`;
             el.liveSessionDisplay.classList.remove('hidden');
             
-            // Re-apply network/save status after UI update
             updateNetworkStatus();
+            
+            // NEW: Ensure input is focused after UI update
+            if (isViewingToday) {
+                el.orderScanInput.focus();
+            }
         }
         
         // --- APPLICATION LOGIC ---
         async function initializeApp() {
             setInitialTexts(); 
             
-            // FIX: Initialize Flip Counter *before* loading data and calling updateUiFromState
             FlipCounter.initialize(0); 
             
             updateClock(); 
-            // Update clock and check for time alert every second
             setInterval(updateClock, 1000); 
-            
-            // Auto-sync initialization and event listener
-            el.toggleAutoSyncBtn.addEventListener('click', toggleAutoSync);
-            
-            // Default Sync is OFF, so we initialize the button state and do NOT start the sync interval
-            updateSyncButton(); 
 
+            // Load recycle bin at startup
+            loadRecycleBin(); 
+            
             currentSessionId = getTodaySessionId(); document.title = "World Out Fashion - OMS";
-            el.orderScanInput.addEventListener("keypress", (e) => { if (e.key === 'Enter') handleOrderScanAddBarcode(); });
+            
+            // NEW: Handle input from any keyboard (including numeric keypad)
+            document.addEventListener("keyup", (e) => {
+                // If a key is pressed while the input is not focused and the key is a relevant scan character
+                if (document.activeElement !== el.orderScanInput && e.key.length === 1 && (e.key.match(/[a-zA-Z0-9]/) || e.code.startsWith('Numpad'))) {
+                    el.orderScanInput.focus();
+                }
+            });
+            
+            el.orderScanInput.addEventListener("keypress", (e) => { 
+                // Only process Enter key to submit the barcode
+                if (e.key === 'Enter') {
+                    handleOrderScanAddBarcode(); 
+                } 
+            });
+            
             el.addOrderBarcodeBtn.addEventListener("click", handleOrderScanAddBarcode);
             el.returnToTodayBtn.addEventListener("click", returnToTodayView);
             el.manualSaveBtn.addEventListener("click", handleManualSave);
@@ -885,108 +1050,110 @@
             el.downloadCsvBtn.addEventListener("click", downloadCsv);
             el.openCameraBtn.addEventListener("click", startCameraScan);
             el.closeCameraBtn.addEventListener("click", stopCameraScan);
+            
+            // NEW Recycle Bin Listeners
+            el.openRecycleBinBtn.addEventListener("click", openRecycleBin);
+            el.closeRecycleBinBtn.addEventListener("click", closeRecycleBin);
+            el.restoreSelectedBtn.addEventListener("click", handleRestoreSelected);
+
 
             // Network Initialization
             window.addEventListener('online', updateNetworkStatus);
             window.addEventListener('offline', updateNetworkStatus);
-            updateNetworkStatus(); // Initial network check
+            updateNetworkStatus(); 
             
             await reloadTodaysData();
             
-            try { const data = await apiCall("getAllSessions"); allSessions = data.sessions; filterSessionsByDate(); } catch (error) { /* Handled by apiCall */ }
+            // --- NEW FIX: Changed how getAllSessions is called to better handle initial errors ---
+            try { 
+                const data = await apiCall("getAllSessions"); 
+                allSessions = data.sessions; 
+                filterSessionsByDate(); 
+            } catch (error) { 
+                console.warn("Could not load previous sessions:", error.message);
+                // Optionally inform the user, but don't stop the app initialization
+            }
+            
+            el.orderScanInput.focus();
         }
         
-        async function reloadTodaysData(isSync = false) {
+        async function reloadTodaysData() {
              try { 
                  const data = await apiCall("getSessionData", { sessionId: currentSessionId }); 
-                 const newBarcodes = data.session.data.barcodes || [];
-                 
-                 // Only update if there's a difference to avoid unnecessary UI redraws
-                 if (JSON.stringify(scannedBarcodes) !== JSON.stringify(newBarcodes)) {
-                    // Merging Logic (re-introduced for local consistency before save)
-                    // If we receive data from server, we update the local list with the server's clean list
-                    scannedBarcodes = newBarcodes;
-
-                    // Only update viewing list if we are currently viewing today's session
-                    if (currentlyViewingSessionId === currentSessionId) {
-                        currentlyViewingBarcodes = [...scannedBarcodes];
-                        updateUiFromState();
-                        if (isSync) {
-                            // Show a brief sync status
-                            el.autoSaveStatus.textContent = '✓ Synced'; el.autoSaveStatus.style.color = 'var(--info)'; el.autoSaveStatus.classList.add("show"); 
-                            setTimeout(() => { el.autoSaveStatus.classList.remove("show"); el.autoSaveStatus.textContent = '✓ Saved'; el.autoSaveStatus.style.color = 'var(--success)'; }, 1500);
-                        }
-                    }
-                 }
+                 scannedBarcodes = data.session.data.barcodes || []; 
              } 
              catch (error) { 
                  if (error.message.includes('Session not found')) { 
                      scannedBarcodes = []; 
+                 } else {
+                     // NEW FIX: If there's an API error loading today's data, initialize with empty array
+                     scannedBarcodes = [];
+                     console.error("Failed to load today's session data due to API error:", error.message);
                  }
-                 // Do not show general API error for sync attempts
              }
-             if (!isSync) {
-                 returnToTodayView();
-             }
+            returnToTodayView();
         }
         
-        async function handleOrderScanAddBarcode() {
+        function handleOrderScanAddBarcode() {
             const barcode = el.orderScanInput.value.trim();
             if (barcode === "") return;
-            
-            // Check local duplicates (If GAS doesn't handle merging, this prevents local list inflation)
             if (scannedBarcodes.includes(barcode)) {
                 showStatusMessage(`Already Scanned: ${barcode}`, "error");
-                playErrorSound(); 
-                el.orderScanInput.value = "";
-                el.orderScanInput.focus();
-                return;
+                const errorAudio = document.getElementById('errorSound');
+                if (errorAudio) { errorAudio.pause(); errorAudio.currentTime = 0; errorAudio.play().catch(console.error); }
+            } else {
+                // Add to the front of the array (unshift) so the newest is always index 0
+                scannedBarcodes.unshift(barcode); 
+                currentlyViewingBarcodes = scannedBarcodes;
+                showStatusMessage(`Success: ${barcode}`, "success");
+                const successAudio = document.getElementById('successSound');
+                if (successAudio) { successAudio.pause(); successAudio.currentTime = 0; successAudio.play().catch(console.error); }
+                updateUiFromState();
+                autoSaveSession();
             }
-            
-            // 1. Add the new barcode to the local list
-            scannedBarcodes.unshift(barcode);
-            currentlyViewingBarcodes = scannedBarcodes;
-            showStatusMessage(`Scanned: ${barcode}`, "success");
-            playSuccessSound();
-            updateUiFromState();
-            
-            // 2. Save the ENTIRE local list to the server (overwrite old list)
-            // This ensures data consistency if other devices are not merging but overwriting.
-            // This reverts the merging strategy back to the most stable overwriting approach.
-            
-            try {
-                await apiCall("saveSession", { sessionId: currentSessionId, barcodes: scannedBarcodes });
-                 el.autoSaveStatus.classList.add("show"); 
-                setTimeout(() => { el.autoSaveStatus.classList.remove("show") }, 2000);
-            } catch (error) {
-                console.error("Auto-save failed after scan:", error);
-                 el.autoSaveStatus.textContent = '✗ Save Failed'; el.autoSaveStatus.style.color = 'var(--danger)'; el.autoSaveStatus.classList.add("show"); 
-                 setTimeout(() => { el.autoSaveStatus.classList.remove("show"); el.autoSaveStatus.textContent = '✓ Saved'; el.autoSaveStatus.style.color = 'var(--success)'; }, 3000); 
-            }
-
             el.orderScanInput.value = "";
             el.orderScanInput.focus();
         }
         
-        function handleDeleteSingleBarcode(reverseIndex) {
-            const actualIndex = scannedBarcodes.length - 1 - reverseIndex;
-            const barcodeToDelete = scannedBarcodes[actualIndex];
-
-            Swal.fire({ title: 'Are you sure?', text: `Do you want to permanently delete barcode ${barcodeToDelete}?`, icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--danger)', confirmButtonText: 'Yes, delete it!', cancelButtonText: 'Cancel'
-            }).then(async (result) => { 
-                if (result.isConfirmed) {
-                    scannedBarcodes.splice(actualIndex, 1);
-                    currentlyViewingBarcodes = scannedBarcodes;
-                    updateUiFromState();
+        function handleDeleteSingleBarcode(indexToDelete) {
+            // Index is the direct index in the currentlyViewingBarcodes array (which is scannedBarcodes)
+            const barcodeToDelete = currentlyViewingBarcodes[indexToDelete];
+            
+            Swal.fire({ 
+                title: 'Are you sure?', 
+                text: `Move barcode: ${barcodeToDelete} to Recycle Bin?`, 
+                icon: 'warning', 
+                showCancelButton: true, 
+                confirmButtonColor: 'var(--danger)', 
+                confirmButtonText: 'Yes, Move to Bin!', 
+                cancelButtonText: 'Cancel'
+            }).then((result) => { 
+                if (result.isConfirmed) { 
                     
-                    // Save the new, shorter list to the server (overwriting)
-                    try {
-                        await apiCall("saveSession", { sessionId: currentSessionId, barcodes: scannedBarcodes });
-                        Swal.fire('Deleted!', `Barcode ${barcodeToDelete} has been deleted.`, 'success');
-                    } catch (error) {
-                         Swal.fire('Error', 'Failed to save changes to server.', 'error');
-                         // If save fails, rely on the next sync/reload to get the correct state
-                    }
+                    // 1. Add to Recycle Bin
+                    recycleBin.push({
+                        barcode: barcodeToDelete,
+                        deletedAt: new Date().toISOString()
+                    });
+                    saveRecycleBin(); 
+
+                    // 2. Delete from the main array
+                    scannedBarcodes.splice(indexToDelete, 1); 
+                    currentlyViewingBarcodes = [...scannedBarcodes]; 
+                    
+                    // 3. Update UI and AutoSave
+                    updateUiFromState(); 
+                    autoSaveSession(); 
+                    
+                    // 4. Show Side Notification (Toast)
+                    Swal.fire({ 
+                        toast: true, 
+                        position: 'top-end', 
+                        icon: 'info', 
+                        title: 'Item moved to Recycle Bin!', 
+                        showConfirmButton: false, 
+                        timer: 2000
+                    });
                 } 
             });
         }
@@ -999,9 +1166,24 @@
             const sessionId = el.savedSessionsSelect.value;
             if (!sessionId) { return Swal.fire({ title: "Please select a session to view.", icon: 'info' }); }
             el.loadSelectedSessionBtn.disabled = true; el.loadSelectedSessionBtn.textContent = "Loading...";
-            try { const data = await apiCall("getSessionData", { sessionId: sessionId }); currentlyViewingSessionId = sessionId; currentlyViewingBarcodes = data.session.data.barcodes || []; updateUiFromState(); } 
-            catch (error) { returnToTodayView(); } 
-            finally { el.loadSelectedSessionBtn.disabled = false; el.loadSelectedSessionBtn.textContent = "View"; }
+            
+            // --- NEW FIX: Improved error handling for load selected session ---
+            try { 
+                const data = await apiCall("getSessionData", { sessionId: sessionId }); 
+                currentlyViewingSessionId = sessionId; 
+                currentlyViewingBarcodes = data.session.data.barcodes || []; 
+                updateUiFromState(); 
+            } catch (error) { 
+                console.error("Failed to load selected session:", error.message);
+                // Inform user only if it's not a 'session not found' error
+                 if (!error.message.includes('Session not found')) {
+                     Swal.fire("Load Error", `Could not load session data: ${error.message}. Returning to today's view.`, "error");
+                 }
+                returnToTodayView(); 
+            } finally { 
+                el.loadSelectedSessionBtn.disabled = false; 
+                el.loadSelectedSessionBtn.textContent = "View"; 
+            }
         }
 
         async function handleBarcodeSearch() {
@@ -1017,22 +1199,162 @@
         
         async function handleManualSave() {
             el.manualSaveBtn.disabled = true; el.manualSaveBtnText.classList.add('hidden'); el.manualSaveBtnSpinner.classList.remove('hidden');
-            try { 
-                await apiCall("saveSession", { sessionId: currentSessionId, barcodes: scannedBarcodes }); 
-                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Session saved!', showConfirmButton: false, timer: 2000 }); 
-            } 
+            try { await autoSaveSession(true); } 
             catch (error) { 
-                if (error.message !== 'Offline') {
-                    Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Save failed!', showConfirmButton: false, timer: 2000 }); 
-                }
+                // Error handling is done inside autoSaveSession now
             } 
             finally { 
-                el.manualSaveBtn.disabled = !navigator.onLine; // Re-enable only if online
+                el.manualSaveBtn.disabled = !navigator.onLine; 
                 el.manualSaveBtnText.classList.remove('hidden'); el.manualSaveBtnSpinner.classList.add('hidden'); 
             }
         }
         
-        function printScannedOrder(){if(0===currentlyViewingBarcodes.length)return void Swal.fire({title:"No items to print.",icon:"info"});document.getElementById("printDate").textContent=new Date().toLocaleString();const t=document.getElementById("printBarcodeList");t.innerHTML="";const e=[...currentlyViewingBarcodes].reverse();let a=Math.ceil(e.length/40);for(let s=0;s<a;s++){const n=e.slice(s*40,(s+1)*40),o=document.createElement("div");o.className="print-column",n.forEach((t,e)=>{const a=document.createElement("div");a.textContent=`${s*40+e+1}. ${t}`,o.appendChild(a)}),t.appendChild(o)}window.print()}
+        async function autoSaveSession(isManual = false) {
+            if (!navigator.onLine) {
+                // If offline, just update the status without trying to save
+                el.autoSaveStatus.textContent = '✗ Offline'; 
+                el.autoSaveStatus.style.color = 'var(--danger)'; 
+                el.autoSaveStatus.classList.add("show"); 
+                // Set to success color on clear for visual continuity (3 seconds)
+                setTimeout(() => { 
+                    el.autoSaveStatus.classList.remove("show"); 
+                    el.autoSaveStatus.textContent = '✓ Saved'; 
+                    el.autoSaveStatus.style.color = 'var(--success)'; 
+                }, 3000);
+                return;
+            }
+            try { 
+                await apiCall("saveSession", { sessionId: currentSessionId, barcodes: scannedBarcodes });
+                
+                // NEW: Trigger Flip Counter Blink
+                FlipCounter.blinkSuccess();
+                
+                if (isManual) { 
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Session saved!', showConfirmButton: false, timer: 2000 }); 
+                } else { 
+                    // Show auto-save success status briefly (2 seconds)
+                    el.autoSaveStatus.classList.remove("show"); // Ensure class is removed first
+                    el.autoSaveStatus.textContent = '✓ Saved'; 
+                    el.autoSaveStatus.style.color = 'var(--success)'; 
+                    el.autoSaveStatus.classList.add("show"); 
+                    setTimeout(() => { el.autoSaveStatus.classList.remove("show") }, 2000); 
+                }
+            } catch (error) { 
+                // NEW: Error Status Update (3 seconds)
+                el.autoSaveStatus.textContent = '✗ Save Failed'; 
+                el.autoSaveStatus.style.color = 'var(--danger)'; 
+                el.autoSaveStatus.classList.add("show"); 
+                // Set to success color on clear for visual continuity
+                setTimeout(() => { 
+                    el.autoSaveStatus.classList.remove("show"); 
+                    el.autoSaveStatus.textContent = '✓ Saved'; 
+                    el.autoSaveStatus.style.color = 'var(--success)'; 
+                }, 3000); 
+            }
+        }
+        
+        function printScannedOrder() {
+            const barcodes = currentlyViewingBarcodes;
+            if (barcodes.length === 0) {
+                return Swal.fire({ title: "No items to print.", icon: "info" });
+            }
+
+            // The list is stored newest first, but print should be oldest first (#1, #2, ...)
+            const itemsToPrint = [...barcodes].reverse(); 
+            const totalItems = itemsToPrint.length;
+            
+            // Print constants
+            const maxItemsPerColumn = 40;
+            const columnsPerPage = 5;
+            const maxItemsPerPage = maxItemsPerColumn * columnsPerPage; // 200 items per page
+            
+            el.printArea.innerHTML = ""; // Clear existing print area
+
+            let pageHtml = "";
+            let itemIndex = 0;
+            let pageNumber = 1;
+
+            const generatePageHeader = (page) => `
+                <div class="print-page">
+                    <div class="print-watermark-overlay">
+                        <img src="logo.png" alt="Watermark Logo">
+                    </div>
+                    <div class="print-header">
+                        <div class="print-title-group">
+                            <img src="logo.png" alt="Company Logo" class="company-logo">
+                            <h1 class="company-name-print">World Out Fashion</h1>
+                        </div>
+                        <p class="print-date">Date: ${new Date().toLocaleString('en-US')}</p>
+                    </div>
+                    <div class="print-list-container">
+            `;
+            
+            const generateSignatureArea = () => `
+                <div class="signature-area">
+                    <p style="text-align: center; margin-top: 0; margin-bottom: 5px; font-weight: normal;">Signature:</p>
+                    <p style="border-top: 1px solid #000; padding-top: 5px;">Prepared By</p>
+                </div>
+            `;
+            
+            const generatePageFooter = () => `
+                    </div> <!-- Close print-list-container -->
+                    <div class="print-footer-watermark">
+                        © 2025 DesignVerse by Sandusha Avishkha. All rights reserved. Crafted with passion in Minuwangoda, Sri Lanka.
+                    </div>
+                </div>
+            `;
+            
+            // Loop through all pages
+            while (itemIndex < totalItems) {
+                const isLastPage = (totalItems - itemIndex) <= maxItemsPerPage;
+                const itemsForThisPage = Math.min(totalItems - itemIndex, maxItemsPerPage);
+                
+                pageHtml += generatePageHeader(pageNumber);
+                let contentHtml = '';
+                
+                // Determine the maximum item index for the current page
+                const maxIndexForPage = itemIndex + itemsForThisPage;
+                
+                // Loop through columns
+                for (let col = 0; col < columnsPerPage; col++) {
+                    const startColIndex = itemIndex + col * maxItemsPerColumn;
+                    
+                    // Only start a column if there are items for it
+                    if (startColIndex < maxIndexForPage) {
+                        contentHtml += '<div class="print-column">';
+                        
+                        // Determine the end index for this column
+                        const endColIndex = Math.min(startColIndex + maxItemsPerColumn, maxIndexForPage);
+                        
+                        // Loop through items in this column
+                        for (let i = startColIndex; i < endColIndex; i++) {
+                            const itemNumber = i + 1;
+                            contentHtml += `<div>${itemNumber}. ${itemsToPrint[i]}</div>`;
+                        }
+                        
+                        contentHtml += '</div>';
+                    }
+                }
+                
+                pageHtml += contentHtml;
+                
+                // Add signature area only on the last page.
+                // The print logic already ensures page breaks occur exactly at 200 items unless totalItems < 200.
+                if (isLastPage) {
+                    pageHtml += generateSignatureArea();
+                } 
+                
+                pageHtml += generatePageFooter();
+                
+                // Move to the next page chunk (max 200 items/page)
+                itemIndex = maxIndexForPage; 
+                pageNumber++;
+            }
+            
+            el.printArea.innerHTML = pageHtml;
+            window.print();
+        }
+        
         function downloadCsv(){if(0===currentlyViewingBarcodes.length)return void Swal.fire({title:"No items to download.",icon:"info"});const t=[...currentlyViewingBarcodes].reverse();let e="No,Barcode\n";t.forEach((t,a)=>{e+=`${a+1},"${t}"\n`});const a=new Blob([e],{type:"text/csv;charset=utf-8;"}),s=document.createElement("a");s.href=URL.createObjectURL(a),s.download=`scanned_order_${currentlyViewingSessionId}.csv`,s.click()}
         
         function filterSessionsByDate(){const t=el.searchByDate.value;let e=allSessions.filter(e=>e.id!==currentSessionId);t&&(e=e.filter(e=>{const a=new Date(e.createdAt).toISOString().split('T')[0];return a===t})),el.savedSessionsSelect.innerHTML=`<option value="">Select a previous session</option>`,e.sort((t,e)=>e.createdAt-t.createdAt).forEach(t=>{const e=document.createElement("option");e.value=t.id,e.textContent=t.name,el.savedSessionsSelect.appendChild(e)})}
@@ -1055,7 +1377,7 @@
                     el.sheetStatus.textContent = "Offline. Try again later."; el.sheetStatus.style.color = "var(--danger)";
                 }
             }).finally(() => { 
-                el.saveToSheetBtn.disabled = !navigator.onLine; // Re-enable only if online
+                el.saveToSheetBtn.disabled = !navigator.onLine; 
                 el.saveBtnText.classList.remove('hidden'); el.saveBtnSpinner.classList.add('hidden'); 
                 setTimeout(() => { el.sheetStatus.textContent = "" }, 5000); 
             }); 
@@ -1063,20 +1385,26 @@
 
         // --- Camera Scan Logic ---
         function onScanSuccess(decodedText, decodedResult) {
-            el.orderScanInput.value = decodedText; handleOrderScanAddBarcode(); stopCameraScan();
+            el.orderScanInput.value = decodedText; 
+            handleOrderScanAddBarcode(); 
+            stopCameraScan();
             Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Barcode Scanned!', showConfirmButton: false, timer: 1500 });
+            el.orderScanInput.focus(); // Ensure focus returns after closing the camera
         }
         function onScanFailure(error) { /* Do nothing to avoid console spam */ }
         function startCameraScan() {
             el.cameraModal.classList.add('show');
             if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); }
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            // Clear input field before starting scan
+            el.orderScanInput.value = ""; 
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
                 .catch(err => { Swal.fire("Camera Error", "Could not start the camera. Please check permissions.", "error"); stopCameraScan(); });
         }
         function stopCameraScan() {
             if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().catch(err => {}); }
             el.cameraModal.classList.remove('show');
+            el.orderScanInput.focus(); // Ensure focus returns to the input after closing the camera
         }
         
         document.addEventListener("DOMContentLoaded", initializeApp);
