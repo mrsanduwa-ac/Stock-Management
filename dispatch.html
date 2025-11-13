@@ -810,25 +810,41 @@
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({ action, ...payload })
                 });
-                if (!response.ok) throw new Error(`Network response error: ${response.statusText}`);
+                
+                // Check for network errors that aren't caught by fetch but may indicate CORS issues
+                if (!response.ok && response.status !== 200) throw new Error(`Network response error: ${response.status} ${response.statusText}`);
+
+                // Attempt to read JSON, even if the status is not ok (GAS often returns errors as JSON)
                 const data = await response.json();
-                if (data.status !== 'success') throw new Error(data.message || 'Unknown script error.');
+                
+                if (data.status !== 'success') {
+                    // This handles custom errors sent by the Google Script
+                    throw new Error(data.message || 'Unknown Google Script error.');
+                }
                 return data;
+
             } catch (error) {
                 console.error(`API Call Failed for action "${action}":`, error);
                 
-                // --- NEW FIX: Handle CORS/Fetch failure error message specifically ---
                 let errorMessage = error.message;
-                if (error instanceof TypeError && error.message === 'Failed to fetch') {
-                    // This is the common error when CORS blocks a request from a local file (null origin)
-                    errorMessage = "CORS/Network Error: Cannot connect to Google Script. Ensure your file is hosted on a secure server (HTTPS) and the script URL is correct. Check your browser console for details.";
-                    Swal.fire("Critical API Error", errorMessage, "error");
+                
+                // Handle the CORS/Network error specifically shown in your console
+                if (error instanceof TypeError && (error.message === 'Failed to fetch' || error.message.includes('CORS'))) {
+                    errorMessage = "Critical CORS/Network Error: Cannot connect to Google Script. Ensure your file is hosted on a secure server (HTTPS) and the script URL is correct. Check your browser console for details.";
+                    // Only show this critical error once on initial failure for session loading
+                    if (action === 'getAllSessions' || action === 'getSessionData') {
+                       // Do not show Swal here, let the caller function handle the initial UI error message
+                       console.error(errorMessage);
+                    } else {
+                       // Show Swal for user-triggered actions (save, delete, etc.)
+                       Swal.fire("Critical API Error", errorMessage, "error");
+                    }
                 } else if (!error.message.includes('Session not found') && error.message !== 'Offline') {
                     // Existing error handling for non-critical errors
                     Swal.fire("API Error", `An error occurred while communicating with the server: ${error.message}`, "error");
                 }
                 
-                throw new Error(errorMessage); // Throw the error with a potentially clearer message
+                throw new Error(errorMessage); 
             }
         }
         
@@ -1066,12 +1082,13 @@
             
             // --- NEW FIX: Changed how getAllSessions is called to better handle initial errors ---
             try { 
+                el.savedSessionsSelect.innerHTML = `<option value="">Loading previous sessions...</option>`;
                 const data = await apiCall("getAllSessions"); 
                 allSessions = data.sessions; 
                 filterSessionsByDate(); 
             } catch (error) { 
                 console.warn("Could not load previous sessions:", error.message);
-                // Optionally inform the user, but don't stop the app initialization
+                el.savedSessionsSelect.innerHTML = `<option value="">Failed to load sessions (API Error)</option>`;
             }
             
             el.orderScanInput.focus();
