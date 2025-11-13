@@ -199,14 +199,14 @@
                 display: flex; 
                 justify-content: center; /* Center the group */
                 align-items: center; 
-                gap: 15px; 
+                gap: 20px; 
                 margin-bottom: 5px; 
             }
             .print-header .company-logo { height: 35px; /* Slightly smaller logo */ }
             .print-header .company-name-print { font-family: 'Impact', 'Arial Narrow Bold', sans-serif; font-size: 16pt; /* Slightly smaller font */ letter-spacing: 1px; }
             .print-header .print-date { 
                 /* NEW: Center the date/time */
-                font-size: 10pt; /* Smaller date font */
+                font-size: 15pt; /* Smaller date font */
                 font-weight: bold; 
                 display: block; 
                 text-align: center;
@@ -215,7 +215,7 @@
             .print-list-container {
                 column-count: 5; 
                 column-gap: 12px; /* Reduced column gap */
-                font-size: 11pt; /* Smaller list font */
+                font-size: 12pt; /* Smaller list font */
                 max-width: 100%;
                 margin-top: 10px;
             }
@@ -225,7 +225,7 @@
                 padding-right: 8px; /* Reduced padding */
             }
             .print-column div { 
-                margin-bottom: 1px; /* CRITICAL: Reduced to 1px for maximum fit */
+                margin-bottom: 2px; /* CRITICAL: Reduced to 1px for maximum fit */
                 white-space: nowrap; 
             }
             
@@ -257,7 +257,7 @@
                 z-index: -1;
             }
             .print-watermark-overlay img {
-                width: 300px; 
+                width: 500px; 
                 height: auto;
             }
             
@@ -269,7 +269,7 @@
                 left: 10mm;
                 right: 10mm;
                 text-align: center;
-                font-size: 7pt;
+                font-size: 8pt;
                 color: #888;
                 /* Remove border as per user's image, only necessary for separation */
                 /* border-top: 1px solid #eee; */
