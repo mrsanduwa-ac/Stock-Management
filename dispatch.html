@@ -387,7 +387,6 @@
     </div>
 
     <!-- Local audio files as per original request -->
-    <!-- Re-added the original audio tags -->
     <audio id="successSound" src="play.mp3" preload="auto"></audio>
     <audio id="errorSound" src="error.mp3" preload="auto"></audio>
 
@@ -518,7 +517,7 @@
             }
         };
 
-        // --- NEW: AUTO SYNC CONTROL LOGIC ---
+        // --- NEW: LOCAL AUTO SYNC CONTROL LOGIC (Reverted to Local Control) ---
         const SYNC_INTERVAL_MS = 60000; // 60 seconds
 
         function updateSyncButton() {
@@ -573,12 +572,13 @@
             el.syncProgressBar.style.width = '0%';
         }
 
-
         function startAutoSync() {
             if (!autoSyncInterval) {
+                // Initial sync is done immediately when turned ON
+                reloadTodaysData(true); 
+
                 autoSyncInterval = setInterval(async () => {
                     if (navigator.onLine && currentlyViewingSessionId === currentSessionId) {
-                        // isSync = true, so status message shows 'Synced' briefly
                         await reloadTodaysData(true); 
                     }
                 }, SYNC_INTERVAL_MS); 
@@ -592,8 +592,14 @@
             }
         }
 
-        function toggleAutoSync() {
+        async function toggleAutoSync() {
+            if (!navigator.onLine) {
+                 Swal.fire("Offline Error", "Cannot change Sync state while offline.", "error");
+                 return;
+            }
+
             isAutoSyncEnabled = !isAutoSyncEnabled;
+            
             updateSyncButton();
             if (isAutoSyncEnabled) {
                 startAutoSync();
@@ -656,9 +662,31 @@
                 successAudio.play().catch(error => console.error("Success sound playback failed:", error)); 
             }
         }
+        
+        // --- NEW: Time Pronunciation Logic ---
+        function announceTime() {
+            if ('speechSynthesis' in window) {
+                const now = new Date();
+                // Format the time for clear speech (e.g., "7 35 P M")
+                const timeString = now.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+                const utterance = new SpeechSynthesisUtterance(timeString);
+                utterance.lang = 'en-US'; 
+                utterance.rate = 1.0; 
+                utterance.pitch = 1.0; 
+
+                // Stop any previous speech and start the new one
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+            } else {
+                // Fallback if Speech API is not supported (e.g., just use the console log or a small beep)
+                console.warn("Speech Synthesis API not supported. Falling back to console log.");
+                // Since user uploaded error.mp3, we can use it as a silent fallback signal
+                playErrorSound(); 
+            }
+        }
 
         function playErrorSound() {
-            const errorAudio = document.getElementById('errorSound');
+             const errorAudio = document.getElementById('errorSound');
             if (errorAudio) { 
                 errorAudio.pause(); 
                 errorAudio.currentTime = 0; 
@@ -668,45 +696,45 @@
         
         function updateBeepAlert(isAlertTime, now) {
             if (isAlertTime && !isBeepingActive) {
-                // START Beeping
+                // START Time Pronunciation
                 isBeepingActive = true;
                 
                 // Calculate time until the next minute start
                 const secondsToNextMinute = 60 - now.getSeconds();
                 
-                // Set the initial beep after the calculated time
+                // Set the initial announcement after the calculated time
                 minuteBeepTimeout = setTimeout(() => {
-                    playErrorSound(); // Use error sound for the alert beep
+                    announceTime(); // Announce time instead of beeping
                     
-                    // Set up interval for subsequent beeps (every 60 seconds)
+                    // Set up interval for subsequent announcements (every 60 seconds)
                     minuteBeepTimeout = setInterval(() => {
-                        // Check time again before beeping to ensure we don't beep at exactly 20:00:00
+                        // Check time again before announcing to ensure we stop at 20:00:00
                         const current = new Date();
                         const currentHour = current.getHours();
-                        const currentMinute = current.getMinutes();
-                        const isStillAlertTime = (currentHour === 19 && currentMinute >= 15) || (currentHour === 20 && currentMinute === 0);
-
-                        if (isStillAlertTime && currentHour < 20) {
-                           playErrorSound();
+                        
+                        if (currentHour < 20) {
+                           announceTime();
                         } else {
-                            // Stop Beeping when the window closes (at 20:00:00)
+                            // Stop Announcement when the window closes (at 20:00:00)
                             clearInterval(minuteBeepTimeout);
                             isBeepingActive = false;
+                            window.speechSynthesis.cancel(); // Stop any pending speech
                         }
                     }, 60000); // 60 seconds
                     
                 }, secondsToNextMinute * 1000);
 
             } else if (!isAlertTime && isBeepingActive) {
-                // STOP Beeping (If outside the window but interval is still running)
+                // STOP Announcement (If outside the window)
                 clearTimeout(minuteBeepTimeout);
                 clearInterval(minuteBeepTimeout);
                 isBeepingActive = false;
+                window.speechSynthesis.cancel(); // Stop any speech
             }
         }
 
         function showStatusMessage(t, e) { el.statusMessage.textContent = t; el.statusMessage.className = "status-message rounded-lg text-center font-semibold p-3"; el.statusMessage.classList.add("success" === e ? "bg-green-status" : "bg-red-status", "show"); setTimeout(() => el.statusMessage.classList.remove("show"), 2500); }
-        function getTodaySessionId() { const today = new Date(); const yyyy = today.getFullYear(); const mm = String(today.getMonth() + 1).padStart(2, '0'); const dd = String(today.getDate()).padStart(2, '0'); return `SESSION-${yyyy}-${mm}-${dd}`; }
+        function getTodaySessionId() { const today = new Date(); const mm = String(today.getMonth() + 1).padStart(2, '0'); const dd = String(today.getDate()).padStart(2, '0'); return `SESSION-${today.getFullYear()}-${mm}-${dd}`; }
         
         // --- API COMMUNICATION ---
        async function apiCall(action, payload = {}) {
@@ -731,16 +759,8 @@
             } catch (error) {
                 console.error(`API Call Failed for action "${action}":`, error);
                 
-                // FIX: Removed the generic pop-up for API errors to stop "Failed to fetch" spam. 
-                // We keep the console log and the more specific pop-ups (e.g., Session not found, Offline).
-
-                if (error.message.includes('Failed to fetch')) {
-                    // Specific silent handling for common 'Failed to fetch' error (often due to CORS/network setup)
-                    console.warn(`Silent API Warning: Failed to communicate with script URL. Check URL or network.`);
-                }
-                
+                // Only show specific, relevant errors to the user
                 if (!error.message.includes('Session not found') && error.message !== 'Offline' && !error.message.includes('Failed to fetch')) {
-                    // Only show specific, relevant errors to the user
                     Swal.fire("API Error", `An error occurred while communicating with the server: ${error.message}`, "error");
                 }
                 
@@ -774,6 +794,14 @@
             // Disable saving to sheet when offline
             el.saveToSheetBtn.disabled = !navigator.onLine;
             el.manualSaveBtn.disabled = !navigator.onLine;
+            
+            // If offline, stop auto sync to prevent constant API errors
+            if (!navigator.onLine && isAutoSyncEnabled) {
+                stopAutoSync();
+                // Update button state visually
+                isAutoSyncEnabled = false; 
+                updateSyncButton();
+            }
         }
 
         // --- UI & STATE MANAGEMENT ---
@@ -837,9 +865,9 @@
             
             // Auto-sync initialization and event listener
             el.toggleAutoSyncBtn.addEventListener('click', toggleAutoSync);
+            
             // Default Sync is OFF, so we initialize the button state and do NOT start the sync interval
             updateSyncButton(); 
-            // stopAutoSync() is implicitly called because isAutoSyncEnabled is false
 
             currentSessionId = getTodaySessionId(); document.title = "World Out Fashion - OMS";
             el.orderScanInput.addEventListener("keypress", (e) => { if (e.key === 'Enter') handleOrderScanAddBarcode(); });
@@ -865,8 +893,6 @@
             
             await reloadTodaysData();
             
-            // Initial data load will call returnToTodayView which calls updateUiFromState.
-            
             try { const data = await apiCall("getAllSessions"); allSessions = data.sessions; filterSessionsByDate(); } catch (error) { /* Handled by apiCall */ }
         }
         
@@ -877,7 +903,10 @@
                  
                  // Only update if there's a difference to avoid unnecessary UI redraws
                  if (JSON.stringify(scannedBarcodes) !== JSON.stringify(newBarcodes)) {
+                    // Merging Logic (re-introduced for local consistency before save)
+                    // If we receive data from server, we update the local list with the server's clean list
                     scannedBarcodes = newBarcodes;
+
                     // Only update viewing list if we are currently viewing today's session
                     if (currentlyViewingSessionId === currentSessionId) {
                         currentlyViewingBarcodes = [...scannedBarcodes];
@@ -901,28 +930,65 @@
              }
         }
         
-        function handleOrderScanAddBarcode() {
+        async function handleOrderScanAddBarcode() {
             const barcode = el.orderScanInput.value.trim();
             if (barcode === "") return;
+            
+            // Check local duplicates (If GAS doesn't handle merging, this prevents local list inflation)
             if (scannedBarcodes.includes(barcode)) {
                 showStatusMessage(`Already Scanned: ${barcode}`, "error");
-                playErrorSound();
-            } else {
-                scannedBarcodes.unshift(barcode);
-                currentlyViewingBarcodes = scannedBarcodes;
-                showStatusMessage(`Success: ${barcode}`, "success");
-                playSuccessSound();
-                updateUiFromState();
-                autoSaveSession();
+                playErrorSound(); 
+                el.orderScanInput.value = "";
+                el.orderScanInput.focus();
+                return;
             }
+            
+            // 1. Add the new barcode to the local list
+            scannedBarcodes.unshift(barcode);
+            currentlyViewingBarcodes = scannedBarcodes;
+            showStatusMessage(`Scanned: ${barcode}`, "success");
+            playSuccessSound();
+            updateUiFromState();
+            
+            // 2. Save the ENTIRE local list to the server (overwrite old list)
+            // This ensures data consistency if other devices are not merging but overwriting.
+            // This reverts the merging strategy back to the most stable overwriting approach.
+            
+            try {
+                await apiCall("saveSession", { sessionId: currentSessionId, barcodes: scannedBarcodes });
+                 el.autoSaveStatus.classList.add("show"); 
+                setTimeout(() => { el.autoSaveStatus.classList.remove("show") }, 2000);
+            } catch (error) {
+                console.error("Auto-save failed after scan:", error);
+                 el.autoSaveStatus.textContent = '✗ Save Failed'; el.autoSaveStatus.style.color = 'var(--danger)'; el.autoSaveStatus.classList.add("show"); 
+                 setTimeout(() => { el.autoSaveStatus.classList.remove("show"); el.autoSaveStatus.textContent = '✓ Saved'; el.autoSaveStatus.style.color = 'var(--success)'; }, 3000); 
+            }
+
             el.orderScanInput.value = "";
             el.orderScanInput.focus();
         }
         
         function handleDeleteSingleBarcode(reverseIndex) {
             const actualIndex = scannedBarcodes.length - 1 - reverseIndex;
-            Swal.fire({ title: 'Are you sure?', text: `Do you want to permanently delete this barcode?`, icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--danger)', confirmButtonText: 'Yes, delete it!', cancelButtonText: 'Cancel'
-            }).then((result) => { if (result.isConfirmed) { scannedBarcodes.splice(actualIndex, 1); currentlyViewingBarcodes = scannedBarcodes; updateUiFromState(); autoSaveSession(); } });
+            const barcodeToDelete = scannedBarcodes[actualIndex];
+
+            Swal.fire({ title: 'Are you sure?', text: `Do you want to permanently delete barcode ${barcodeToDelete}?`, icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--danger)', confirmButtonText: 'Yes, delete it!', cancelButtonText: 'Cancel'
+            }).then(async (result) => { 
+                if (result.isConfirmed) {
+                    scannedBarcodes.splice(actualIndex, 1);
+                    currentlyViewingBarcodes = scannedBarcodes;
+                    updateUiFromState();
+                    
+                    // Save the new, shorter list to the server (overwriting)
+                    try {
+                        await apiCall("saveSession", { sessionId: currentSessionId, barcodes: scannedBarcodes });
+                        Swal.fire('Deleted!', `Barcode ${barcodeToDelete} has been deleted.`, 'success');
+                    } catch (error) {
+                         Swal.fire('Error', 'Failed to save changes to server.', 'error');
+                         // If save fails, rely on the next sync/reload to get the correct state
+                    }
+                } 
+            });
         }
         
         function returnToTodayView() {
@@ -951,7 +1017,10 @@
         
         async function handleManualSave() {
             el.manualSaveBtn.disabled = true; el.manualSaveBtnText.classList.add('hidden'); el.manualSaveBtnSpinner.classList.remove('hidden');
-            try { await autoSaveSession(true); } 
+            try { 
+                await apiCall("saveSession", { sessionId: currentSessionId, barcodes: scannedBarcodes }); 
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Session saved!', showConfirmButton: false, timer: 2000 }); 
+            } 
             catch (error) { 
                 if (error.message !== 'Offline') {
                     Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Save failed!', showConfirmButton: false, timer: 2000 }); 
@@ -960,24 +1029,6 @@
             finally { 
                 el.manualSaveBtn.disabled = !navigator.onLine; // Re-enable only if online
                 el.manualSaveBtnText.classList.remove('hidden'); el.manualSaveBtnSpinner.classList.add('hidden'); 
-            }
-        }
-        
-        async function autoSaveSession(showSuccess = false) {
-            if (!navigator.onLine) {
-                // If offline, just update the status without trying to save
-                el.autoSaveStatus.textContent = '✗ Offline'; el.autoSaveStatus.style.color = 'var(--danger)'; el.autoSaveStatus.classList.add("show"); 
-                setTimeout(() => { el.autoSaveStatus.classList.remove("show"); el.autoSaveStatus.textContent = '✓ Saved'; el.autoSaveStatus.style.color = 'var(--success)'; }, 3000);
-                throw new Error("Offline");
-            }
-            try { 
-                await apiCall("saveSession", { sessionId: currentSessionId, barcodes: scannedBarcodes });
-                if (showSuccess) { Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Session saved!', showConfirmButton: false, timer: 2000 }); } 
-                else { el.autoSaveStatus.classList.add("show"); setTimeout(() => { el.autoSaveStatus.classList.remove("show") }, 2000); }
-            } catch (error) { 
-                el.autoSaveStatus.textContent = '✗ Save Failed'; el.autoSaveStatus.style.color = 'var(--danger)'; el.autoSaveStatus.classList.add("show"); 
-                setTimeout(() => { el.autoSaveStatus.classList.remove("show"); el.autoSaveStatus.textContent = '✓ Saved'; el.autoSaveStatus.style.color = 'var(--success)'; }, 3000); 
-                throw error; 
             }
         }
         
