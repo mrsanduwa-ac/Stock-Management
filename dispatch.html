@@ -351,7 +351,7 @@
             50% { background-color: var(--success); box-shadow: 0 0 10px var(--success); }
         }
         .flip-counter.success-blink .flip-digit-container {
-             /* 5 blinks over 1 second (0.2s * 5) */
+             /* 5 blinks over 1 second (0.2s * 5 iterations in CSS) */
              animation: flipCounterSuccessBlink 0.2s ease-in-out 5; 
         }
     </style>
@@ -595,6 +595,66 @@
             restoreSelectedBtn: document.getElementById('restoreSelectedBtn'),
         };
 
+
+        // --- NEW GLOBAL BARCODE SCANNER CAPTURE LOGIC ---
+        // This logic captures the full barcode sequence globally and submits it upon detecting 'Enter'.
+        let barcodeBuffer = '';
+        let barcodeTimer = null;
+        const BARCODE_TIMEOUT = 50; // Max time gap (ms) between key presses to be considered a single scan sequence
+
+        document.addEventListener('keydown', (e) => {
+            
+            // 1. If the input is ALREADY focused, only listen for Enter key for immediate submission
+            if (document.activeElement === el.orderScanInput) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); 
+                    // Add a tiny delay to ensure the last key's value is processed.
+                    setTimeout(() => handleOrderScanAddBarcode(), 50); 
+                }
+                return; 
+            }
+            
+            // 2. If focus is on another interactive form element (e.g., search, select, button), ignore global capture.
+            const activeTag = document.activeElement.tagName;
+            if (activeTag === 'INPUT' || activeTag === 'SELECT' || activeTag === 'TEXTAREA' || activeTag === 'BUTTON') {
+                 return;
+            }
+
+            // --- GLOBAL SCANNER CAPTURE LOGIC (Only runs if input is NOT on a form element or orderScanInput) ---
+            
+            // Reset timer for sequence continuation
+            clearTimeout(barcodeTimer);
+
+            // Check for the termination character (Enter)
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Stop default Enter action
+                
+                // If the buffer has content, process it
+                if (barcodeBuffer.length > 0) {
+                    el.orderScanInput.value = barcodeBuffer;
+                    // Immediately focus the element before processing (for visual confirmation)
+                    el.orderScanInput.focus(); 
+                    handleOrderScanAddBarcode();
+                    barcodeBuffer = ''; // Clear buffer after submission
+                }
+                return;
+            }
+
+            // Capture character input (Only alphanumeric keys that a scanner would typically send)
+            if (e.key.length === 1 && e.key.match(/[a-zA-Z0-9]/)) {
+                barcodeBuffer += e.key;
+                
+                // IMPORTANT: Prevent default action so the character doesn't appear in the active element (or document body).
+                e.preventDefault(); 
+                
+                // Set a short timer to clear the buffer if the key sequence stops (prevents slow manual typing from triggering scans)
+                barcodeTimer = setTimeout(() => {
+                    barcodeBuffer = '';
+                }, BARCODE_TIMEOUT);
+            }
+        });
+        // --- END NEW GLOBAL BARCODE SCANNER CAPTURE LOGIC ---
+        
         // --- NEW: ANIMATED FLIP COUNTER LOGIC ---
         const FlipCounter = {
             element: null,
@@ -1037,21 +1097,12 @@
             
             currentSessionId = getTodaySessionId(); document.title = "World Out Fashion - OMS";
             
-            // NEW: Handle input from any keyboard (including numeric keypad)
-            document.addEventListener("keyup", (e) => {
-                // If a key is pressed while the input is not focused and the key is a relevant scan character
-                if (document.activeElement !== el.orderScanInput && e.key.length === 1 && (e.key.match(/[a-zA-Z0-9]/) || e.code.startsWith('Numpad'))) {
-                    el.orderScanInput.focus();
-                }
-            });
+            // --- REMOVED OLD problematic global keyup listener here (lines ~403-408) ---
+            // The new document.addEventListener('keydown', ...) handles this globally now.
             
-            el.orderScanInput.addEventListener("keypress", (e) => { 
-                // Only process Enter key to submit the barcode
-                if (e.key === 'Enter') {
-                    handleOrderScanAddBarcode(); 
-                } 
-            });
-            
+            // --- REMOVED OLD orderScanInput keypress listener here (lines ~410-416) ---
+            // The new document.addEventListener('keydown', ...) handles this submission now.
+
             el.addOrderBarcodeBtn.addEventListener("click", handleOrderScanAddBarcode);
             el.returnToTodayBtn.addEventListener("click", returnToTodayView);
             el.manualSaveBtn.addEventListener("click", handleManualSave);
@@ -1060,7 +1111,8 @@
             el.searchByDate.addEventListener("input", filterSessionsByDate);
             el.resetDateFilterBtn.addEventListener("click", () => { el.searchByDate.value = ""; filterSessionsByDate(); });
             el.barcodeSearchBtn.addEventListener("click", handleBarcodeSearch);
-            el.barcodeSearchInput.addEventListener("keypress", (e) => { if (e.key === 'Enter') handleBarcodeSearch(); });
+            // We keep the Enter press listener for the Search box as it is separate from the main barcode flow
+            el.barcodeSearchInput.addEventListener("keypress", (e) => { if (e.key === 'Enter') handleBarcodeSearch(); }); 
             el.saveToSheetBtn.addEventListener("click", saveDataToGoogleSheet);
             el.printScannedOrderBtn.addEventListener("click", printScannedOrder);
             el.downloadCsvBtn.addEventListener("click", downloadCsv);
