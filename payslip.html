@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payslip System Pro</title>
+    <!-- SweetAlert2 for beautiful popups -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
+        .app-container { max-width: 900px; margin: auto; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
+        .tabs { display: flex; background: #007bff; padding: 0; }
+        .tab-btn { flex: 1; padding: 15px; border: none; background: none; color: white; font-size: 16px; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .tab-btn:hover { background: rgba(255,255,255,0.2); }
+        .tab-btn.active { background: #0056b3; border-bottom: 4px solid #ffcc00; }
+        .section { display: none; padding: 30px; animation: fadeIn 0.4s; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; box-sizing: border-box; transition: 0.3s; }
+        input:focus { border-color: #007bff; outline: none; box-shadow: 0 0 5px rgba(0,123,255,0.2); }
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; width: 100%; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; margin-top: 20px; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn:hover { filter: brightness(90%); transform: translateY(-1px); }
+        .history-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .history-table th, .history-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        .history-table th { background: #f8f9fa; color: #333; }
+        .action-btns { display: flex; gap: 5px; }
+        .icon-btn { padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer; color: white; transition: 0.2s; }
+        .icon-btn:hover { transform: scale(1.1); }
+        .swal2-icon.swal2-custom-icon { border: none !important; }
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
+        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #007bff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* PRINT LAYOUT */
+        .print-area { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            .print-area, .print-area * { visibility: visible; }
+            .print-area { display: block; position: absolute; left: 0; top: 0; width: 210mm; height: 297mm; padding: 10mm; background: white; box-sizing: border-box; }
+            .p-header-box { border: 2px solid #000; text-align: center; padding: 10px; margin-bottom: 20px; }
+            .p-header-box h3 { margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase; }
+            .p-header-box h1 { margin: 0px 0; font-size: 28px; font-weight: 900; text-transform: uppercase; font-family: 'Impact', sans-serif; }
+            .p-header-box p { margin: 2px 0; font-size: 14px; }
+            .p-details { display: flex; justify-content: space-between; margin-bottom: 15px; font-family: Arial, sans-serif; font-size: 14px; }
+            .p-col { width: 48%; }
+            .p-row { display: flex; margin-bottom: 5px; }
+            .p-label { width: 130px; font-weight: normal; }
+            .p-val { font-weight: normal; }
+            .p-table { width: 100%; border-collapse: collapse; border: 2px solid #000; font-family: Arial, sans-serif; font-size: 14px; }
+            .p-table th { background-color: #d9d9d9 !important; -webkit-print-color-adjust: exact; border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; }
+            .p-table td { border: 1px solid #000; padding: 5px 8px; }
+            .text-right { text-align: right; }
+            .p-footer { margin-top: 50px; display: flex; justify-content: space-between; align-items: flex-end; }
+            .p-sign-box { text-align: center; width: 200px; }
+            .p-line { border-top: 1px dotted #000; display: block; margin-top: 5px; }
+        }
+        @media (max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .tabs { flex-direction: column; }
+            .history-table { display: block; overflow-x: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading" class="loading-overlay">
+        <div class="loader"></div>
+        <h3 style="color: #333; margin-top: 15px;">Processing...</h3>
+    </div>
+
+    <div class="app-container no-print">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('generate')"><i class="fas fa-file-invoice"></i> Generate Payslip</button>
+            <button class="tab-btn" onclick="switchTab('history')"><i class="fas fa-history"></i> History & Edit</button>
+            <button class="tab-btn" onclick="switchTab('create')"><i class="fas fa-user-plus"></i> Add Employee</button>
+        </div>
+
+        <!-- GENERATE TAB -->
+        <div id="generate" class="section active">
+            <h2 style="text-align: center; color: #007bff; margin-bottom: 25px;">Generate Payslip</h2>
+            <input type="hidden" id="editRowIndex" value="">
+
+            <div class="form-grid">
+                <div>
+                    <label>Select Employee</label>
+                    <input list="empList" id="empSearch" placeholder="Type name..." onchange="fillEmpDetails()">
+                    <datalist id="empList"></datalist>
+                </div>
+                <div>
+                    <label>Month & Year</label>
+                    <input type="month" id="monthYear">
+                </div>
+            </div>
+
+            <div class="form-grid" style="margin-top: 10px;">
+                <div>
+                    <label>Employee ID</label>
+                    <input type="text" id="empId" readonly style="background: #f9f9f9;">
+                </div>
+                <div>
+                    <label>Designation</label>
+                    <input type="text" id="designation" readonly style="background: #f9f9f9;">
+                </div>
+            </div>
+
+            <div class="form-grid" style="margin-top: 10px;">
+                <div class="form-group">
+                    <label>Worked Days</label>
+                    <input type="number" id="workedDays">
+                </div>
+                <div></div> 
+            </div>
+
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px; border: 1px solid #e9ecef;">
+                <div class="form-grid">
+                    <div>
+                        <h4 style="color: #28a745; border-bottom: 2px solid #28a745; padding-bottom: 5px;">Earnings (Rs.)</h4>
+                        <div class="form-group"><label>Basic Salary</label><input type="number" id="basic" class="calc"></div>
+                        <div class="form-group"><label>Arrival Allowance</label><input type="number" id="allowance" class="calc"></div>
+                        <div class="form-group"><label>Overtime</label><input type="number" id="ot" class="calc"></div>
+                        <div class="form-group"><label>Bonus</label><input type="number" id="bonus" class="calc"></div>
+                        <div style="text-align: right; font-weight: bold; margin-top: 10px;">Total: <span id="totalEarn">0.00</span></div>
+                    </div>
+                    <div>
+                        <h4 style="color: #dc3545; border-bottom: 2px solid #dc3545; padding-bottom: 5px;">Deductions (Rs.)</h4>
+                        <div class="form-group"><label>Loan</label><input type="number" id="loan" class="calc"></div>
+                        <div class="form-group"><label>Advance</label><input type="number" id="advance" class="calc"></div>
+                        <div class="form-group"><label>Late</label><input type="number" id="late" class="calc"></div>
+                        <div class="form-group"><label>Leave</label><input type="number" id="leave" class="calc"></div>
+                        <div style="text-align: right; font-weight: bold; margin-top: 10px; color: #dc3545;">Total: <span id="totalDeduct">0.00</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: #28a745; color: white; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center; font-size: 20px; font-weight: bold;">
+                Net Salary: Rs. <span id="netPay">0.00</span>
+            </div>
+
+            <button class="btn btn-success" id="saveBtn" onclick="submitPayslip('save')"><i class="fas fa-print"></i> Generate & Print</button>
+            <button class="btn btn-primary" id="updateBtn" onclick="askPasswordForUpdate()" style="display: none; margin-top: 20px;"><i class="fas fa-lock"></i> Unlock & Update</button>
+            <button class="btn btn-danger" id="cancelBtn" onclick="resetForm()" style="display: none; margin-top: 10px;">Cancel Edit</button>
+        </div>
+
+        <!-- HISTORY TAB -->
+        <div id="history" class="section">
+            <h2 style="text-align: center; margin-bottom: 20px;">Payslip History</h2>
+            <button class="btn btn-primary" onclick="loadHistory()" style="width: auto; margin-bottom: 10px;"><i class="fas fa-sync"></i> Refresh List</button>
+            <div style="overflow-x: auto;">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Name (Click to Print)</th>
+                            <th>Net Pay</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        <tr><td colspan="4" style="text-align:center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CREATE EMPLOYEE TAB -->
+        <div id="create" class="section">
+            <h2>Add New Employee</h2>
+            <div class="form-group">
+                <label>Employee Name</label>
+                <input type="text" id="new_name">
+            </div>
+            <div class="form-group">
+                <label>Employee ID</label>
+                <input type="text" id="new_id">
+            </div>
+            <div class="form-group">
+                <label>Designation</label>
+                <input type="text" id="new_designation">
+            </div>
+            <button class="btn btn-success" onclick="saveEmployee()"><i class="fas fa-save"></i> Save Employee</button>
+        </div>
+    </div>
+
+    <!-- PRINT LAYOUT (Hidden) -->
+    <div class="print-area">
+        <div class="p-header-box">
+            <h3>Payslip</h3>
+            <h1>WORLD OUT FASHION</h1>
+            <p>NO : 79 Freedom Park Shopping Complex</p>
+            <p>Minuwangoda</p>
+        </div>
+        <div class="p-details">
+            <div class="p-col">
+                <div class="p-row"><span class="p-label">Employee ID</span><span class="p-val">: <span id="p_empId"></span></span></div>
+                <div class="p-row"><span class="p-label">Month & Year</span><span class="p-val">: <span id="p_month"></span></span></div>
+                <div class="p-row" style="margin-top: 10px;"><span class="p-label">Worked Days</span><span class="p-val">: <span id="p_worked"></span></span></div>
+            </div>
+            <div class="p-col">
+                <div class="p-row"><span class="p-label">Employee name</span><span class="p-val">: <span id="p_name"></span></span></div>
+                <div class="p-row"><span class="p-label">Designation</span><span class="p-val">: <span id="p_designation"></span></span></div>
+            </div>
+        </div>
+        <table class="p-table">
+            <thead>
+                <tr>
+                    <th style="width: 35%;">Earnings</th>
+                    <th style="width: 15%;">Amount</th>
+                    <th style="width: 35%;">Deductions</th>
+                    <th style="width: 15%;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Basic</td><td class="text-right" id="p_basic"></td>
+                    <td>Loan</td><td class="text-right" id="p_loan"></td>
+                </tr>
+                <tr>
+                    <td>Arrival Allowance</td><td class="text-right" id="p_allowance"></td>
+                    <td>Advance</td><td class="text-right" id="p_advance"></td>
+                </tr>
+                <tr>
+                    <td>Overtime</td><td class="text-right" id="p_ot"></td>
+                    <td>Late</td><td class="text-right" id="p_late"></td>
+                </tr>
+                <tr>
+                    <td>Bonus</td><td class="text-right" id="p_bonus"></td>
+                    <td>Leave</td><td class="text-right" id="p_leave"></td>
+                </tr>
+                <tr style="font-weight: bold;">
+                    <td>Total Earnings</td><td class="text-right" id="p_totEarn"></td>
+                    <td>Total Deductions</td><td class="text-right" id="p_totDed"></td>
+                </tr>
+                <tr style="background-color: #d9d9d9; font-weight: bold;">
+                    <td colspan="2"></td>
+                    <td class="text-right">Net Salary</td>
+                    <td class="text-right" id="p_net" style="font-size: 1.1em;"></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="p-footer">
+            <div class="p-sign-box"><span id="p_date"></span><span class="p-line">Date</span></div>
+            <div class="p-sign-box"><br><span class="p-line">Signature</span></div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // PASTE YOUR GOOGLE SCRIPT URL HERE
+        // ==========================================
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydFL2RdZ2-9eTtnmQOWbFA-QK-TJDrNAghedop0O35oovD_s7UmzRHqBVNCI_5FczL/exec"; 
+        // ==========================================
+
+        let employees = [];
+
+        window.onload = function() {
+            loadEmployees();
+            setupEnterKey();
+            loadHistory();
+        };
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelector(`button[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            if(tabId === 'history') loadHistory();
+        }
+
+        function toggleLoading(show) {
+            document.getElementById('loading').style.display = show ? 'flex' : 'none';
+        }
+
+        function loadEmployees() {
+            fetch(SCRIPT_URL + "?action=getEmployees").then(res => res.json()).then(data => {
+                employees = data;
+                let list = document.getElementById('empList');
+                list.innerHTML = "";
+                data.forEach(emp => { let opt = document.createElement('option'); opt.value = emp[0]; list.appendChild(opt); });
+            });
+        }
+
+        function fillEmpDetails() {
+            let name = document.getElementById('empSearch').value;
+            let emp = employees.find(e => e[0] === name);
+            if(emp) {
+                document.getElementById('empId').value = emp[1];
+                document.getElementById('designation').value = emp[2];
+            }
+        }
+
+        document.querySelectorAll('.calc').forEach(el => el.addEventListener('input', calculate));
+        
+        function calculate() {
+            let getVal = id => parseFloat(document.getElementById(id).value) || 0;
+            let totEarn = getVal('basic') + getVal('allowance') + getVal('ot') + getVal('bonus');
+            let totDed = getVal('loan') + getVal('advance') + getVal('late') + getVal('leave');
+            document.getElementById('totalEarn').innerText = totEarn.toFixed(2);
+            document.getElementById('totalDeduct').innerText = totDed.toFixed(2);
+            document.getElementById('netPay').innerText = (totEarn - totDed).toFixed(2);
+        }
+
+        function submitPayslip(mode) {
+            let formData = getFormData();
+            if(!formData.empName) return Swal.fire('Error', 'Please select an employee', 'error');
+
+            if(mode === 'save') {
+                toggleLoading(true);
+                formData.action = "savePayslip";
+                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(formData) }).then(res => res.json()).then(data => {
+                    toggleLoading(false);
+                    if(data.result === 'Success') {
+                        populatePrint(formData);
+                        window.print();
+                        Swal.fire('Success', 'Payslip Saved!', 'success');
+                    }
+                });
+            }
+        }
+
+        function getFormData() {
+            // Logic to Calculate Print Date (10th of Next Month)
+            let monthVal = document.getElementById('monthYear').value;
+            let generatedDate = "";
+            if(monthVal) {
+                let d = new Date(monthVal + "-01");
+                if(!isNaN(d.getTime())){
+                    d.setMonth(d.getMonth() + 1);
+                    d.setDate(10);
+                    generatedDate = d.getFullYear() + " / " + (d.getMonth()+1).toString().padStart(2,'0') + " / " + d.getDate().toString().padStart(2,'0');
+                }
+            }
+
+            return {
+                monthYear: document.getElementById('monthYear').value,
+                empName: document.getElementById('empSearch').value,
+                empId: document.getElementById('empId').value,
+                designation: document.getElementById('designation').value,
+                basic: document.getElementById('basic').value,
+                allowance: document.getElementById('allowance').value,
+                ot: document.getElementById('ot').value,
+                bonus: document.getElementById('bonus').value,
+                totalEarn: document.getElementById('totalEarn').innerText,
+                loan: document.getElementById('loan').value,
+                advance: document.getElementById('advance').value,
+                late: document.getElementById('late').value,
+                leave: document.getElementById('leave').value,
+                totalDeduct: document.getElementById('totalDeduct').innerText,
+                netPay: document.getElementById('netPay').innerText,
+                // Add the new field
+                printDate: generatedDate
+            };
+        }
+
+        function populatePrint(data) {
+            document.getElementById('p_empId').innerText = data.empId;
+            document.getElementById('p_name').innerText = data.empName;
+            document.getElementById('p_designation').innerText = data.designation;
+            
+            // --- FIX START: Clean Month & Year ---
+            let cleanMonth = data.monthYear;
+            if(cleanMonth && typeof cleanMonth === 'string' && cleanMonth.includes('T')) {
+                cleanMonth = cleanMonth.split('T')[0]; // Remove Time part
+            }
+            document.getElementById('p_month').innerText = cleanMonth;
+            // --- FIX END ---
+
+            document.getElementById('p_worked').innerText = document.getElementById('workedDays').value;
+
+            const fmt = val => "Rs." + parseFloat(val || 0).toFixed(2);
+            document.getElementById('p_basic').innerText = fmt(data.basic);
+            document.getElementById('p_allowance').innerText = fmt(data.allowance);
+            document.getElementById('p_ot').innerText = fmt(data.ot);
+            document.getElementById('p_bonus').innerText = fmt(data.bonus);
+            document.getElementById('p_totEarn').innerText = fmt(data.totalEarn);
+            document.getElementById('p_loan').innerText = fmt(data.loan);
+            document.getElementById('p_advance').innerText = fmt(data.advance);
+            document.getElementById('p_late').innerText = fmt(data.late);
+            document.getElementById('p_leave').innerText = fmt(data.leave);
+            document.getElementById('p_totDed').innerText = fmt(data.totalDeduct);
+            document.getElementById('p_net').innerText = fmt(data.netPay);
+
+            // Use stored date if available, otherwise fallback to calculation
+            if (data.printDate && data.printDate.trim() !== "") {
+                document.getElementById('p_date').innerText = data.printDate;
+            } else {
+                // Fallback logic for old records without stored date
+                let dateText = ".... / .. / .."; 
+                if(data.monthYear && data.monthYear.trim() !== "") {
+                    try {
+                        let d = new Date(data.monthYear + "-01");
+                        if (!isNaN(d.getTime())) {
+                            d.setMonth(d.getMonth() + 1);
+                            d.setDate(10);
+                            dateText = d.getFullYear() + " / " + (d.getMonth()+1).toString().padStart(2,'0') + " / " + d.getDate().toString().padStart(2,'0');
+                        }
+                    } catch(e) { console.error("Date error", e); }
+                }
+                document.getElementById('p_date').innerText = dateText;
+            }
+        }
+
+        function loadHistory() {
+            let tbody = document.getElementById('historyBody');
+            fetch(SCRIPT_URL + "?action=getHistory").then(res => res.json()).then(data => {
+                tbody.innerHTML = "";
+                if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No records found</td></tr>'; return; }
+                data.forEach(item => {
+                    let date = new Date(item.data[0]).toLocaleDateString();
+                    let tr = document.createElement('tr');
+                    
+                    tr.innerHTML = `
+                        <td>${date}</td>
+                        <td>
+                            <div style="cursor: pointer; color: #007bff; display: flex; align-items: center;" onclick='printHistoryRecord(${JSON.stringify(item)})' title="Click to Print">
+                                <i class="fas fa-print" style="margin-right: 8px;"></i>
+                                <span style="font-weight: 500;">${item.data[2]}</span>
+                                <small style="color: #666; margin-left: 5px;">(${item.data[1]})</small>
+                            </div>
+                        </td>
+                        <td style="font-weight:bold;">Rs.${item.data[15]}</td>
+                        <td><div class="action-btns">
+                            <button class="icon-btn" style="background:#ffc107;" onclick='editRecord(${JSON.stringify(item)})'><i class="fas fa-edit"></i></button>
+                            <button class="icon-btn" style="background:#dc3545;" onclick="deleteRecord(${item.row})"><i class="fas fa-trash"></i></button>
+                        </div></td>`;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        function printHistoryRecord(item) {
+            let data = item.data;
+            let printData = {
+                monthYear: data[1],
+                empName: data[2],
+                empId: data[3],
+                designation: data[4],
+                basic: data[5],
+                allowance: data[6],
+                ot: data[7],
+                bonus: data[8],
+                totalEarn: data[9],
+                loan: data[10],
+                advance: data[11],
+                late: data[12],
+                leave: data[13],
+                totalDeduct: data[14],
+                netPay: data[15],
+                // Mapping the new 17th column (index 16)
+                printDate: data[16] 
+            };
+
+            populatePrint(printData);
+            document.getElementById('p_worked').innerText = "-"; 
+            window.print();
+        }
+
+        function deleteRecord(rowIndex) {
+            Swal.fire({
+                title: 'Security Access',
+                html: 'Enter Admin PIN to <b style="color:red">DELETE</b> this record',
+                input: 'password',
+                inputAttributes: { autocapitalize: 'off', placeholder: 'Enter 4-digit PIN' },
+                iconHtml: '<i class="fas fa-lock" style="font-size: 3rem; color: #dc3545;"></i>',
+                customClass: { icon: 'swal2-custom-icon' },
+                showCancelButton: true,
+                confirmButtonText: 'Unlock & Delete',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    toggleLoading(true);
+                    fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'deletePayslip', rowIndex: rowIndex, password: result.value })
+                    }).then(res => res.json()).then(data => {
+                        toggleLoading(false);
+                        if(data.result === 'Success') {
+                            Swal.fire('Deleted!', 'Record deleted successfully.', 'success');
+                            loadHistory();
+                        } else {
+                            Swal.fire('Access Denied', 'Incorrect PIN Number!', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        function askPasswordForUpdate() {
+            Swal.fire({
+                title: 'Update Locked',
+                html: 'Enter Admin PIN to <b style="color:#007bff">UPDATE</b> this record',
+                input: 'password',
+                inputAttributes: { autocapitalize: 'off', placeholder: 'Enter 4-digit PIN' },
+                iconHtml: '<i class="fas fa-lock" style="font-size: 3rem; color: #007bff;"></i>',
+                customClass: { icon: 'swal2-custom-icon' },
+                showCancelButton: true,
+                confirmButtonText: 'Unlock & Update',
+                confirmButtonColor: '#007bff'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    performUpdate(result.value);
+                }
+            });
+        }
+
+        function editRecord(item) {
+            let data = item.data;
+            document.getElementById('editRowIndex').value = item.row;
+            document.getElementById('monthYear').value = data[1];
+            document.getElementById('empSearch').value = data[2];
+            document.getElementById('empId').value = data[3];
+            document.getElementById('designation').value = data[4];
+            document.getElementById('basic').value = data[5];
+            document.getElementById('allowance').value = data[6];
+            document.getElementById('ot').value = data[7];
+            document.getElementById('bonus').value = data[8];
+            document.getElementById('loan').value = data[10];
+            document.getElementById('advance').value = data[11];
+            document.getElementById('late').value = data[12];
+            document.getElementById('leave').value = data[13];
+            
+            calculate();
+            switchTab('generate');
+            document.getElementById('saveBtn').style.display = 'none';
+            document.getElementById('updateBtn').style.display = 'block';
+            document.getElementById('cancelBtn').style.display = 'block';
+            Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Editing Mode Enabled', timer: 3000, showConfirmButton: false });
+        }
+
+        function performUpdate(password) {
+            toggleLoading(true);
+            let formData = getFormData();
+            formData.action = 'updatePayslip';
+            formData.rowIndex = document.getElementById('editRowIndex').value;
+            formData.password = password;
+
+            fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(formData) }).then(res => res.json()).then(data => {
+                toggleLoading(false);
+                if(data.result === 'Success') {
+                    Swal.fire('Updated!', 'Record updated successfully.', 'success');
+                    resetForm();
+                    loadHistory();
+                } else {
+                    Swal.fire('Access Denied', 'Incorrect PIN Number!', 'error');
+                }
+            });
+        }
+
+        function resetForm() {
+            document.querySelectorAll('input').forEach(i => i.value = '');
+            document.getElementById('saveBtn').style.display = 'block';
+            document.getElementById('updateBtn').style.display = 'none';
+            document.getElementById('cancelBtn').style.display = 'none';
+            calculate();
+        }
+
+        function saveEmployee() {
+             let name = document.getElementById('new_name').value;
+             let id = document.getElementById('new_id').value;
+             let desig = document.getElementById('new_designation').value;
+             if(!name || !id) return Swal.fire('Error', 'Fill all fields', 'warning');
+             toggleLoading(true);
+             fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "addEmployee", name: name, id: id, designation: desig }) })
+             .then(res => res.json()).then(data => {
+                 toggleLoading(false);
+                 Swal.fire('Success', 'Employee Added', 'success');
+                 document.getElementById('new_name').value = "";
+                 loadEmployees();
+             });
+        }
+
+        function setupEnterKey() {
+            let inputs = document.querySelectorAll("input, select");
+            inputs.forEach((input, index) => {
+                input.addEventListener("keydown", function(e) {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (inputs[index + 1]) inputs[index + 1].focus();
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
