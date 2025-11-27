@@ -62,7 +62,7 @@
     <div id="login-screen">
         <div class="logo-container">
             <div class="logo">
-                <img src="logo.png" alt="World Out Fashion Logo">
+                <img src="logo.png" alt="World Out Fashion Logo" onerror="this.src='https://placehold.co/180x180?text=Logo'">
             </div>
         </div>
         <form class="login-form" onsubmit="event.preventDefault(); loginWithEmail();">
@@ -85,7 +85,6 @@
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
         <div class="dashboard-grid">
-            <!-- dispatch.html and stock.html links are now ACTIVE -->
             <a href="dispatch.html" class="dashboard-item">
                 <div class="icon"><i class="fas fa-truck"></i></div>
                 <h2>Dispatch</h2>
@@ -105,6 +104,13 @@
                 <div class="icon"><i class="fas fa-chart-bar"></i></div>
                 <h2>Report</h2>
                 <p>Generate business reports and analytics</p>
+            </a>
+            
+            <!-- NEW CUSTOMER BILL BUTTON -->
+            <a href="Custoemersbill.html" class="dashboard-item">
+                <div class="icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                <h2>Customer Bill</h2>
+                <p>Generate and view customer bills</p>
             </a>
         </div>
     </div>
@@ -149,6 +155,7 @@
             alertTitle.innerText = title;
             alertMessage.innerText = message;
             alertBox.className = 'alert-box';
+            alertBox.classList.remove('error', 'info'); // Reset classes
             alertBox.classList.add(type);
             alertOverlay.style.display = 'flex';
             setTimeout(() => alertBox.classList.add('show'), 10);
