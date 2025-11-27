@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>World Out Fashion Invoice</title>
+    <style>
+        :root {
+            --primary-color: #0288d1; /* Dark Blue */
+            --secondary-color: #e1f5fe; /* Light Blue Background */
+            --border-color: #b3e5fc;
+            --text-color: #333;
+            --success-color: #4caf50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 10px; /* Reduced padding for mobile */
+            color: var(--text-color);
+        }
+
+        /* Navigation Bar */
+        .nav-bar {
+            max-width: 210mm;
+            margin: 0 auto 10px auto;
+            text-align: right;
+        }
+        .nav-link {
+            text-decoration: none;
+            color: var(--primary-color);
+            font-weight: bold;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: inline-block; /* Better for mobile tap */
+        }
+
+        /* Page Styling - Responsive for Mobile, A4 for Print */
+        .page {
+            width: 100%; /* Full width on mobile */
+            max-width: 210mm; /* A4 width on desktop */
+            min-height: 297mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 15px rgba(0,0,0,0.15);
+            padding: 40px;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Watermark */
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: auto;
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            gap: 15px;
+        }
+
+        .logo-area img { max-height: 80px; }
+
+        .company-info { text-align: right; }
+        .company-info h1 { margin: 0; color: var(--primary-color); text-transform: uppercase; font-size: 24px; }
+        .company-info p { margin: 5px 0; font-size: 14px; color: #555; }
+
+        /* Invoice Meta */
+        .invoice-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+            flex-wrap: wrap; /* Stack on mobile */
+            gap: 20px;
+        }
+
+        .bill-to, .invoice-data { width: 48%; }
+        .label { font-weight: bold; color: var(--primary-color); display: block; margin-bottom: 5px; }
+
+        /* Inputs */
+        input {
+            width: 100%; 
+            padding: 10px; /* Larger tap area */
+            border: 1px solid #ddd; 
+            border-radius: 4px;
+            font-family: inherit; 
+            font-size: 16px; /* Prevents zoom on iOS */
+            background: transparent; 
+            box-sizing: border-box;
+        }
+        input:focus { outline: none; border-color: var(--primary-color); background: #f0fbff; }
+
+        .clean-input { border: 1px solid transparent; font-weight: 500; }
+        .clean-input:hover, .clean-input:focus { border: 1px solid #ddd; }
+
+        /* Table */
+        table {
+            width: 100%; border-collapse: collapse; margin-bottom: 10px;
+            position: relative; z-index: 1;
+            table-layout: fixed; /* Fix layout to prevent jumping */
+        }
+        th {
+            background-color: var(--secondary-color); color: var(--primary-color);
+            padding: 12px 5px; text-align: left; border-bottom: 2px solid var(--primary-color);
+            font-size: 14px;
+        }
+        td { padding: 10px 5px; border-bottom: 1px solid #eee; vertical-align: middle; }
+
+        /* Column Widths - Optimized for visibility */
+        .col-desc { width: 40%; }
+        .col-qty { width: 15%; text-align: center; }
+        .col-price { width: 20%; text-align: right; }
+        .col-total { width: 20%; text-align: right; }
+        .col-action { width: 5%; text-align: center; }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 20px; border: none; border-radius: 5px;
+            cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px;
+            width: 100%; /* Full width on mobile for easier tap */
+            max-width: 200px; /* Limit width on desktop */
+        }
+        .btn-add { background-color: #4caf50; color: white; display: inline-block; }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-direction: column; /* Stack buttons on mobile default */
+        }
+        .btn-print { 
+            background-color: var(--primary-color); color: white; 
+            padding: 15px; font-size: 18px; width: 100%; max-width: none;
+        }
+        .btn-save {
+            background-color: #607d8b; color: white;
+            padding: 15px; font-size: 18px; width: 100%; max-width: none;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+        }
+        
+        .row-del-btn {
+            background: #ffcdd2; color: #c62828; border: none; border-radius: 50%;
+            width: 30px; height: 30px; cursor: pointer; font-size: 16px; /* Larger delete btn */
+            display: flex; align-items: center; justify-content: center; margin: 0 auto;
+        }
+
+        /* Toggle Switch Styling */
+        .switch-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        .switch-label { font-size: 12px; font-weight: bold; color: #555; }
+        
+        .switch {
+            position: relative; display: inline-block; width: 50px; height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #dc3545; transition: .4s; border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #28a745; }
+        input:checked + .slider:before { transform: translateX(26px); }
+
+        /* Notification Popup */
+        #notification {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: var(--success-color);
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1000;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-size: 17px;
+            opacity: 0;
+            transition: opacity 0.5s, bottom 0.5s;
+        }
+        #notification.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+        /* Summary */
+        .summary {
+            display: flex; justify-content: flex-end; position: relative; z-index: 1; margin-top: 20px;
+        }
+        .summary-box { width: 100%; max-width: 300px; }
+        .summary-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; align-items: center; }
+        .grand-total {
+            font-size: 20px; font-weight: bold; color: var(--primary-color);
+            border-top: 2px solid var(--primary-color); border-bottom: 2px solid var(--primary-color);
+            padding: 10px 0; margin-top: 10px;
+        }
+
+        /* Footer */
+        .footer-section {
+            margin-top: auto; position: relative; z-index: 1; padding-top: 40px;
+        }
+        .signature-wrapper {
+            text-align: right; margin-bottom: 30px; display: flex; flex-direction: column; align-items: flex-end;
+        }
+        .signature-box {
+            text-align: center; width: 150px; height: 80px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+        }
+        .signature-img { max-height: 60px; display: none; }
+        .thank-you {
+            text-align: center; font-size: 14px; color: #333; line-height: 1.6; border-top: 1px solid #eee; padding-top: 20px;
+        }
+        
+        /* New Footer Text */
+        .design-credit {
+            text-align: center;
+            font-size: 10px;
+            color: #888;
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid white;
+            width: 16px; height: 16px; animation: spin 1s linear infinite; display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- MOBILE RESPONSIVE CSS --- */
+        @media screen and (max-width: 768px) {
+            .page {
+                padding: 15px; /* Reduce padding to save space */
+                width: 100%;
+                min-height: auto;
+            }
+            header {
+                flex-direction: column;
+                text-align: center;
+            }
+            .company-info { text-align: center; margin-top: 10px; }
+            
+            .invoice-meta {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .bill-to, .invoice-data { width: 100%; }
+            .invoice-data { text-align: left; }
+            .invoice-data input { text-align: left !important; }
+
+            /* Table adjustments for Mobile */
+            .col-desc { width: 35%; }
+            .col-qty { width: 15%; }
+            .col-price { width: 25%; } /* Increased width for price */
+            .col-total { width: 25%; }
+            .col-action { width: 0; display: none; } /* Hide delete column header, move button or handle differently if needed, but for now we keep layout clean */
+            
+            /* Actually, let's keep action but make it small. Best is to adjust inputs */
+            input.item-price, input.item-qty {
+                padding: 5px;
+                font-size: 14px;
+            }
+
+            /* Better Table Layout for Mobile */
+            table th, table td { padding: 5px 2px; }
+            
+            .btn-group { flex-direction: column; }
+            
+            /* Ensure large numbers are visible */
+            input[type="number"] {
+                min-width: 50px;
+            }
+        }
+
+        /* Print Styles - Always A4 */
+        @media print {
+            body { background: none; padding: 0; }
+            .nav-bar, .no-print { display: none !important; }
+            .page { 
+                box-shadow: none; margin: 0; width: 100%; border: none; min-height: auto; 
+                padding: 40px; /* Restore padding for print */
+                max-width: 100%;
+            }
+            .row-del-btn { display: none; }
+            th:last-child, td:last-child { display: none; }
+            input { border: none !important; padding: 0; }
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            
+            /* Restore desktop layouts for print */
+            header { flex-direction: row; text-align: left; }
+            .company-info { text-align: right; }
+            .invoice-meta { flex-direction: row; }
+            .bill-to, .invoice-data { width: 48%; }
+        }
+    </style>
+</head>
+<body>
+
+    <datalist id="customerList"></datalist>
+    <datalist id="itemList"></datalist>
+
+    <div class="nav-bar no-print">
+        <a href="BillHistory.html" class="nav-link">📜 View Bill History</a>
+    </div>
+
+    <div class="page">
+        <img src="logo.png" alt="Watermark" class="watermark" onerror="this.style.display='none'">
+
+        <header>
+            <div class="logo-area">
+                <img src="logo.png" alt="LOGO" style="height: 60px;" onerror="this.src='https://placehold.co/200x80/e1f5fe/0288d1?text=YOUR+LOGO'">
+            </div>
+            <div class="company-info">
+                <h1>World Out Fashion</h1>
+                <p>152 / 40 Yatiyana, Minuwangoda</p>
+                <p>Tel: 070 348 8218</p>
+                <p>Email: info@worldoutfashion.com</p>
+            </div>
+        </header>
+
+        <div class="invoice-meta">
+            <div class="bill-to">
+                <span class="label">Bill To:</span>
+                <input type="text" id="custName" class="clean-input" placeholder="Customer Name" list="customerList" oninput="fillCustomerDetails()" style="font-weight: bold; font-size: 16px;" autocomplete="off">
+                <input type="text" id="custContact" class="clean-input" placeholder="Address / Phone" value="" autocomplete="off">
+            </div>
+            <div class="invoice-data">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span style="font-weight: bold;">Invoice No:</span>
+                    <input type="text" id="invNo" value="INV-0012" style="width: 100px; text-align: right;" class="clean-input" readonly>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-weight: bold;">Date:</span>
+                    <input type="date" id="datePicker" style="width: 130px; text-align: right;" class="clean-input">
+                </div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-desc">Description</th>
+                    <th class="col-qty">Qty</th>
+                    <th class="col-price">Unit Price</th>
+                    <th class="col-total">Amount (Rs)</th>
+                    <th class="col-action no-print">Action</th>
+                </tr>
+            </thead>
+            <tbody id="invoiceItems">
+                <!-- Items will be here -->
+            </tbody>
+        </table>
+
+        <button class="btn btn-add no-print" onclick="addNewRow()">+ Add Item</button>
+
+        <div class="summary">
+            <div class="summary-box">
+                <div class="summary-row">
+                    <span>Sub Total</span>
+                    <span id="subTotal">0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Delivery Charge</span>
+                    <input type="number" id="delivery" value="0" style="width: 80px; text-align: right;" inputmode="decimal" oninput="calculateTotal()" onkeydown="handleEnter(event, 'tax')">
+                </div>
+                <div class="summary-row">
+                    <span>Tax / Other</span>
+                    <input type="number" id="tax" value="0" style="width: 80px; text-align: right;" inputmode="decimal" oninput="calculateTotal()" onkeydown="handleEnter(event, 'save')">
+                </div>
+                <div class="summary-row grand-total">
+                    <span>TOTAL</span>
+                    <span id="grandTotal">0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-section">
+            <div class="signature-wrapper">
+                <div class="switch-container no-print">
+                    <span class="switch-label">Signature:</span>
+                    <label class="switch">
+                        <input type="checkbox" id="sigToggle" onchange="toggleSignature()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="signature-box">
+                    <img src="signature.png" id="sigImage" class="signature-img" alt="Signature" onerror="this.src='https://placehold.co/150x50/ffffff/000000?text=Signature'">
+                    <div style="border-top: 1px dashed #333; width: 100%; margin-top: 5px;"></div>
+                    <div style="font-size: 12px; margin-top: 2px;">Authorized Signature</div>
+                </div>
+            </div>
+
+            <div class="thank-you">
+                We truly appreciate your purchase and your trust in our brand.<br>
+                Your support means everything to us. We hope you love your new style !<br>
+                <strong>Stay fashionable</strong><br>
+                Follow us on social media for the latest drops & offers !<br>
+                070 348 8218
+            </div>
+            
+            <!-- NEW FOOTER CREDIT -->
+            <div class="design-credit">
+                © 2025 DesignVerse by Sandusha Avishkha. All rights reserved. Crafted with passion in Minuwangoda, Sri Lanka
+            </div>
+        </div>
+
+        <div class="btn-group no-print">
+            <button class="btn btn-save no-print" id="saveBtn" onclick="saveInvoice()">
+                <div class="spinner" id="saveSpinner"></div>
+                <span id="saveText">💾 Save to Google Sheet</span>
+            </button>
+            <button class="btn btn-print no-print" onclick="window.print()">🖨️ Print Bill</button>
+        </div>
+    </div>
+
+    <!-- REMOVED THE POPUP DIV -->
+
+    <script>
+        // -----------------------------------------------------
+        // CONFIGURATION
+        // -----------------------------------------------------
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbyUimQ5D7CwaEJAjfiDjC3tkN00ukZXoWjUCP_KqgQVJ7f9aV0BXECq0hkXrfUswb3urw/exec';
+        // -----------------------------------------------------
+
+        document.getElementById('datePicker').valueAsDate = new Date();
+
+        window.onload = function() {
+            loadSuggestions(); 
+            
+            const editId = localStorage.getItem('editInvoiceId');
+            if (editId) {
+                loadEditData(editId);
+            } else {
+                generateInvoiceNumber();
+                addNewRow();
+            }
+            calculateTotal();
+        }
+
+        // --- SMART SUGGESTIONS ---
+        function loadSuggestions() {
+            const history = JSON.parse(localStorage.getItem('worldOutFashionInvoices')) || [];
+            const customers = new Map();
+            const items = new Set();
+
+            history.forEach(inv => {
+                if(inv.custName) customers.set(inv.custName, inv.custContact || "");
+                if(inv.items) {
+                    inv.items.forEach(i => { if(i.desc) items.add(i.desc); });
+                }
+            });
+
+            constcustList = document.getElementById('customerList');
+            const custList = document.getElementById('customerList');
+            const itmList = document.getElementById('itemList');
+            
+            custList.innerHTML = '';
+            itmList.innerHTML = '';
+            
+            customers.forEach((contact, name) => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                custList.appendChild(opt);
+            });
+
+            items.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item;
+                itmList.appendChild(opt);
+            });
+        }
+
+        function fillCustomerDetails() {
+            const name = document.getElementById('custName').value;
+            const history = JSON.parse(localStorage.getItem('worldOutFashionInvoices')) || [];
+            const customer = history.slice().reverse().find(inv => inv.custName === name);
+            if(customer && customer.custContact) {
+                document.getElementById('custContact').value = customer.custContact;
+            }
+        }
+
+        // --- AUTO INVOICE NUMBER ---
+        function generateInvoiceNumber() {
+            const history = JSON.parse(localStorage.getItem('worldOutFashionInvoices')) || [];
+            if(history.length === 0) {
+                document.getElementById('invNo').value = "INV-0012";
+                return;
+            }
+            let maxNum = 0;
+            history.forEach(inv => {
+                const numStr = inv.invNo ? inv.invNo.replace(/\D/g,'') : "0";
+                const num = parseInt(numStr) || 0;
+                if(num > maxNum) maxNum = num;
+            });
+            if(maxNum === 0) maxNum = 11;
+            const nextNum = maxNum + 1;
+            document.getElementById('invNo').value = "INV-" + String(nextNum).padStart(4, '0');
+        }
+
+        // --- ROW MANAGEMENT & KEYBOARD NAV ---
+        function addNewRow(desc='', qty=1, price=0) {
+            const tbody = document.getElementById('invoiceItems');
+            const tr = document.createElement('tr');
+            
+            tr.innerHTML = `
+                <td><input type="text" class="clean-input item-name" placeholder="Item Name" list="itemList" onkeydown="handleRowEnter(event, this, 'qty')" autocomplete="off"></td>
+                <td class="col-qty"><input type="number" class="clean-input item-qty" inputmode="numeric" style="text-align: center;" oninput="calculateRow(this)" onkeydown="handleRowEnter(event, this, 'price')"></td>
+                <td class="col-price"><input type="number" class="clean-input item-price" inputmode="decimal" style="text-align: right;" oninput="calculateRow(this)" onkeydown="handleRowEnter(event, this, 'next')"></td>
+                <td class="col-total"><span class="row-total">0.00</span></td>
+                <td class="col-action no-print"><button class="row-del-btn" onclick="deleteRow(this)">×</button></td>
+            `;
+            
+            tbody.appendChild(tr);
+            
+            tr.querySelector('.item-name').value = desc;
+            tr.querySelector('.item-qty').value = qty;
+            tr.querySelector('.item-price').value = price;
+            
+            calculateRow(tr.querySelector('.item-qty'));
+            
+            if(desc === '') {
+                setTimeout(() => tr.querySelector('.item-name').focus(), 10);
+            }
+        }
+
+        function handleRowEnter(e, input, nextField) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                const row = input.closest('tr');
+                if (nextField === 'qty') {
+                    row.querySelector('.item-qty').focus();
+                    row.querySelector('.item-qty').select();
+                } else if (nextField === 'price') {
+                    row.querySelector('.item-price').focus();
+                    row.querySelector('.item-price').select();
+                } else if (nextField === 'next') {
+                    addNewRow(); 
+                }
+            }
+        }
+
+        function handleEnter(e, action) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                if (action === 'tax') {
+                    document.getElementById('tax').focus();
+                    document.getElementById('tax').select();
+                } else if (action === 'save') {
+                    saveInvoice();
+                }
+            }
+        }
+
+        function deleteRow(btn) {
+            const row = btn.parentNode.parentNode;
+            row.parentNode.removeChild(row);
+            calculateTotal();
+            if(document.querySelectorAll('#invoiceItems tr').length === 0){
+                addNewRow();
+            }
+        }
+
+        function calculateRow(el) {
+            const row = el.closest('tr');
+            const q = parseFloat(row.querySelector('.item-qty').value) || 0;
+            const p = parseFloat(row.querySelector('.item-price').value) || 0;
+            const total = q * p;
+            row.querySelector('.row-total').innerText = total.toFixed(2);
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            let subTotal = 0;
+            const rowTotals = document.querySelectorAll('.row-total');
+            rowTotals.forEach(span => {
+                subTotal += parseFloat(span.innerText);
+            });
+
+            const delivery = parseFloat(document.getElementById('delivery').value) || 0;
+            const tax = parseFloat(document.getElementById('tax').value) || 0;
+            const grandTotal = subTotal + delivery + tax;
+
+            document.getElementById('subTotal').innerText = subTotal.toLocaleString('en-LK', {minimumFractionDigits: 2});
+            document.getElementById('grandTotal').innerText = grandTotal.toLocaleString('en-LK', {minimumFractionDigits: 2});
+            return grandTotal;
+        }
+
+        function toggleSignature() {
+            const isChecked = document.getElementById('sigToggle').checked;
+            const sigImg = document.getElementById('sigImage');
+            sigImg.style.display = isChecked ? 'block' : 'none';
+        }
+
+        // --- EDIT & SAVE ---
+        function loadEditData(editId) {
+            const history = JSON.parse(localStorage.getItem('worldOutFashionInvoices')) || [];
+            const inv = history.find(i => i.id == editId);
+            
+            if (inv) {
+                document.getElementById('datePicker').value = inv.date;
+                document.getElementById('invNo').value = inv.invNo;
+                document.getElementById('custName').value = inv.custName;
+                document.getElementById('custContact').value = inv.custContact ? inv.custContact : "";
+                document.getElementById('delivery').value = inv.delivery ? inv.delivery : 0;
+                document.getElementById('tax').value = inv.tax ? inv.tax : 0;
+                
+                document.getElementById('invoiceItems').innerHTML = '';
+                
+                if(inv.items && inv.items.length > 0) {
+                    inv.items.forEach(i => addNewRow(i.desc, i.qty, i.price));
+                } else {
+                    addNewRow("Previous Item", 1, inv.total);
+                }
+            }
+        }
+
+        function saveInvoice() {
+            const btn = document.getElementById('saveBtn');
+            const spinner = document.getElementById('saveSpinner');
+            const saveText = document.getElementById('saveText');
+            
+            if(!document.getElementById('custName').value) {
+                alert("Please enter Customer Name");
+                return;
+            }
+
+            const items = [];
+            let itemsStr = "";
+            document.querySelectorAll('#invoiceItems tr').forEach(row => {
+                const d = row.querySelector('.item-name').value;
+                const q = row.querySelector('.item-qty').value;
+                const p = row.querySelector('.item-price').value;
+                if(d) {
+                    items.push({desc: d, qty: q, price: p});
+                    itemsStr += `${d} (x${q}) | `;
+                }
+            });
+
+            const data = {
+                id: Date.now(),
+                date: document.getElementById('datePicker').value,
+                invNo: document.getElementById('invNo').value,
+                custName: document.getElementById('custName').value,
+                custContact: document.getElementById('custContact').value,
+                delivery: document.getElementById('delivery').value,
+                tax: document.getElementById('tax').value,
+                total: calculateTotal(),
+                items: items,
+                itemsStr: itemsStr,
+                itemsJson: JSON.stringify(items)
+            };
+
+            let history = JSON.parse(localStorage.getItem('worldOutFashionInvoices')) || [];
+            const editId = localStorage.getItem('editInvoiceId');
+            if(editId) {
+                const idx = history.findIndex(i => i.id == editId);
+                if(idx > -1) history[idx] = {...data, id: parseInt(editId)};
+                else history.push(data);
+                localStorage.removeItem('editInvoiceId');
+            } else {
+                history.push(data);
+            }
+            localStorage.setItem('worldOutFashionInvoices', JSON.stringify(history));
+
+            btn.disabled = true;
+            saveText.innerText = "Saving...";
+            spinner.style.display = 'inline-block';
+
+            if(scriptURL.includes('PASTE_YOUR')) {
+                // If local only, just print directly
+                setTimeout(() => {
+                    window.print();
+                    finishSave();
+                }, 500);
+                return;
+            }
+
+            fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            }).then(() => {
+                // Success - Print Immediately
+                setTimeout(() => {
+                    window.print();
+                    finishSave();
+                }, 1000);
+            }).catch(e => {
+                // Error - Print Anyway
+                setTimeout(() => {
+                    window.print();
+                    finishSave();
+                }, 1000);
+            });
+        }
+
+        function finishSave() {
+            const btn = document.getElementById('saveBtn');
+            const spinner = document.getElementById('saveSpinner');
+            const saveText = document.getElementById('saveText');
+            
+            btn.disabled = false;
+            saveText.innerText = "💾 Save to Google Sheet";
+            spinner.style.display = 'none';
+            
+            setTimeout(() => {
+                if(!localStorage.getItem('editInvoiceId')) {
+                    document.getElementById('custName').value = '';
+                    document.getElementById('custContact').value = '';
+                    document.getElementById('delivery').value = '0';
+                    document.getElementById('tax').value = '0';
+                    document.getElementById('invoiceItems').innerHTML = '';
+                    
+                    generateInvoiceNumber();
+                    addNewRow();
+                    calculateTotal();
+                    loadSuggestions();
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
