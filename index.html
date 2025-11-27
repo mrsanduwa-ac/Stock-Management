@@ -15,7 +15,17 @@
             --border-color: #DEE2E6; --error-color: #dc3545; --info-color: #17a2b8;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: var(--background-color); height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        
+        /* Updated Body CSS for better scrolling */
+        body { 
+            background: var(--background-color); 
+            height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            overflow: hidden; /* Prevent body scroll, handle in dashboard */
+        }
+
         #login-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--background-color); z-index: 10; }
         .logo-container { margin-bottom: 40px; }
         .logo { width: 180px; height: 180px; border-radius: 50%; box-shadow: 0 10px 30px rgba(0, 123, 255, 0.3); display: flex; justify-content: center; align-items: center; overflow: hidden; background: white; }
@@ -29,12 +39,23 @@
         .login-btn { width: 100%; padding: 15px; border: none; border-radius: 50px; background: linear-gradient(45deg, var(--primary-light), var(--primary-dark)); color: white; font-size: 18px; font-weight: 600; cursor: pointer; transition: 0.3s ease; letter-spacing: 1px; margin-top: 10px; }
         .login-btn:hover { transform: scale(1.03); box-shadow: 0 8px 15px rgba(0, 123, 255, 0.3); }
         
-        #dashboard { width: 100%; height: 100%; display: none; flex-direction: column; padding: 20px; z-index: 5; }
+        /* Updated Dashboard CSS for scrolling */
+        #dashboard { 
+            width: 100%; 
+            height: 100%; 
+            display: none; 
+            flex-direction: column; 
+            padding: 20px; 
+            z-index: 5;
+            overflow-y: auto; /* Enable vertical scrolling */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+
         .header { display: flex; justify-content: space-between; align-items: center; padding: 20px; margin-bottom: 40px; }
         .header h1 { color: var(--text-color); font-size: 2.5rem; letter-spacing: 2px; flex: 1; text-align: center; }
         .logout-btn { background: var(--card-background); color: var(--primary-color); border: 1px solid var(--border-color); padding: 10px 20px; border-radius: 50px; cursor: pointer; transition: 0.3s; font-weight: 600; }
         .logout-btn:hover { background: var(--primary-color); color: white; border-color: var(--primary-color); }
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; width: 100%; max-width: 1200px; margin: 0 auto; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; width: 100%; max-width: 1200px; margin: 0 auto; padding-bottom: 80px; /* Space for PWA button */ }
         .dashboard-item { background: var(--card-background); border-radius: 20px; padding: 30px; text-align: center; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); transition: 0.3s; cursor: pointer; border: 1px solid var(--border-color); text-decoration: none; }
         .dashboard-item:hover { transform: translateY(-10px) scale(1.03); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12); }
         .icon { font-size: 60px; margin-bottom: 20px; color: var(--primary-color); }
@@ -56,6 +77,34 @@
         .alert-box button { background: var(--primary-color); color: white; border: none; padding: 10px 25px; border-radius: 50px; cursor: pointer; transition: background 0.3s; font-weight: bold; }
         .alert-box.error button { background: var(--error-color); }
         .alert-box.info button { background: var(--info-color); }
+
+        /* Add to Home Screen Button Styles */
+        .install-float-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            border: none;
+            cursor: pointer;
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.3s ease;
+            overflow: hidden;
+        }
+        .install-float-btn:hover {
+            transform: scale(1.1);
+        }
+        .install-float-btn img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+        }
     </style>
 </head>
 <body>
@@ -114,6 +163,11 @@
             </a>
         </div>
     </div>
+
+    <!-- Add to Home Screen Floating Button -->
+    <button id="install-btn" class="install-float-btn" title="Add to Home Screen">
+        <img src="web.png" alt="Install App" onerror="this.parentElement.innerHTML='<i class=\'fas fa-download\' style=\'color:#007BFF;font-size:24px;\'></i>'">
+    </button>
 
     <div id="waterfall-container"></div>
 
@@ -218,6 +272,42 @@
                 }
             });
         });
+
+        // PWA Install Logic
+        let deferredPrompt;
+        const installBtn = document.getElementById('install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later.
+            deferredPrompt = e;
+            // Update UI to notify the user they can add to home screen
+            installBtn.style.display = 'flex';
+        });
+
+        installBtn.addEventListener('click', (e) => {
+            // Hide the app provided install promotion
+            installBtn.style.display = 'none';
+            // Show the install prompt
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                // Wait for the user to respond to the prompt
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the A2HS prompt');
+                    } else {
+                        console.log('User dismissed the A2HS prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        });
+
+        // Check if app is already installed
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            installBtn.style.display = 'none';
+        }
     </script>
 </body>
 </html>
