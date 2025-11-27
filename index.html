@@ -16,30 +16,112 @@
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
-        /* Updated Body CSS for better scrolling */
         body { 
             background: var(--background-color); 
             height: 100vh; 
             display: flex; 
             justify-content: center; 
             align-items: center; 
-            overflow: hidden; /* Prevent body scroll, handle in dashboard */
+            overflow: hidden; 
         }
 
-        #login-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--background-color); z-index: 10; }
-        .logo-container { margin-bottom: 40px; }
-        .logo { width: 180px; height: 180px; border-radius: 50%; box-shadow: 0 10px 30px rgba(0, 123, 255, 0.3); display: flex; justify-content: center; align-items: center; overflow: hidden; background: white; }
-        .logo img { width: 100%; height: 100%; object-fit: cover; }
-        .login-form { background: var(--card-background); padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); width: 90%; max-width: 400px; text-align: center; border: 1px solid var(--border-color); }
-        .login-form h2 { color: var(--text-color); margin-bottom: 25px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; }
-        .input-group { margin-bottom: 20px; }
-        .input-group input { width: 100%; padding: 15px; border: 1px solid var(--border-color); border-radius: 50px; background: var(--background-color); color: var(--text-color); font-size: 16px; outline: none; text-align: center; transition: 0.3s; }
-        .input-group input::placeholder { color: #6C757D; }
-        .input-group input:focus { border-color: var(--primary-color); box-shadow: 0 0 10px rgba(0, 123, 255, 0.25); }
-        .login-btn { width: 100%; padding: 15px; border: none; border-radius: 50px; background: linear-gradient(45deg, var(--primary-light), var(--primary-dark)); color: white; font-size: 18px; font-weight: 600; cursor: pointer; transition: 0.3s ease; letter-spacing: 1px; margin-top: 10px; }
-        .login-btn:hover { transform: scale(1.03); box-shadow: 0 8px 15px rgba(0, 123, 255, 0.3); }
+        /* --- ADVANCED ANIMATIONS START --- */
         
-        /* Updated Dashboard CSS for scrolling */
+        /* Moving Gradient Background */
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #login-screen { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 10;
+            /* Advanced Gradient Background */
+            background: linear-gradient(-45deg, #ffffff, #e6f2ff, #cce5ff, #ffffff);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        /* Slide Up Animation */
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Floating Logo Animation */
+        @keyframes floatLogo {
+            0% { transform: translateY(0px); box-shadow: 0 10px 30px rgba(0, 123, 255, 0.3); }
+            50% { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0, 123, 255, 0.4); }
+            100% { transform: translateY(0px); box-shadow: 0 10px 30px rgba(0, 123, 255, 0.3); }
+        }
+
+        .logo-container { 
+            margin-bottom: 40px; 
+            opacity: 0; 
+            animation: slideInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; /* Smooth entry */
+            animation-delay: 0.1s;
+        }
+        
+        .logo { 
+            width: 180px; 
+            height: 180px; 
+            border-radius: 50%; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            overflow: hidden; 
+            background: white; 
+            /* Continuous floating effect after entry */
+            animation: floatLogo 4s ease-in-out infinite;
+        }
+        
+        .logo img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .login-form { 
+            background: rgba(255, 255, 255, 0.85); /* Semi-transparent for glass effect */
+            backdrop-filter: blur(10px); /* Glassmorphism blur */
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); 
+            width: 90%; 
+            max-width: 400px; 
+            text-align: center; 
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            opacity: 0; 
+            animation: slideInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            animation-delay: 0.3s;
+        }
+
+        /* Staggered Animation for Form Elements */
+        .login-form h2 { 
+            color: var(--text-color); margin-bottom: 25px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px;
+            opacity: 0; animation: slideInUp 0.5s ease forwards 0.5s; 
+        }
+        .input-group { margin-bottom: 20px; }
+        .input-group:nth-of-type(1) { opacity: 0; animation: slideInUp 0.5s ease forwards 0.6s; }
+        .input-group:nth-of-type(2) { opacity: 0; animation: slideInUp 0.5s ease forwards 0.7s; }
+        
+        .input-group input { width: 100%; padding: 15px; border: 1px solid var(--border-color); border-radius: 50px; background: rgba(255, 255, 255, 0.9); color: var(--text-color); font-size: 16px; outline: none; text-align: center; transition: 0.3s; }
+        .input-group input::placeholder { color: #6C757D; }
+        .input-group input:focus { border-color: var(--primary-color); box-shadow: 0 0 15px rgba(0, 123, 255, 0.2); transform: scale(1.02); }
+        
+        .login-btn { 
+            width: 100%; padding: 15px; border: none; border-radius: 50px; background: linear-gradient(45deg, var(--primary-light), var(--primary-dark)); color: white; font-size: 18px; font-weight: 600; cursor: pointer; transition: 0.3s ease; letter-spacing: 1px; margin-top: 10px; 
+            opacity: 0; animation: slideInUp 0.5s ease forwards 0.8s;
+        }
+        .login-btn:hover { transform: scale(1.05); box-shadow: 0 10px 20px rgba(0, 123, 255, 0.4); }
+        
+        /* --- ADVANCED ANIMATIONS END --- */
+
         #dashboard { 
             width: 100%; 
             height: 100%; 
@@ -47,15 +129,15 @@
             flex-direction: column; 
             padding: 20px; 
             z-index: 5;
-            overflow-y: auto; /* Enable vertical scrolling */
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch; 
         }
 
         .header { display: flex; justify-content: space-between; align-items: center; padding: 20px; margin-bottom: 40px; }
         .header h1 { color: var(--text-color); font-size: 2.5rem; letter-spacing: 2px; flex: 1; text-align: center; }
         .logout-btn { background: var(--card-background); color: var(--primary-color); border: 1px solid var(--border-color); padding: 10px 20px; border-radius: 50px; cursor: pointer; transition: 0.3s; font-weight: 600; }
         .logout-btn:hover { background: var(--primary-color); color: white; border-color: var(--primary-color); }
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; width: 100%; max-width: 1200px; margin: 0 auto; padding-bottom: 80px; /* Space for PWA button */ }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; width: 100%; max-width: 1200px; margin: 0 auto; padding-bottom: 80px; }
         .dashboard-item { background: var(--card-background); border-radius: 20px; padding: 30px; text-align: center; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); transition: 0.3s; cursor: pointer; border: 1px solid var(--border-color); text-decoration: none; }
         .dashboard-item:hover { transform: translateY(-10px) scale(1.03); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12); }
         .icon { font-size: 60px; margin-bottom: 20px; color: var(--primary-color); }
@@ -78,7 +160,6 @@
         .alert-box.error button { background: var(--error-color); }
         .alert-box.info button { background: var(--info-color); }
 
-        /* Add to Home Screen Button Styles */
         .install-float-btn {
             position: fixed;
             bottom: 20px;
@@ -91,7 +172,7 @@
             z-index: 1000;
             border: none;
             cursor: pointer;
-            display: none; /* Hidden by default */
+            display: none;
             justify-content: center;
             align-items: center;
             transition: transform 0.3s ease;
@@ -155,16 +236,20 @@
                 <p>Generate business reports and analytics</p>
             </a>
             
-            <!-- NEW CUSTOMER BILL BUTTON -->
             <a href="Custoemersbill.html" class="dashboard-item">
                 <div class="icon"><i class="fas fa-file-invoice-dollar"></i></div>
                 <h2>Customer Bill</h2>
                 <p>Generate and view customer bills</p>
             </a>
+
+            <a href="payslip.html" class="dashboard-item">
+                <div class="icon"><i class="fas fa-file-contract"></i></div>
+                <h2>PaySlip Generate</h2>
+                <p>Generate employee payslips</p>
+            </a>
         </div>
     </div>
 
-    <!-- Add to Home Screen Floating Button -->
     <button id="install-btn" class="install-float-btn" title="Add to Home Screen">
         <img src="web.png" alt="Install App" onerror="this.parentElement.innerHTML='<i class=\'fas fa-download\' style=\'color:#007BFF;font-size:24px;\'></i>'">
     </button>
@@ -209,7 +294,7 @@
             alertTitle.innerText = title;
             alertMessage.innerText = message;
             alertBox.className = 'alert-box';
-            alertBox.classList.remove('error', 'info'); // Reset classes
+            alertBox.classList.remove('error', 'info');
             alertBox.classList.add(type);
             alertOverlay.style.display = 'flex';
             setTimeout(() => alertBox.classList.add('show'), 10);
@@ -278,33 +363,21 @@
         const installBtn = document.getElementById('install-btn');
 
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevent Chrome 67 and earlier from automatically showing the prompt
             e.preventDefault();
-            // Stash the event so it can be triggered later.
             deferredPrompt = e;
-            // Update UI to notify the user they can add to home screen
             installBtn.style.display = 'flex';
         });
 
         installBtn.addEventListener('click', (e) => {
-            // Hide the app provided install promotion
             installBtn.style.display = 'none';
-            // Show the install prompt
             if (deferredPrompt) {
                 deferredPrompt.prompt();
-                // Wait for the user to respond to the prompt
                 deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the A2HS prompt');
-                    } else {
-                        console.log('User dismissed the A2HS prompt');
-                    }
                     deferredPrompt = null;
                 });
             }
         });
 
-        // Check if app is already installed
         if (window.matchMedia('(display-mode: standalone)').matches) {
             installBtn.style.display = 'none';
         }
