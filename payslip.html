@@ -22,7 +22,8 @@
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; box-sizing: border-box; transition: 0.3s; }
+        /* Improved Input Styles for Mobile */
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; transition: 0.3s; }
         input:focus { border-color: #007bff; outline: none; box-shadow: 0 0 5px rgba(0,123,255,0.2); }
         .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; width: 100%; }
         .btn-primary { background: #007bff; color: white; }
@@ -40,29 +41,51 @@
         .loader { border: 5px solid #f3f3f3; border-top: 5px solid #007bff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* PRINT LAYOUT */
+        /* PRINT LAYOUT FIXES FOR MOBILE */
         .print-area { display: none; }
+        
+        /* Force A4 Size */
+        @page { size: A4; margin: 0; }
+        
         @media print {
             body * { visibility: hidden; }
+            .app-container, .no-print { display: none !important; }
+            
             .print-area, .print-area * { visibility: visible; }
-            .print-area { display: block; position: absolute; left: 0; top: 0; width: 210mm; height: 297mm; padding: 10mm; background: white; box-sizing: border-box; }
+            .print-area { 
+                display: block !important; 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 210mm; 
+                height: 297mm; 
+                padding: 10mm; 
+                background: white; 
+                box-sizing: border-box; 
+                font-size: 12pt;
+            }
+            
             .p-header-box { border: 2px solid #000; text-align: center; padding: 10px; margin-bottom: 20px; }
             .p-header-box h3 { margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase; }
             .p-header-box h1 { margin: 0px 0; font-size: 28px; font-weight: 900; text-transform: uppercase; font-family: 'Impact', sans-serif; }
             .p-header-box p { margin: 2px 0; font-size: 14px; }
+            
             .p-details { display: flex; justify-content: space-between; margin-bottom: 15px; font-family: Arial, sans-serif; font-size: 14px; }
             .p-col { width: 48%; }
             .p-row { display: flex; margin-bottom: 5px; }
             .p-label { width: 130px; font-weight: normal; }
             .p-val { font-weight: normal; }
+            
             .p-table { width: 100%; border-collapse: collapse; border: 2px solid #000; font-family: Arial, sans-serif; font-size: 14px; }
             .p-table th { background-color: #d9d9d9 !important; -webkit-print-color-adjust: exact; border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; }
             .p-table td { border: 1px solid #000; padding: 5px 8px; }
             .text-right { text-align: right; }
+            
             .p-footer { margin-top: 50px; display: flex; justify-content: space-between; align-items: flex-end; }
             .p-sign-box { text-align: center; width: 200px; }
             .p-line { border-top: 1px dotted #000; display: block; margin-top: 5px; }
         }
+        
         @media (max-width: 600px) {
             .form-grid { grid-template-columns: 1fr; }
             .tabs { flex-direction: column; }
@@ -92,7 +115,8 @@
             <div class="form-grid">
                 <div>
                     <label>Select Employee</label>
-                    <input list="empList" id="empSearch" placeholder="Type name..." onchange="fillEmpDetails()">
+                    <!-- Added autocomplete="off" to fix mobile suggestions issue -->
+                    <input list="empList" id="empSearch" placeholder="Type name..." onchange="fillEmpDetails()" autocomplete="off">
                     <datalist id="empList"></datalist>
                 </div>
                 <div>
@@ -115,7 +139,8 @@
             <div class="form-grid" style="margin-top: 10px;">
                 <div class="form-group">
                     <label>Worked Days</label>
-                    <input type="number" id="workedDays">
+                    <!-- Added inputmode="decimal" for numeric keypad -->
+                    <input type="number" id="workedDays" inputmode="decimal">
                 </div>
                 <div></div> 
             </div>
@@ -124,18 +149,20 @@
                 <div class="form-grid">
                     <div>
                         <h4 style="color: #28a745; border-bottom: 2px solid #28a745; padding-bottom: 5px;">Earnings (Rs.)</h4>
-                        <div class="form-group"><label>Basic Salary</label><input type="number" id="basic" class="calc"></div>
-                        <div class="form-group"><label>Arrival Allowance</label><input type="number" id="allowance" class="calc"></div>
-                        <div class="form-group"><label>Overtime</label><input type="number" id="ot" class="calc"></div>
-                        <div class="form-group"><label>Bonus</label><input type="number" id="bonus" class="calc"></div>
+                        <!-- Added inputmode="decimal" for numeric keypad -->
+                        <div class="form-group"><label>Basic Salary</label><input type="number" id="basic" class="calc" inputmode="decimal"></div>
+                        <div class="form-group"><label>Arrival Allowance</label><input type="number" id="allowance" class="calc" inputmode="decimal"></div>
+                        <div class="form-group"><label>Overtime</label><input type="number" id="ot" class="calc" inputmode="decimal"></div>
+                        <div class="form-group"><label>Bonus</label><input type="number" id="bonus" class="calc" inputmode="decimal"></div>
                         <div style="text-align: right; font-weight: bold; margin-top: 10px;">Total: <span id="totalEarn">0.00</span></div>
                     </div>
                     <div>
                         <h4 style="color: #dc3545; border-bottom: 2px solid #dc3545; padding-bottom: 5px;">Deductions (Rs.)</h4>
-                        <div class="form-group"><label>Loan</label><input type="number" id="loan" class="calc"></div>
-                        <div class="form-group"><label>Advance</label><input type="number" id="advance" class="calc"></div>
-                        <div class="form-group"><label>Late</label><input type="number" id="late" class="calc"></div>
-                        <div class="form-group"><label>Leave</label><input type="number" id="leave" class="calc"></div>
+                        <!-- Added inputmode="decimal" for numeric keypad -->
+                        <div class="form-group"><label>Loan</label><input type="number" id="loan" class="calc" inputmode="decimal"></div>
+                        <div class="form-group"><label>Advance</label><input type="number" id="advance" class="calc" inputmode="decimal"></div>
+                        <div class="form-group"><label>Late</label><input type="number" id="late" class="calc" inputmode="decimal"></div>
+                        <div class="form-group"><label>Leave</label><input type="number" id="leave" class="calc" inputmode="decimal"></div>
                         <div style="text-align: right; font-weight: bold; margin-top: 10px; color: #dc3545;">Total: <span id="totalDeduct">0.00</span></div>
                     </div>
                 </div>
@@ -176,7 +203,7 @@
             <h2>Add New Employee</h2>
             <div class="form-group">
                 <label>Employee Name</label>
-                <input type="text" id="new_name">
+                <input type="text" id="new_name" autocomplete="off">
             </div>
             <div class="form-group">
                 <label>Employee ID</label>
