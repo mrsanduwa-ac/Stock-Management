@@ -22,9 +22,11 @@
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px; }
+        
         /* Improved Input Styles for Mobile */
         input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; transition: 0.3s; }
         input:focus { border-color: #007bff; outline: none; box-shadow: 0 0 5px rgba(0,123,255,0.2); }
+        
         .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; width: 100%; }
         .btn-primary { background: #007bff; color: white; }
         .btn-success { background: #28a745; color: white; margin-top: 20px; }
@@ -44,13 +46,22 @@
         /* PRINT LAYOUT FIXES FOR MOBILE */
         .print-area { display: none; }
         
-        /* Force A4 Size */
+        /* Force A4 Size and Settings */
         @page { size: A4; margin: 0; }
         
         @media print {
             body * { visibility: hidden; }
             .app-container, .no-print { display: none !important; }
             
+            /* Fix for Mobile PDF Generation */
+            html, body {
+                width: 210mm;
+                height: 297mm;
+                margin: 0;
+                padding: 0;
+                overflow: hidden; /* Prevents extra pages */
+            }
+
             .print-area, .print-area * { visibility: visible; }
             .print-area { 
                 display: block !important; 
@@ -115,7 +126,6 @@
             <div class="form-grid">
                 <div>
                     <label>Select Employee</label>
-                    <!-- Added autocomplete="off" to fix mobile suggestions issue -->
                     <input list="empList" id="empSearch" placeholder="Type name..." onchange="fillEmpDetails()" autocomplete="off">
                     <datalist id="empList"></datalist>
                 </div>
@@ -139,8 +149,8 @@
             <div class="form-grid" style="margin-top: 10px;">
                 <div class="form-group">
                     <label>Worked Days</label>
-                    <!-- Added inputmode="decimal" for numeric keypad -->
-                    <input type="number" id="workedDays" inputmode="decimal">
+                    <!-- Added enterkeyhint for keypad -->
+                    <input type="number" id="workedDays" inputmode="decimal" enterkeyhint="next">
                 </div>
                 <div></div> 
             </div>
@@ -149,20 +159,21 @@
                 <div class="form-grid">
                     <div>
                         <h4 style="color: #28a745; border-bottom: 2px solid #28a745; padding-bottom: 5px;">Earnings (Rs.)</h4>
-                        <!-- Added inputmode="decimal" for numeric keypad -->
-                        <div class="form-group"><label>Basic Salary</label><input type="number" id="basic" class="calc" inputmode="decimal"></div>
-                        <div class="form-group"><label>Arrival Allowance</label><input type="number" id="allowance" class="calc" inputmode="decimal"></div>
-                        <div class="form-group"><label>Overtime</label><input type="number" id="ot" class="calc" inputmode="decimal"></div>
-                        <div class="form-group"><label>Bonus</label><input type="number" id="bonus" class="calc" inputmode="decimal"></div>
+                        <!-- Added enterkeyhint="next" -->
+                        <div class="form-group"><label>Basic Salary</label><input type="number" id="basic" class="calc" inputmode="decimal" enterkeyhint="next"></div>
+                        <div class="form-group"><label>Arrival Allowance</label><input type="number" id="allowance" class="calc" inputmode="decimal" enterkeyhint="next"></div>
+                        <div class="form-group"><label>Overtime</label><input type="number" id="ot" class="calc" inputmode="decimal" enterkeyhint="next"></div>
+                        <div class="form-group"><label>Bonus</label><input type="number" id="bonus" class="calc" inputmode="decimal" enterkeyhint="next"></div>
                         <div style="text-align: right; font-weight: bold; margin-top: 10px;">Total: <span id="totalEarn">0.00</span></div>
                     </div>
                     <div>
                         <h4 style="color: #dc3545; border-bottom: 2px solid #dc3545; padding-bottom: 5px;">Deductions (Rs.)</h4>
-                        <!-- Added inputmode="decimal" for numeric keypad -->
-                        <div class="form-group"><label>Loan</label><input type="number" id="loan" class="calc" inputmode="decimal"></div>
-                        <div class="form-group"><label>Advance</label><input type="number" id="advance" class="calc" inputmode="decimal"></div>
-                        <div class="form-group"><label>Late</label><input type="number" id="late" class="calc" inputmode="decimal"></div>
-                        <div class="form-group"><label>Leave</label><input type="number" id="leave" class="calc" inputmode="decimal"></div>
+                        <!-- Added enterkeyhint="next" -->
+                        <div class="form-group"><label>Loan</label><input type="number" id="loan" class="calc" inputmode="decimal" enterkeyhint="next"></div>
+                        <div class="form-group"><label>Advance</label><input type="number" id="advance" class="calc" inputmode="decimal" enterkeyhint="next"></div>
+                        <div class="form-group"><label>Late</label><input type="number" id="late" class="calc" inputmode="decimal" enterkeyhint="next"></div>
+                        <!-- Added enterkeyhint="done" for the LAST input -->
+                        <div class="form-group"><label>Leave</label><input type="number" id="leave" class="calc" inputmode="decimal" enterkeyhint="done"></div>
                         <div style="text-align: right; font-weight: bold; margin-top: 10px; color: #dc3545;">Total: <span id="totalDeduct">0.00</span></div>
                     </div>
                 </div>
@@ -611,6 +622,12 @@
                 input.addEventListener("keydown", function(e) {
                     if (e.key === "Enter") {
                         e.preventDefault();
+                        // --- FIX START: Detect 'leave' field and submit ---
+                        if (input.id === 'leave') {
+                            submitPayslip('save');
+                            return;
+                        }
+                        // --- FIX END ---
                         if (inputs[index + 1]) inputs[index + 1].focus();
                     }
                 });
