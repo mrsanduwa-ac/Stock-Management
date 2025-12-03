@@ -27,6 +27,18 @@
         input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; transition: 0.3s; }
         input:focus { border-color: #007bff; outline: none; box-shadow: 0 0 5px rgba(0,123,255,0.2); }
         
+        /* CSS for Warning Animation */
+        .input-warning {
+            border: 2px solid #dc3545 !important;
+            box-shadow: 0 0 8px rgba(220, 53, 69, 0.6);
+            animation: shake 0.5s; /* Apply shake animation */
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        
         .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; width: 100%; }
         .btn-primary { background: #007bff; color: white; }
         .btn-success { background: #28a745; color: white; margin-top: 20px; }
@@ -40,26 +52,65 @@
         .icon-btn:hover { transform: scale(1.1); }
         .swal2-icon.swal2-custom-icon { border: none !important; }
         .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
-        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #007bff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* New Document Filling Liquid Loader CSS */
+        .loader-document {
+            width: 60px;
+            height: 70px;
+            border: 4px solid #007bff;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loader-document::before {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0;
+            background-color: #007bff; /* Blue "liquid" */
+            animation: fill-document 2s infinite ease-in-out;
+        }
+        
+        .loader-document::after {
+            /* Icon of the document */
+            content: "\f15c"; 
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            font-size: 30px;
+            color: #ccc;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        @keyframes fill-document {
+            0% { height: 0; }
+            50% { height: 100%; }
+            100% { height: 0; }
+        }
 
         /* PRINT LAYOUT FIXES FOR MOBILE */
         .print-area { display: none; }
         
-        /* Force A4 Size and Settings */
+        /* Force A4 Size and Settings for single page print */
         @page { size: A4; margin: 0; }
         
         @media print {
             body * { visibility: hidden; }
             .app-container, .no-print { display: none !important; }
             
-            /* Fix for Mobile PDF Generation */
+            /* Ensure A4 size and prevent overflow */
             html, body {
                 width: 210mm;
                 height: 297mm;
                 margin: 0;
                 padding: 0;
-                overflow: hidden; /* Prevents extra pages */
+                overflow: hidden; /* This is the key to preventing extra pages */
             }
 
             .print-area, .print-area * { visibility: visible; }
@@ -71,14 +122,14 @@
                 width: 210mm; 
                 height: 297mm; 
                 padding: 10mm; 
-                background: white; 
                 box-sizing: border-box; 
                 font-size: 12pt;
             }
             
             .p-header-box { border: 2px solid #000; text-align: center; padding: 10px; margin-bottom: 20px; }
             .p-header-box h3 { margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase; }
-            .p-header-box h1 { margin: 0px 0; font-size: 28px; font-weight: 900; text-transform: uppercase; font-family: 'Impact', sans-serif; }
+            /* Updated font family to include Arial Black/Impact for wider support */
+            .p-header-box h1 { margin: 0px 0; font-size: 28px; font-weight: 900; text-transform: uppercase; font-family: 'Impact', 'Arial Black', sans-serif; }
             .p-header-box p { margin: 2px 0; font-size: 14px; }
             
             .p-details { display: flex; justify-content: space-between; margin-bottom: 15px; font-family: Arial, sans-serif; font-size: 14px; }
@@ -88,8 +139,17 @@
             .p-val { font-weight: normal; }
             
             .p-table { width: 100%; border-collapse: collapse; border: 2px solid #000; font-family: Arial, sans-serif; font-size: 14px; }
+            /* REMOVED inner border lines from table */
             .p-table th { background-color: #d9d9d9 !important; -webkit-print-color-adjust: exact; border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; }
-            .p-table td { border: 1px solid #000; padding: 5px 8px; }
+            /* The only inner lines should be the column dividers for Amount and the bottom line */
+            .p-table td { border: none; padding: 5px 8px; }
+            /* Re-add specific vertical borders */
+            .p-table td:nth-child(2), .p-table th:nth-child(2) { border-left: 1px solid #000; border-right: 1px solid #000; }
+            .p-table td:nth-child(4), .p-table th:nth-child(4) { border-left: 1px solid #000; border-right: 1px solid #000; }
+            
+            /* Re-add the bottom border for the final total row */
+            .p-table tbody tr:last-child td { border-top: 2px solid #000; }
+            .p-table tbody tr:last-child { border-top: 2px solid #000; }
             .text-right { text-align: right; }
             
             .p-footer { margin-top: 50px; display: flex; justify-content: space-between; align-items: flex-end; }
@@ -107,7 +167,8 @@
 <body>
 
     <div id="loading" class="loading-overlay">
-        <div class="loader"></div>
+        <!-- New Document Filling Liquid Loader -->
+        <div class="loader-document"></div> 
         <h3 style="color: #333; margin-top: 15px;">Processing...</h3>
     </div>
 
@@ -115,7 +176,8 @@
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('generate')"><i class="fas fa-file-invoice"></i> Generate Payslip</button>
             <button class="tab-btn" onclick="switchTab('history')"><i class="fas fa-history"></i> History & Edit</button>
-            <button class="tab-btn" onclick="switchTab('create')"><i class="fas fa-user-plus"></i> Add Employee</button>
+            <!-- Updated tab for employee management -->
+            <button class="tab-btn" onclick="switchTab('employee-mgmt')"><i class="fas fa-users"></i> Employee Management</button>
         </div>
 
         <!-- GENERATE TAB -->
@@ -125,7 +187,8 @@
 
             <div class="form-grid">
                 <div>
-                    <label>Select Employee</label>
+                    <!-- Updated label to select Employee ID and input type to select -->
+                    <label>Select Employee (by Name)</label>
                     <input list="empList" id="empSearch" placeholder="Type name..." onchange="fillEmpDetails()" autocomplete="off">
                     <datalist id="empList"></datalist>
                 </div>
@@ -138,6 +201,7 @@
             <div class="form-grid" style="margin-top: 10px;">
                 <div>
                     <label>Employee ID</label>
+                    <!-- Display selected Employee ID here -->
                     <input type="text" id="empId" readonly style="background: #f9f9f9;">
                 </div>
                 <div>
@@ -149,7 +213,6 @@
             <div class="form-grid" style="margin-top: 10px;">
                 <div class="form-group">
                     <label>Worked Days</label>
-                    <!-- Added enterkeyhint for keypad -->
                     <input type="number" id="workedDays" inputmode="decimal" enterkeyhint="next">
                 </div>
                 <div></div> 
@@ -159,7 +222,6 @@
                 <div class="form-grid">
                     <div>
                         <h4 style="color: #28a745; border-bottom: 2px solid #28a745; padding-bottom: 5px;">Earnings (Rs.)</h4>
-                        <!-- Added enterkeyhint="next" -->
                         <div class="form-group"><label>Basic Salary</label><input type="number" id="basic" class="calc" inputmode="decimal" enterkeyhint="next"></div>
                         <div class="form-group"><label>Arrival Allowance</label><input type="number" id="allowance" class="calc" inputmode="decimal" enterkeyhint="next"></div>
                         <div class="form-group"><label>Overtime</label><input type="number" id="ot" class="calc" inputmode="decimal" enterkeyhint="next"></div>
@@ -168,11 +230,9 @@
                     </div>
                     <div>
                         <h4 style="color: #dc3545; border-bottom: 2px solid #dc3545; padding-bottom: 5px;">Deductions (Rs.)</h4>
-                        <!-- Added enterkeyhint="next" -->
                         <div class="form-group"><label>Loan</label><input type="number" id="loan" class="calc" inputmode="decimal" enterkeyhint="next"></div>
                         <div class="form-group"><label>Advance</label><input type="number" id="advance" class="calc" inputmode="decimal" enterkeyhint="next"></div>
                         <div class="form-group"><label>Late</label><input type="number" id="late" class="calc" inputmode="decimal" enterkeyhint="next"></div>
-                        <!-- Added enterkeyhint="done" for the LAST input -->
                         <div class="form-group"><label>Leave</label><input type="number" id="leave" class="calc" inputmode="decimal" enterkeyhint="done"></div>
                         <div style="text-align: right; font-weight: bold; margin-top: 10px; color: #dc3545;">Total: <span id="totalDeduct">0.00</span></div>
                     </div>
@@ -191,7 +251,8 @@
         <!-- HISTORY TAB -->
         <div id="history" class="section">
             <h2 style="text-align: center; margin-bottom: 20px;">Payslip History</h2>
-            <button class="btn btn-primary" onclick="loadHistory()" style="width: auto; margin-bottom: 10px;"><i class="fas fa-sync"></i> Refresh List</button>
+            <!-- Fixed: Changed onclick to loadHistory() to match the function name -->
+            <button class="btn btn-primary" onclick="loadHistory()" style="width: auto; margin-bottom: 10px;"><i class="fas fa-sync"></i> Refresh List</button> 
             <div style="overflow-x: auto;">
                 <table class="history-table">
                     <thead>
@@ -209,22 +270,43 @@
             </div>
         </div>
 
-        <!-- CREATE EMPLOYEE TAB -->
-        <div id="create" class="section">
-            <h2>Add New Employee</h2>
-            <div class="form-group">
-                <label>Employee Name</label>
-                <input type="text" id="new_name" autocomplete="off">
+        <!-- EMPLOYEE MANAGEMENT TAB (Replaced Create Tab) -->
+        <div id="employee-mgmt" class="section">
+            <h2 style="text-align: center; margin-bottom: 20px;">Employee Management</h2>
+            
+            <div style="background: #f0f8ff; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #cceeff;">
+                <h3>Add New Employee</h3>
+                <div class="form-group">
+                    <label>Employee Name</label>
+                    <input type="text" id="new_name" autocomplete="off" placeholder="Enter Full Name">
+                </div>
+                <div class="form-group">
+                    <label>Employee ID</label>
+                    <input type="text" id="new_id" placeholder="Enter Unique ID (e.g., EA001)">
+                </div>
+                <div class="form-group">
+                    <label>Designation</label>
+                    <input type="text" id="new_designation" placeholder="Enter Designation">
+                </div>
+                <button class="btn btn-success" onclick="saveEmployee()"><i class="fas fa-user-plus"></i> Save Employee</button>
             </div>
-            <div class="form-group">
-                <label>Employee ID</label>
-                <input type="text" id="new_id">
+            
+            <h3>Current Employees</h3>
+            <div style="overflow-x: auto;">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Designation</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employeeListBody">
+                        <tr><td colspan="4" style="text-align:center;">Loading employee list...</td></tr>
+                    </tbody>
+                </table>
             </div>
-            <div class="form-group">
-                <label>Designation</label>
-                <input type="text" id="new_designation">
-            </div>
-            <button class="btn btn-success" onclick="saveEmployee()"><i class="fas fa-save"></i> Save Employee</button>
         </div>
     </div>
 
@@ -273,12 +355,12 @@
                     <td>Bonus</td><td class="text-right" id="p_bonus"></td>
                     <td>Leave</td><td class="text-right" id="p_leave"></td>
                 </tr>
-                <tr style="font-weight: bold;">
+                <tr style="font-weight: bold; border-top: 2px solid #000;">
                     <td>Total Earnings</td><td class="text-right" id="p_totEarn"></td>
                     <td>Total Deductions</td><td class="text-right" id="p_totDed"></td>
                 </tr>
-                <tr style="background-color: #d9d9d9; font-weight: bold;">
-                    <td colspan="2"></td>
+                <tr style="background-color: #d9d9d9; font-weight: bold; border-top: 2px solid #000;">
+                    <td colspan="2" style="border-right: 1px solid #000;"></td>
                     <td class="text-right">Net Salary</td>
                     <td class="text-right" id="p_net" style="font-size: 1.1em;"></td>
                 </tr>
@@ -303,6 +385,8 @@
             loadEmployees();
             setupEnterKey();
             loadHistory();
+            loadEmployeeList(); 
+            setupInputClearWarning(); // Added to remove warnings on input
         };
 
         function switchTab(tabId) {
@@ -310,7 +394,9 @@
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelector(`button[onclick="switchTab('${tabId}')"]`).classList.add('active');
             document.getElementById(tabId).classList.add('active');
+            
             if(tabId === 'history') loadHistory();
+            if(tabId === 'employee-mgmt') loadEmployeeList();
         }
 
         function toggleLoading(show) {
@@ -318,20 +404,29 @@
         }
 
         function loadEmployees() {
+            // Loads employee names into the datalist for searching/selection
             fetch(SCRIPT_URL + "?action=getEmployees").then(res => res.json()).then(data => {
+                // The data array contains [Name, ID, Designation, RowIndex]
                 employees = data;
                 let list = document.getElementById('empList');
                 list.innerHTML = "";
+                // Now filling the list with Name, but when selected, we use the name to find the details
                 data.forEach(emp => { let opt = document.createElement('option'); opt.value = emp[0]; list.appendChild(opt); });
             });
         }
 
         function fillEmpDetails() {
             let name = document.getElementById('empSearch').value;
-            let emp = employees.find(e => e[0] === name);
+            // Find the employee using the name selected from the datalist
+            let emp = employees.find(e => e[0] === name); 
             if(emp) {
+                // emp[0]=Name, emp[1]=ID, emp[2]=Designation
                 document.getElementById('empId').value = emp[1];
                 document.getElementById('designation').value = emp[2];
+            } else {
+                // Clear fields if the name doesn't match a valid employee
+                document.getElementById('empId').value = '';
+                document.getElementById('designation').value = '';
             }
         }
 
@@ -346,9 +441,47 @@
             document.getElementById('netPay').innerText = (totEarn - totDed).toFixed(2);
         }
 
+        // --- Validation Function ---
+        function validatePayslipForm() {
+            let isValid = true;
+            const requiredInputs = [
+                { id: 'empSearch', name: 'Employee Name' },
+                { id: 'monthYear', name: 'Month & Year' },
+                { id: 'workedDays', name: 'Worked Days' }
+            ];
+
+            requiredInputs.forEach(item => {
+                const input = document.getElementById(item.id);
+                const value = input.value.trim();
+                
+                // Always remove previous warning class
+                input.classList.remove('input-warning');
+
+                if (value === '') {
+                    input.classList.add('input-warning');
+                    isValid = false;
+                }
+            });
+
+            if (!isValid) {
+                // Removed Sinhala text as requested
+                Swal.fire('Warning', 'Please fill the red required fields.', 'warning');
+            }
+            
+            return isValid;
+        }
+
         function submitPayslip(mode) {
             let formData = getFormData();
-            if(!formData.empName) return Swal.fire('Error', 'Please select an employee', 'error');
+            
+            // Check required fields using new validation function
+            if (!validatePayslipForm()) {
+                return;
+            }
+
+            // Additional check for employee ID presence after validation passes (should be redundant if validation passes but good for safety)
+            if(!formData.empName || !formData.empId) return Swal.fire('Error', 'Please select a valid employee (by Name)', 'error');
+
 
             if(mode === 'save') {
                 toggleLoading(true);
@@ -359,7 +492,13 @@
                         populatePrint(formData);
                         window.print();
                         Swal.fire('Success', 'Payslip Saved!', 'success');
+                        resetForm(); // Reset after successful save
+                    } else {
+                         Swal.fire('Error', 'Failed to save payslip. Check Google Sheet setup.', 'error');
                     }
+                }).catch(e => {
+                    toggleLoading(false);
+                    Swal.fire('Error', 'Network or Script Error: ' + e.message, 'error');
                 });
             }
         }
@@ -368,6 +507,8 @@
             // Logic to Calculate Print Date (10th of Next Month)
             let monthVal = document.getElementById('monthYear').value;
             let generatedDate = "";
+            let workedDays = document.getElementById('workedDays').value;
+
             if(monthVal) {
                 let d = new Date(monthVal + "-01");
                 if(!isNaN(d.getTime())){
@@ -379,9 +520,10 @@
 
             return {
                 monthYear: document.getElementById('monthYear').value,
-                empName: document.getElementById('empSearch').value,
+                empName: document.getElementById('empSearch').value, // This is the Name
                 empId: document.getElementById('empId').value,
                 designation: document.getElementById('designation').value,
+                workedDays: workedDays, // Include worked days
                 basic: document.getElementById('basic').value,
                 allowance: document.getElementById('allowance').value,
                 ot: document.getElementById('ot').value,
@@ -393,7 +535,6 @@
                 leave: document.getElementById('leave').value,
                 totalDeduct: document.getElementById('totalDeduct').innerText,
                 netPay: document.getElementById('netPay').innerText,
-                // Add the new field
                 printDate: generatedDate
             };
         }
@@ -403,15 +544,14 @@
             document.getElementById('p_name').innerText = data.empName;
             document.getElementById('p_designation').innerText = data.designation;
             
-            // --- FIX START: Clean Month & Year ---
             let cleanMonth = data.monthYear;
             if(cleanMonth && typeof cleanMonth === 'string' && cleanMonth.includes('T')) {
-                cleanMonth = cleanMonth.split('T')[0]; // Remove Time part
+                cleanMonth = cleanMonth.split('T')[0];
             }
             document.getElementById('p_month').innerText = cleanMonth;
-            // --- FIX END ---
 
-            document.getElementById('p_worked').innerText = document.getElementById('workedDays').value;
+            // Updated: Use the workedDays property from the data object
+            document.getElementById('p_worked').innerText = data.workedDays || "-"; 
 
             const fmt = val => "Rs." + parseFloat(val || 0).toFixed(2);
             document.getElementById('p_basic').innerText = fmt(data.basic);
@@ -426,11 +566,9 @@
             document.getElementById('p_totDed').innerText = fmt(data.totalDeduct);
             document.getElementById('p_net').innerText = fmt(data.netPay);
 
-            // Use stored date if available, otherwise fallback to calculation
             if (data.printDate && data.printDate.trim() !== "") {
                 document.getElementById('p_date').innerText = data.printDate;
             } else {
-                // Fallback logic for old records without stored date
                 let dateText = ".... / .. / .."; 
                 if(data.monthYear && data.monthYear.trim() !== "") {
                     try {
@@ -452,7 +590,11 @@
                 tbody.innerHTML = "";
                 if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No records found</td></tr>'; return; }
                 data.forEach(item => {
+                    // Check if the record is fully populated (e.g., if it has workedDays at index 17)
+                    // The row data: [Timestamp(0), monthYear(1), empName(2), empId(3), designation(4), basic(5), allowance(6), ot(7), bonus(8), totalEarn(9), loan(10), advance(11), late(12), leave(13), totalDeduct(14), netPay(15), printDate(16), workedDays(17), row]
                     let date = new Date(item.data[0]).toLocaleDateString();
+                    // FIX: Net Pay is consistently at index 15
+                    const netPay = item.data[15];
                     let tr = document.createElement('tr');
                     
                     tr.innerHTML = `
@@ -461,13 +603,13 @@
                             <div style="cursor: pointer; color: #007bff; display: flex; align-items: center;" onclick='printHistoryRecord(${JSON.stringify(item)})' title="Click to Print">
                                 <i class="fas fa-print" style="margin-right: 8px;"></i>
                                 <span style="font-weight: 500;">${item.data[2]}</span>
-                                <small style="color: #666; margin-left: 5px;">(${item.data[1]})</small>
+                                <small style="color: #666; margin-left: 5px;">(${item.data[3]})</small>
                             </div>
                         </td>
-                        <td style="font-weight:bold;">Rs.${item.data[15]}</td>
+                        <td style="font-weight:bold;">Rs.${netPay}</td>
                         <td><div class="action-btns">
                             <button class="icon-btn" style="background:#ffc107;" onclick='editRecord(${JSON.stringify(item)})'><i class="fas fa-edit"></i></button>
-                            <button class="icon-btn" style="background:#dc3545;" onclick="deleteRecord(${item.row})"><i class="fas fa-trash"></i></button>
+                            <button class="icon-btn" style="background:#dc3545;" onclick="deleteRecordPayslip(${item.row})"><i class="fas fa-trash"></i></button>
                         </div></td>`;
                     tbody.appendChild(tr);
                 });
@@ -476,6 +618,9 @@
 
         function printHistoryRecord(item) {
             let data = item.data;
+            // Map the history array data to the printData object
+            // The data array now includes workedDays as the 18th column (index 17)
+            let workedDaysIndex = 17; 
             let printData = {
                 monthYear: data[1],
                 empName: data[2],
@@ -492,19 +637,19 @@
                 leave: data[13],
                 totalDeduct: data[14],
                 netPay: data[15],
-                // Mapping the new 17th column (index 16)
-                printDate: data[16] 
+                printDate: data[16],
+                workedDays: data[workedDaysIndex] || "-" // Use index 17 for workedDays
             };
 
             populatePrint(printData);
-            document.getElementById('p_worked').innerText = "-"; 
             window.print();
         }
 
-        function deleteRecord(rowIndex) {
+        // Renamed function to avoid confusion with employee delete
+        function deleteRecordPayslip(rowIndex) { 
             Swal.fire({
                 title: 'Security Access',
-                html: 'Enter Admin PIN to <b style="color:red">DELETE</b> this record',
+                html: 'Enter Admin PIN to <b style="color:red">DELETE</b> this payslip record',
                 input: 'password',
                 inputAttributes: { autocapitalize: 'off', placeholder: 'Enter 4-digit PIN' },
                 iconHtml: '<i class="fas fa-lock" style="font-size: 3rem; color: #dc3545;"></i>',
@@ -522,11 +667,14 @@
                     }).then(res => res.json()).then(data => {
                         toggleLoading(false);
                         if(data.result === 'Success') {
-                            Swal.fire('Deleted!', 'Record deleted successfully.', 'success');
+                            Swal.fire('Deleted!', 'Payslip record deleted successfully.', 'success');
                             loadHistory();
                         } else {
                             Swal.fire('Access Denied', 'Incorrect PIN Number!', 'error');
                         }
+                    }).catch(e => {
+                        toggleLoading(false);
+                        Swal.fire('Error', 'Network or Script Error: ' + e.message, 'error');
                     });
                 }
             });
@@ -552,10 +700,13 @@
 
         function editRecord(item) {
             let data = item.data;
+            // Assuming the structure is: [Timestamp(0), monthYear(1), empName(2), empId(3), designation(4), basic(5), allowance(6), ot(7), bonus(8), totalEarn(9), loan(10), advance(11), late(12), leave(13), totalDeduct(14), netPay(15), printDate(16), workedDays(17), row]
+            let workedDaysIndex = 17; // Index 17 for workedDays
+
             document.getElementById('editRowIndex').value = item.row;
             document.getElementById('monthYear').value = data[1];
-            document.getElementById('empSearch').value = data[2];
-            document.getElementById('empId').value = data[3];
+            document.getElementById('empSearch').value = data[2]; // Name
+            document.getElementById('empId').value = data[3]; // ID
             document.getElementById('designation').value = data[4];
             document.getElementById('basic').value = data[5];
             document.getElementById('allowance').value = data[6];
@@ -565,7 +716,8 @@
             document.getElementById('advance').value = data[11];
             document.getElementById('late').value = data[12];
             document.getElementById('leave').value = data[13];
-            
+            document.getElementById('workedDays').value = data[workedDaysIndex] || ''; // Worked Days
+
             calculate();
             switchTab('generate');
             document.getElementById('saveBtn').style.display = 'none';
@@ -590,31 +742,199 @@
                 } else {
                     Swal.fire('Access Denied', 'Incorrect PIN Number!', 'error');
                 }
+            }).catch(e => {
+                toggleLoading(false);
+                Swal.fire('Error', 'Network or Script Error: ' + e.message, 'error');
             });
         }
 
         function resetForm() {
-            document.querySelectorAll('input').forEach(i => i.value = '');
+            document.querySelectorAll('input').forEach(i => {
+                if(i.id !== 'empSearch' && i.id !== 'monthYear') { 
+                    i.value = ''; // Keep search and month input to easily start new payslip
+                }
+                // Also clear any warning classes
+                i.classList.remove('input-warning');
+            });
             document.getElementById('saveBtn').style.display = 'block';
             document.getElementById('updateBtn').style.display = 'none';
             document.getElementById('cancelBtn').style.display = 'none';
             calculate();
         }
 
+        // --- New function to remove warning class when user interacts ---
+        function setupInputClearWarning() {
+            const requiredInputs = document.querySelectorAll('#empSearch, #monthYear, #workedDays');
+            requiredInputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    if (input.value.trim() !== '') {
+                        input.classList.remove('input-warning');
+                    }
+                });
+                input.addEventListener('focus', () => {
+                    input.classList.remove('input-warning');
+                });
+            });
+        }
+        // --- EMPLOYEE MANAGEMENT FUNCTIONS ---
+
         function saveEmployee() {
              let name = document.getElementById('new_name').value;
              let id = document.getElementById('new_id').value;
              let desig = document.getElementById('new_designation').value;
-             if(!name || !id) return Swal.fire('Error', 'Fill all fields', 'warning');
+             if(!name || !id) return Swal.fire('Error', 'Fill Employee Name and ID', 'warning');
+             
+             // Check for duplicate ID
+             if (employees.some(e => e[1] === id)) {
+                return Swal.fire('Error', `Employee ID ${id} already exists.`, 'error');
+            }
+
              toggleLoading(true);
              fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "addEmployee", name: name, id: id, designation: desig }) })
              .then(res => res.json()).then(data => {
                  toggleLoading(false);
-                 Swal.fire('Success', 'Employee Added', 'success');
-                 document.getElementById('new_name').value = "";
-                 loadEmployees();
+                 if(data.result === 'Success') {
+                    Swal.fire('Success', 'Employee Added', 'success');
+                    document.getElementById('new_name').value = "";
+                    document.getElementById('new_id').value = "";
+                    document.getElementById('new_designation').value = "";
+                    loadEmployees(); // Reload datalist
+                    loadEmployeeList(); // Reload table list
+                 } else {
+                    Swal.fire('Error', 'Failed to add employee.', 'error');
+                 }
+             }).catch(e => {
+                toggleLoading(false);
+                Swal.fire('Error', 'Network or Script Error: ' + e.message, 'error');
              });
         }
+
+        function loadEmployeeList() {
+            let tbody = document.getElementById('employeeListBody');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading employee list...</td></tr>';
+
+            fetch(SCRIPT_URL + "?action=getEmployees").then(res => res.json()).then(data => {
+                // data format: [Name, ID, Designation, RowIndex]
+                employees = data; // Update global list as well
+                tbody.innerHTML = "";
+                if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No employees found</td></tr>'; return; }
+                
+                data.forEach(emp => {
+                    let tr = document.createElement('tr');
+                    // Data is structured as [Name, ID, Designation, RowIndex]
+                    const name = emp[0];
+                    const id = emp[1];
+                    const designation = emp[2];
+                    const rowIndex = emp[3]; 
+
+                    tr.innerHTML = `
+                        <td>${id}</td>
+                        <td>${name}</td>
+                        <td>${designation}</td>
+                        <td><div class="action-btns">
+                            <button class="icon-btn" style="background:#ffc107;" onclick='editEmployee(${JSON.stringify(emp)})'><i class="fas fa-edit"></i></button>
+                            <button class="icon-btn" style="background:#dc3545;" onclick="deleteEmployee(${rowIndex})"><i class="fas fa-trash"></i></button>
+                        </div></td>`;
+                    tbody.appendChild(tr);
+                });
+            }).catch(e => {
+                tbody.innerHTML = '<tr><td colspan="4" style="color:red; text-align:center;">Error loading list. Check script URL.</td></tr>';
+            });
+        }
+
+        function editEmployee(empData) {
+            Swal.fire({
+                title: `Edit Employee: ${empData[0]}`,
+                html: `
+                    <div style="text-align:left;">
+                        <label for="swal-name" style="display:block; margin-top:10px;">Name</label>
+                        <input id="swal-name" class="swal2-input" value="${empData[0]}">
+                        <label for="swal-id" style="display:block; margin-top:10px;">Employee ID</label>
+                        <input id="swal-id" class="swal2-input" value="${empData[1]}" readonly style="background:#eee;">
+                        <label for="swal-designation" style="display:block; margin-top:10px;">Designation</label>
+                        <input id="swal-designation" class="swal2-input" value="${empData[2]}">
+                    </div>
+                `,
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonText: 'Save Changes',
+                preConfirm: () => {
+                    return {
+                        name: document.getElementById('swal-name').value,
+                        id: document.getElementById('swal-id').value,
+                        designation: document.getElementById('swal-designation').value,
+                        rowIndex: empData[3]
+                    };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    performEmployeeUpdate(result.value);
+                }
+            });
+        }
+
+        function performEmployeeUpdate(data) {
+            toggleLoading(true);
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    action: 'updateEmployee', 
+                    name: data.name, 
+                    id: data.id, // ID is used for lookup, but it is readonly
+                    designation: data.designation,
+                    rowIndex: data.rowIndex
+                })
+            }).then(res => res.json()).then(data => {
+                toggleLoading(false);
+                if(data.result === 'Success') {
+                    Swal.fire('Updated!', 'Employee details updated successfully.', 'success');
+                    loadEmployees(); 
+                    loadEmployeeList(); 
+                } else {
+                    Swal.fire('Error', 'Failed to update employee details.', 'error');
+                }
+            }).catch(e => {
+                toggleLoading(false);
+                Swal.fire('Error', 'Network or Script Error: ' + e.message, 'error');
+            });
+        }
+
+
+        function deleteEmployee(rowIndex) {
+            Swal.fire({
+                title: 'Security Access',
+                html: 'Enter Admin PIN to <b style="color:red">DELETE</b> this employee',
+                input: 'password',
+                inputAttributes: { autocapitalize: 'off', placeholder: 'Enter 4-digit PIN' },
+                iconHtml: '<i class="fas fa-user-times" style="font-size: 3rem; color: #dc3545;"></i>',
+                customClass: { icon: 'swal2-custom-icon' },
+                showCancelButton: true,
+                confirmButtonText: 'Unlock & Delete',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    toggleLoading(true);
+                    fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'deleteEmployee', rowIndex: rowIndex, password: result.value })
+                    }).then(res => res.json()).then(data => {
+                        toggleLoading(false);
+                        if(data.result === 'Success') {
+                            Swal.fire('Deleted!', 'Employee deleted successfully.', 'success');
+                            loadEmployees(); // Reload datalist
+                            loadEmployeeList(); // Reload table list
+                        } else {
+                            Swal.fire('Access Denied', 'Incorrect PIN Number!', 'error');
+                        }
+                    }).catch(e => {
+                        toggleLoading(false);
+                        Swal.fire('Error', 'Network or Script Error: ' + e.message, 'error');
+                    });
+                }
+            });
+        }
+
 
         function setupEnterKey() {
             let inputs = document.querySelectorAll("input, select");
@@ -622,12 +942,10 @@
                 input.addEventListener("keydown", function(e) {
                     if (e.key === "Enter") {
                         e.preventDefault();
-                        // --- FIX START: Detect 'leave' field and submit ---
                         if (input.id === 'leave') {
                             submitPayslip('save');
                             return;
                         }
-                        // --- FIX END ---
                         if (inputs[index + 1]) inputs[index + 1].focus();
                     }
                 });
