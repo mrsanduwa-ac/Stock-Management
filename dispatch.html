@@ -480,7 +480,7 @@
                             <select id="savedSessionsSelect" class="flex-grow p-3"><option value=""></option></select>
                             <button id="loadSelectedSessionBtn" class="px-6 py-3 rounded-lg font-semibold shadow-md btn btn-primary"></button>
                         </div>
-                        <button id="deleteSelectedSessionBtn" class="mt-4 w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-danger"></button>
+                        <!-- DELETED: The Session Delete Button was removed from here as requested -->
                     </div>
                 </aside>
             </main>
@@ -527,9 +527,11 @@
         <!-- Print content will be generated here by JavaScript -->
     </div>
 
-    <!-- Local audio files as per original request -->
+    <!-- Local audio files -->
     <audio id="successSound" src="play.mp3" preload="auto"></audio>
     <audio id="errorSound" src="error.mp3" preload="auto"></audio>
+    <!-- NEW: Batch Alert Sound -->
+    <audio id="batchAlertSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
     <script>
         // =========================================================================
@@ -549,6 +551,11 @@
         let minuteBeepTimeout = null;
         let isBeepingActive = false;
         
+        // NEW: Batch Notification Variables
+        let batchTimer = null;
+        const BATCH_WAIT_TIME = 10000; // 10 seconds
+        let lastNotification = null;
+
         // NEW: TTS Object and Voice Setup
         const tts = window.speechSynthesis;
         let ttsVoice = null;
@@ -576,7 +583,9 @@
         }
         
         const el = {
-            appContainer: document.getElementById('app-container'), appTitle: document.getElementById("appTitle"), scanOrderDescription: document.getElementById("scanOrderDescription"), uniqueOrderCountLabel: document.getElementById("uniqueOrderCountLabel"), orderScanInput: document.getElementById("orderScanInput"), addOrderBarcodeBtn: document.getElementById("addOrderBarcodeBtn"), statusMessage: document.getElementById("statusMessage"), scannedListHeader: document.getElementById("scannedListHeader"), scannedOrderBarcodesList: document.getElementById("scannedOrderBarcodesList"), noOrderBarcodesMessage: document.getElementById("noOrderBarcodesMessage"), orderListContainer: document.getElementById("orderListContainer"), returnToTodayBtn: document.getElementById("returnToTodayBtn"), exportTitle: document.getElementById("exportTitle"), printScannedOrderBtn: document.getElementById("printScannedOrderBtn"), downloadCsvBtn: document.getElementById("downloadCsvBtn"), loadPreviousOrdersTitle: document.getElementById("loadPreviousOrdersTitle"), autoSaveStatus: document.getElementById("autoSaveStatus"), searchByDateLabel: document.getElementById("searchByDateLabel"), searchByDate: document.getElementById("searchByDate"), resetDateFilterBtn: document.getElementById("resetDateFilterBtn"), savedSessionsSelect: document.getElementById("savedSessionsSelect"), loadSelectedSessionBtn: document.getElementById("loadSelectedSessionBtn"), deleteSelectedSessionBtn: document.getElementById("deleteSelectedSessionBtn"), liveClock: document.getElementById("live-clock"), saveToSheetBtn: document.getElementById('saveToSheetBtn'), saveBtnText: document.getElementById('saveBtnText'), saveBtnSpinner: document.getElementById('saveBtnSpinner'), sheetStatus: document.getElementById('sheetStatus'), liveSessionDisplay: document.getElementById('liveSessionDisplay'), liveSessionName: document.getElementById('liveSessionName'), manualSaveBtn: document.getElementById('manualSaveBtn'), manualSaveBtnText: document.getElementById('manualSaveBtnText'), manualSaveBtnSpinner: document.getElementById('manualSaveBtnSpinner'), barcodeSearchInput: document.getElementById('barcodeSearchInput'), barcodeSearchBtn: document.getElementById('barcodeSearchBtn'), barcodeSearchResult: document.getElementById('barcodeSearchResult'),
+            appContainer: document.getElementById('app-container'), appTitle: document.getElementById("appTitle"), scanOrderDescription: document.getElementById("scanOrderDescription"), uniqueOrderCountLabel: document.getElementById("uniqueOrderCountLabel"), orderScanInput: document.getElementById("orderScanInput"), addOrderBarcodeBtn: document.getElementById("addOrderBarcodeBtn"), statusMessage: document.getElementById("statusMessage"), scannedListHeader: document.getElementById("scannedListHeader"), scannedOrderBarcodesList: document.getElementById("scannedOrderBarcodesList"), noOrderBarcodesMessage: document.getElementById("noOrderBarcodesMessage"), orderListContainer: document.getElementById("orderListContainer"), returnToTodayBtn: document.getElementById("returnToTodayBtn"), exportTitle: document.getElementById("exportTitle"), printScannedOrderBtn: document.getElementById("printScannedOrderBtn"), downloadCsvBtn: document.getElementById("downloadCsvBtn"), loadPreviousOrdersTitle: document.getElementById("loadPreviousOrdersTitle"), autoSaveStatus: document.getElementById("autoSaveStatus"), searchByDateLabel: document.getElementById("searchByDateLabel"), searchByDate: document.getElementById("searchByDate"), resetDateFilterBtn: document.getElementById("resetDateFilterBtn"), savedSessionsSelect: document.getElementById("savedSessionsSelect"), loadSelectedSessionBtn: document.getElementById("loadSelectedSessionBtn"), 
+            // deleteSelectedSessionBtn REMOVED
+            liveClock: document.getElementById("live-clock"), saveToSheetBtn: document.getElementById('saveToSheetBtn'), saveBtnText: document.getElementById('saveBtnText'), saveBtnSpinner: document.getElementById('saveBtnSpinner'), sheetStatus: document.getElementById('sheetStatus'), liveSessionDisplay: document.getElementById('liveSessionDisplay'), liveSessionName: document.getElementById('liveSessionName'), manualSaveBtn: document.getElementById('manualSaveBtn'), manualSaveBtnText: document.getElementById('manualSaveBtnText'), manualSaveBtnSpinner: document.getElementById('manualSaveBtnSpinner'), barcodeSearchInput: document.getElementById('barcodeSearchInput'), barcodeSearchBtn: document.getElementById('barcodeSearchBtn'), barcodeSearchResult: document.getElementById('barcodeSearchResult'),
             cameraModal: document.getElementById('camera-modal'), openCameraBtn: document.getElementById('openCameraBtn'), closeCameraBtn: document.getElementById('closeCameraBtn'),
             // Network Status Elements
             connectionStatus: document.getElementById('connectionStatus'),
@@ -593,67 +602,47 @@
             recycleBinList: document.getElementById('recycleBinList'),
             noRecycleItems: document.getElementById('noRecycleItems'),
             restoreSelectedBtn: document.getElementById('restoreSelectedBtn'),
+            // Audio
+            batchAlertSound: document.getElementById('batchAlertSound'),
         };
 
 
         // --- NEW GLOBAL BARCODE SCANNER CAPTURE LOGIC ---
-        // This logic captures the full barcode sequence globally and submits it upon detecting 'Enter'.
         let barcodeBuffer = '';
         let barcodeTimer = null;
-        const BARCODE_TIMEOUT = 50; // Max time gap (ms) between key presses to be considered a single scan sequence
+        const BARCODE_TIMEOUT = 50; 
 
         document.addEventListener('keydown', (e) => {
-            
-            // 1. If the input is ALREADY focused, only listen for Enter key for immediate submission
             if (document.activeElement === el.orderScanInput) {
                 if (e.key === 'Enter') {
                     e.preventDefault(); 
-                    // Add a tiny delay to ensure the last key's value is processed.
                     setTimeout(() => handleOrderScanAddBarcode(), 50); 
                 }
                 return; 
             }
-            
-            // 2. If focus is on another interactive form element (e.g., search, select, button), ignore global capture.
             const activeTag = document.activeElement.tagName;
             if (activeTag === 'INPUT' || activeTag === 'SELECT' || activeTag === 'TEXTAREA' || activeTag === 'BUTTON') {
                  return;
             }
-
-            // --- GLOBAL SCANNER CAPTURE LOGIC (Only runs if input is NOT on a form element or orderScanInput) ---
-            
-            // Reset timer for sequence continuation
             clearTimeout(barcodeTimer);
-
-            // Check for the termination character (Enter)
             if (e.key === 'Enter') {
-                e.preventDefault(); // Stop default Enter action
-                
-                // If the buffer has content, process it
+                e.preventDefault(); 
                 if (barcodeBuffer.length > 0) {
                     el.orderScanInput.value = barcodeBuffer;
-                    // Immediately focus the element before processing (for visual confirmation)
                     el.orderScanInput.focus(); 
                     handleOrderScanAddBarcode();
-                    barcodeBuffer = ''; // Clear buffer after submission
+                    barcodeBuffer = ''; 
                 }
                 return;
             }
-
-            // Capture character input (Only alphanumeric keys that a scanner would typically send)
             if (e.key.length === 1 && e.key.match(/[a-zA-Z0-9]/)) {
                 barcodeBuffer += e.key;
-                
-                // IMPORTANT: Prevent default action so the character doesn't appear in the active element (or document body).
                 e.preventDefault(); 
-                
-                // Set a short timer to clear the buffer if the key sequence stops (prevents slow manual typing from triggering scans)
                 barcodeTimer = setTimeout(() => {
                     barcodeBuffer = '';
                 }, BARCODE_TIMEOUT);
             }
         });
-        // --- END NEW GLOBAL BARCODE SCANNER CAPTURE LOGIC ---
         
         // --- NEW: ANIMATED FLIP COUNTER LOGIC ---
         const FlipCounter = {
@@ -669,18 +658,14 @@
             
             update: function(newValue, noAnimation = false) {
                 if (newValue < 0) newValue = 0;
-                // Pad up to 4 digits for a consistent display (max 9999 orders)
                 const oldValueStr = String(this.value).padStart(4, '0');
                 this.value = newValue;
-                const newValueStr = String(newValue > 9999 ? 9999 : newValue).padStart(4, '0'); // Limit to 9999
+                const newValueStr = String(newValue > 9999 ? 9999 : newValue).padStart(4, '0');
                 
-                // Ensure there are 4 digit containers
                 while (this.digitContainers.length < 4) {
                     const container = document.createElement('div');
                     container.className = 'flip-digit-container';
-                    // Inside container: two layers, one for current, one for next
                     container.innerHTML = `<div class="flip-digit current">0</div><div class="flip-digit next">0</div>`;
-                    // FIX: Ensure 'this.element' exists before appending
                     if (this.element) {
                         this.element.appendChild(container);
                     }
@@ -698,10 +683,8 @@
                 }
             },
             
-            // NEW: Success Blink Effect
             blinkSuccess: function() {
                 el.animatedCounter.classList.add('success-blink');
-                // The animation lasts 1 second (0.2s * 5 iterations in CSS), so we remove the class after that
                 setTimeout(() => {
                     el.animatedCounter.classList.remove('success-blink');
                 }, 1000); 
@@ -717,37 +700,25 @@
                     currentElement.style.transform = 'translateY(0%)';
                     return;
                 }
-
-                // 1. Initial State Setup
                 nextElement.textContent = newDigit;
-                
-                // Reset positions (instant, no transition)
                 currentElement.style.transition = 'none';
                 nextElement.style.transition = 'none';
                 currentElement.style.transform = 'translateY(0%)';
                 nextElement.style.transform = 'translateY(100%)';
                 
-                // 2. Start Animation (after reflow/delay)
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
                         currentElement.style.transition = 'transform 0.5s ease-out';
                         nextElement.style.transition = 'transform 0.5s ease-out';
-
-                        currentElement.style.transform = 'translateY(-100%)'; // Move current digit up
-                        nextElement.style.transform = 'translateY(0%)';      // Move next digit up to replace
-                        
-                        // 3. Final State (Swap content and reset for next animation)
+                        currentElement.style.transform = 'translateY(-100%)'; 
+                        nextElement.style.transform = 'translateY(0%)';      
                         setTimeout(() => {
-                            // Set the final state immediately after the transition ends
                             currentElement.textContent = newDigit;
-                            
-                            // Reset position by instantly moving back to 0% after animation
                             currentElement.style.transition = 'none';
                             currentElement.style.transform = 'translateY(0%)';
                             nextElement.style.transition = 'none';
                             nextElement.style.transform = 'translateY(100%)';
-                            
-                        }, 500); // Match CSS transition duration
+                        }, 500); 
                     });
                 });
             }
@@ -768,7 +739,7 @@
             el.searchByDateLabel.textContent = "Filter by Date"; 
             el.resetDateFilterBtn.textContent = "Reset"; 
             el.loadSelectedSessionBtn.textContent = "View"; 
-            el.deleteSelectedSessionBtn.textContent = "Delete"; 
+            // el.deleteSelectedSessionBtn.textContent = "Delete"; // REMOVED
             el.orderScanInput.placeholder = "Barcode number..."; 
             el.savedSessionsSelect.innerHTML = `<option value="">Loading...</option>`; 
             el.manualSaveBtnText.textContent = "Save Current Session"; 
@@ -777,12 +748,8 @@
         function updateClock() { 
             const now = new Date();
             el.liveClock.textContent = now.toLocaleString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: !0 }); 
-            
-            // NEW: Blinking Logic (7:15 PM to 8:00 PM local time)
             const hour = now.getHours();
             const minute = now.getMinutes();
-
-            // Check if time is between 19:15:00 and 20:00:00 (exclusive of 20:00:00)
             const isAlertTime = (hour === 19 && minute >= 15) || (hour === 20 && minute === 0);
             
             if (isAlertTime && hour < 20) {
@@ -792,21 +759,16 @@
                 el.liveClock.classList.remove('blinking-alert');
                 el.appTitle.classList.remove('blinking-alert');
             }
-            
-            // Check if TTS system needs to be started or stopped
             updateBeepAlert(isAlertTime && hour < 20, now);
         }
 
-        // NEW: Time Announcement Logic (Replaces the Beep Sound)
         function speakTime() {
-            // Check if speech is already running or if voice is unavailable
             if (!tts.speaking && ttsVoice) {
                 const now = new Date();
                 const hr = now.getHours() % 12 || 12;
                 const min = now.getMinutes();
                 const ampm = now.getHours() >= 12 ? 'P M' : 'A M';
                 const timeText = `The time is ${hr} ${min === 0 ? '' : min} ${ampm}`;
-                
                 const utterance = new SpeechSynthesisUtterance(timeText);
                 utterance.voice = ttsVoice;
                 utterance.rate = 1.0; 
@@ -817,34 +779,22 @@
         
         function updateBeepAlert(isAlertTime, now) {
             if (isAlertTime && !isBeepingActive) {
-                // START Announcement
                 isBeepingActive = true;
-                
-                // Calculate time until the next minute start
                 const secondsToNextMinute = 60 - now.getSeconds();
-                
-                // Set the initial announcement after the calculated time
                 minuteBeepTimeout = setTimeout(() => {
                     speakTime();
-                    
-                    // Set up interval for subsequent announcements (every 60 seconds)
                     minuteBeepTimeout = setInterval(() => {
                         const current = new Date();
                         const currentHour = current.getHours();
-                        // Check time again before speaking to ensure we don't speak at exactly 20:00:00
                         if (currentHour < 20) {
                            speakTime();
                         } else {
-                            // Stop Announcement when the window closes (at 20:00:00)
                             clearInterval(minuteBeepTimeout);
                             isBeepingActive = false;
                         }
-                    }, 60000); // 60 seconds
-                    
+                    }, 60000); 
                 }, secondsToNextMinute * 1000);
-
             } else if (!isAlertTime && isBeepingActive) {
-                // STOP Announcement (If outside the window but interval is still running)
                 clearTimeout(minuteBeepTimeout);
                 clearInterval(minuteBeepTimeout);
                 isBeepingActive = false;
@@ -856,7 +806,6 @@
         
         // --- API COMMUNICATION ---
        async function apiCall(action, payload = {}) {
-            // Check network status before making an API call
             if (!navigator.onLine && action !== 'getSessionData' && action !== 'getAllSessions') {
                  Swal.fire("Offline Error", "Cannot perform this action while offline. Please check your internet connection.", "error");
                  throw new Error("Offline");
@@ -870,45 +819,31 @@
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({ action, ...payload })
                 });
-                
-                // Check for network errors that aren't caught by fetch but may indicate CORS issues
                 if (!response.ok && response.status !== 200) throw new Error(`Network response error: ${response.status} ${response.statusText}`);
-
-                // Attempt to read JSON, even if the status is not ok (GAS often returns errors as JSON)
                 const data = await response.json();
-                
                 if (data.status !== 'success') {
-                    // This handles custom errors sent by the Google Script
                     throw new Error(data.message || 'Unknown Google Script error.');
                 }
                 return data;
 
             } catch (error) {
                 console.error(`API Call Failed for action "${action}":`, error);
-                
                 let errorMessage = error.message;
-                
-                // Handle the CORS/Network error specifically shown in your console
                 if (error instanceof TypeError && (error.message === 'Failed to fetch' || error.message.includes('CORS'))) {
                     errorMessage = "Critical CORS/Network Error: Cannot connect to Google Script. Ensure your file is hosted on a secure server (HTTPS) and the script URL is correct. Check your browser console for details.";
-                    // Only show this critical error once on initial failure for session loading
                     if (action === 'getAllSessions' || action === 'getSessionData') {
-                       // Do not show Swal here, let the caller function handle the initial UI error message
                        console.error(errorMessage);
                     } else {
-                       // Show Swal for user-triggered actions (save, delete, etc.)
                        Swal.fire("Critical API Error", errorMessage, "error");
                     }
                 } else if (!error.message.includes('Session not found') && error.message !== 'Offline') {
-                    // Existing error handling for non-critical errors
                     Swal.fire("API Error", `An error occurred while communicating with the server: ${error.message}`, "error");
                 }
-                
                 throw new Error(errorMessage); 
             }
         }
         
-        // --- RECYCLE BIN LOGIC (using Local Storage) ---
+        // --- RECYCLE BIN LOGIC ---
         function loadRecycleBin() {
             try {
                 const storedBin = localStorage.getItem('recycleBin');
@@ -937,15 +872,12 @@
             recycleBin.forEach((item, index) => {
                 const listItem = document.createElement("li");
                 listItem.className = "flex items-center justify-between p-2 rounded-md text-sm bg-white shadow-sm border border-gray-200 text-gray-700";
-                
-                // Checkbox for selection
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.value = item.barcode;
                 checkbox.id = `rb-item-${index}`;
                 checkbox.className = 'mr-3 h-4 w-4 text-primary rounded focus:ring-primary';
 
-                // Barcode text and deletion time
                 const textDiv = document.createElement('label');
                 textDiv.htmlFor = `rb-item-${index}`;
                 textDiv.className = 'flex-grow cursor-pointer';
@@ -976,23 +908,16 @@
             if (selected.length === 0) {
                 return Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'No items selected!', showConfirmButton: false, timer: 1500 });
             }
-
-            // Move items back to scannedBarcodes (at the top, newest first)
             selected.forEach(barcode => {
                 if (!scannedBarcodes.includes(barcode)) {
                     scannedBarcodes.unshift(barcode);
                 }
             });
-            
-            // Remove restored items from recycleBin
             recycleBin = recycleBin.filter(item => !selected.includes(item.barcode));
             saveRecycleBin();
-            
-            // Update the main UI
             returnToTodayView(); 
             closeRecycleBin();
             autoSaveSession();
-            
             Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `${selected.length} item(s) restored!`, showConfirmButton: false, timer: 2000 });
         }
         
@@ -1043,11 +968,9 @@
             el.orderScanInput.placeholder = isViewingToday ? "Barcode number..." : "Viewing past session...";
 
             if (hasBarcodes) {
-                // Barcodes are stored in reverse order (newest first). Display them in reverse (newest at top) but number them 1-based (newest is #1)
                 currentlyViewingBarcodes.forEach((barcode, index) => {
                     const listItem = document.createElement("li");
                     listItem.style.animation = `slideInFromLeft 0.5s ease-out forwards`;
-                    // Calculate scan number based on current length - index (since it's newest first)
                     const scanNumber = currentCount - index; 
                     if(isViewingToday) {
                         listItem.className = "flex items-center justify-between p-2 rounded-md text-base bg-white shadow-sm border border-gray-200 text-gray-800";
@@ -1056,7 +979,6 @@
                         const barcodeSpan = document.createElement('span'); barcodeSpan.textContent = barcode;
                         leftDiv.appendChild(numberSpan); leftDiv.appendChild(barcodeSpan);
                         
-                        // Pass the actual index in the currentlyViewingBarcodes array (which is scannedBarcodes)
                         const deleteBtn = document.createElement('button'); 
                         deleteBtn.textContent = "Delete"; 
                         deleteBtn.className = "btn btn-danger px-3 py-1 text-xs rounded-md font-semibold"; 
@@ -1077,41 +999,56 @@
             
             updateNetworkStatus();
             
-            // NEW: Ensure input is focused after UI update
             if (isViewingToday) {
                 el.orderScanInput.focus();
+            }
+        }
+
+        // --- NEW: NOTIFICATION HELPER FUNCTIONS ---
+        function requestNotifyPermission() {
+            if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        console.log("Notifications enabled");
+                    }
+                });
+            }
+        }
+
+        function triggerBatchAlert() {
+            // 1. Play Sound
+            if(el.batchAlertSound) {
+                el.batchAlertSound.play().catch(e => console.log("Audio play failed:", e));
+            }
+
+            // 2. Show Browser Notification
+            if (Notification.permission === "granted") {
+                lastNotification = new Notification("✅ Batch Completed", {
+                    body: `Total Scanned: ${scannedBarcodes.length} Items`,
+                    icon: "https://cdn-icons-png.flaticon.com/512/190/190411.png",
+                    tag: "batch-alert" // Ensures we update the existing notification rather than spamming
+                });
             }
         }
         
         // --- APPLICATION LOGIC ---
         async function initializeApp() {
             setInitialTexts(); 
-            
             FlipCounter.initialize(0); 
-            
             updateClock(); 
             setInterval(updateClock, 1000); 
-
-            // Load recycle bin at startup
             loadRecycleBin(); 
             
             currentSessionId = getTodaySessionId(); document.title = "World Out Fashion - OMS";
             
-            // --- REMOVED OLD problematic global keyup listener here (lines ~403-408) ---
-            // The new document.addEventListener('keydown', ...) handles this globally now.
-            
-            // --- REMOVED OLD orderScanInput keypress listener here (lines ~410-416) ---
-            // The new document.addEventListener('keydown', ...) handles this submission now.
-
             el.addOrderBarcodeBtn.addEventListener("click", handleOrderScanAddBarcode);
             el.returnToTodayBtn.addEventListener("click", returnToTodayView);
             el.manualSaveBtn.addEventListener("click", handleManualSave);
             el.loadSelectedSessionBtn.addEventListener("click", loadSelectedSession);
-            el.deleteSelectedSessionBtn.addEventListener("click", deleteSelectedSession);
+            // el.deleteSelectedSessionBtn REMOVED
             el.searchByDate.addEventListener("input", filterSessionsByDate);
             el.resetDateFilterBtn.addEventListener("click", () => { el.searchByDate.value = ""; filterSessionsByDate(); });
             el.barcodeSearchBtn.addEventListener("click", handleBarcodeSearch);
-            // We keep the Enter press listener for the Search box as it is separate from the main barcode flow
             el.barcodeSearchInput.addEventListener("keypress", (e) => { if (e.key === 'Enter') handleBarcodeSearch(); }); 
             el.saveToSheetBtn.addEventListener("click", saveDataToGoogleSheet);
             el.printScannedOrderBtn.addEventListener("click", printScannedOrder);
@@ -1119,20 +1056,16 @@
             el.openCameraBtn.addEventListener("click", startCameraScan);
             el.closeCameraBtn.addEventListener("click", stopCameraScan);
             
-            // NEW Recycle Bin Listeners
             el.openRecycleBinBtn.addEventListener("click", openRecycleBin);
             el.closeRecycleBinBtn.addEventListener("click", closeRecycleBin);
             el.restoreSelectedBtn.addEventListener("click", handleRestoreSelected);
 
-
-            // Network Initialization
             window.addEventListener('online', updateNetworkStatus);
             window.addEventListener('offline', updateNetworkStatus);
             updateNetworkStatus(); 
             
             await reloadTodaysData();
             
-            // --- NEW FIX: Changed how getAllSessions is called to better handle initial errors ---
             try { 
                 el.savedSessionsSelect.innerHTML = `<option value="">Loading previous sessions...</option>`;
                 const data = await apiCall("getAllSessions"); 
@@ -1155,7 +1088,6 @@
                  if (error.message.includes('Session not found')) { 
                      scannedBarcodes = []; 
                  } else {
-                     // NEW FIX: If there's an API error loading today's data, initialize with empty array
                      scannedBarcodes = [];
                      console.error("Failed to load today's session data due to API error:", error.message);
                  }
@@ -1164,6 +1096,15 @@
         }
         
         function handleOrderScanAddBarcode() {
+            // --- NEW: Request notification permission on first interaction ---
+            if (Notification.permission === "default") {
+                requestNotifyPermission();
+            }
+
+            // --- NEW: Reset Batch Timer & Clear Notification ---
+            if (lastNotification) lastNotification.close();
+            clearTimeout(batchTimer);
+
             const barcode = el.orderScanInput.value.trim();
             if (barcode === "") return;
             if (scannedBarcodes.includes(barcode)) {
@@ -1171,7 +1112,6 @@
                 const errorAudio = document.getElementById('errorSound');
                 if (errorAudio) { errorAudio.pause(); errorAudio.currentTime = 0; errorAudio.play().catch(console.error); }
             } else {
-                // Add to the front of the array (unshift) so the newest is always index 0
                 scannedBarcodes.unshift(barcode); 
                 currentlyViewingBarcodes = scannedBarcodes;
                 showStatusMessage(`Success: ${barcode}`, "success");
@@ -1182,12 +1122,13 @@
             }
             el.orderScanInput.value = "";
             el.orderScanInput.focus();
+
+            // --- NEW: Start Batch Timer (10 seconds) ---
+            batchTimer = setTimeout(triggerBatchAlert, BATCH_WAIT_TIME);
         }
         
         function handleDeleteSingleBarcode(indexToDelete) {
-            // Index is the direct index in the currentlyViewingBarcodes array (which is scannedBarcodes)
             const barcodeToDelete = currentlyViewingBarcodes[indexToDelete];
-            
             Swal.fire({ 
                 title: 'Are you sure?', 
                 text: `Move barcode: ${barcodeToDelete} to Recycle Bin?`, 
@@ -1198,31 +1139,16 @@
                 cancelButtonText: 'Cancel'
             }).then((result) => { 
                 if (result.isConfirmed) { 
-                    
-                    // 1. Add to Recycle Bin
                     recycleBin.push({
                         barcode: barcodeToDelete,
                         deletedAt: new Date().toISOString()
                     });
                     saveRecycleBin(); 
-
-                    // 2. Delete from the main array
                     scannedBarcodes.splice(indexToDelete, 1); 
                     currentlyViewingBarcodes = [...scannedBarcodes]; 
-                    
-                    // 3. Update UI and AutoSave
                     updateUiFromState(); 
                     autoSaveSession(); 
-                    
-                    // 4. Show Side Notification (Toast)
-                    Swal.fire({ 
-                        toast: true, 
-                        position: 'top-end', 
-                        icon: 'info', 
-                        title: 'Item moved to Recycle Bin!', 
-                        showConfirmButton: false, 
-                        timer: 2000
-                    });
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Item moved to Recycle Bin!', showConfirmButton: false, timer: 2000 });
                 } 
             });
         }
@@ -1236,7 +1162,6 @@
             if (!sessionId) { return Swal.fire({ title: "Please select a session to view.", icon: 'info' }); }
             el.loadSelectedSessionBtn.disabled = true; el.loadSelectedSessionBtn.textContent = "Loading...";
             
-            // --- NEW FIX: Improved error handling for load selected session ---
             try { 
                 const data = await apiCall("getSessionData", { sessionId: sessionId }); 
                 currentlyViewingSessionId = sessionId; 
@@ -1244,7 +1169,6 @@
                 updateUiFromState(); 
             } catch (error) { 
                 console.error("Failed to load selected session:", error.message);
-                // Inform user only if it's not a 'session not found' error
                  if (!error.message.includes('Session not found')) {
                      Swal.fire("Load Error", `Could not load session data: ${error.message}. Returning to today's view.`, "error");
                  }
@@ -1269,9 +1193,7 @@
         async function handleManualSave() {
             el.manualSaveBtn.disabled = true; el.manualSaveBtnText.classList.add('hidden'); el.manualSaveBtnSpinner.classList.remove('hidden');
             try { await autoSaveSession(true); } 
-            catch (error) { 
-                // Error handling is done inside autoSaveSession now
-            } 
+            catch (error) { } 
             finally { 
                 el.manualSaveBtn.disabled = !navigator.onLine; 
                 el.manualSaveBtnText.classList.remove('hidden'); el.manualSaveBtnSpinner.classList.add('hidden'); 
@@ -1280,11 +1202,9 @@
         
         async function autoSaveSession(isManual = false) {
             if (!navigator.onLine) {
-                // If offline, just update the status without trying to save
                 el.autoSaveStatus.textContent = '✗ Offline'; 
                 el.autoSaveStatus.style.color = 'var(--danger)'; 
                 el.autoSaveStatus.classList.add("show"); 
-                // Set to success color on clear for visual continuity (3 seconds)
                 setTimeout(() => { 
                     el.autoSaveStatus.classList.remove("show"); 
                     el.autoSaveStatus.textContent = '✓ Saved'; 
@@ -1294,26 +1214,20 @@
             }
             try { 
                 await apiCall("saveSession", { sessionId: currentSessionId, barcodes: scannedBarcodes });
-                
-                // NEW: Trigger Flip Counter Blink
                 FlipCounter.blinkSuccess();
-                
                 if (isManual) { 
                     Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Session saved!', showConfirmButton: false, timer: 2000 }); 
                 } else { 
-                    // Show auto-save success status briefly (2 seconds)
-                    el.autoSaveStatus.classList.remove("show"); // Ensure class is removed first
+                    el.autoSaveStatus.classList.remove("show"); 
                     el.autoSaveStatus.textContent = '✓ Saved'; 
                     el.autoSaveStatus.style.color = 'var(--success)'; 
                     el.autoSaveStatus.classList.add("show"); 
                     setTimeout(() => { el.autoSaveStatus.classList.remove("show") }, 2000); 
                 }
             } catch (error) { 
-                // NEW: Error Status Update (3 seconds)
                 el.autoSaveStatus.textContent = '✗ Save Failed'; 
                 el.autoSaveStatus.style.color = 'var(--danger)'; 
                 el.autoSaveStatus.classList.add("show"); 
-                // Set to success color on clear for visual continuity
                 setTimeout(() => { 
                     el.autoSaveStatus.classList.remove("show"); 
                     el.autoSaveStatus.textContent = '✓ Saved'; 
@@ -1327,17 +1241,12 @@
             if (barcodes.length === 0) {
                 return Swal.fire({ title: "No items to print.", icon: "info" });
             }
-
-            // The list is stored newest first, but print should be oldest first (#1, #2, ...)
             const itemsToPrint = [...barcodes].reverse(); 
             const totalItems = itemsToPrint.length;
-            
-            // Print constants
             const maxItemsPerColumn = 40;
             const columnsPerPage = 5;
-            const maxItemsPerPage = maxItemsPerColumn * columnsPerPage; // 200 items per page
-            
-            el.printArea.innerHTML = ""; // Clear existing print area
+            const maxItemsPerPage = maxItemsPerColumn * columnsPerPage; 
+            el.printArea.innerHTML = ""; 
 
             let pageHtml = "";
             let itemIndex = 0;
@@ -1357,14 +1266,12 @@
                     </div>
                     <div class="print-list-container">
             `;
-            
             const generateSignatureArea = () => `
                 <div class="signature-area">
                     <p style="text-align: center; margin-top: 0; margin-bottom: 5px; font-weight: normal;">Signature:</p>
                     <p style="border-top: 1px solid #000; padding-top: 5px;">Prepared By</p>
                 </div>
             `;
-            
             const generatePageFooter = () => `
                     </div> <!-- Close print-list-container -->
                     <div class="print-footer-watermark">
@@ -1373,53 +1280,32 @@
                 </div>
             `;
             
-            // Loop through all pages
             while (itemIndex < totalItems) {
                 const isLastPage = (totalItems - itemIndex) <= maxItemsPerPage;
                 const itemsForThisPage = Math.min(totalItems - itemIndex, maxItemsPerPage);
-                
                 pageHtml += generatePageHeader(pageNumber);
                 let contentHtml = '';
-                
-                // Determine the maximum item index for the current page
                 const maxIndexForPage = itemIndex + itemsForThisPage;
-                
-                // Loop through columns
                 for (let col = 0; col < columnsPerPage; col++) {
                     const startColIndex = itemIndex + col * maxItemsPerColumn;
-                    
-                    // Only start a column if there are items for it
                     if (startColIndex < maxIndexForPage) {
                         contentHtml += '<div class="print-column">';
-                        
-                        // Determine the end index for this column
                         const endColIndex = Math.min(startColIndex + maxItemsPerColumn, maxIndexForPage);
-                        
-                        // Loop through items in this column
                         for (let i = startColIndex; i < endColIndex; i++) {
                             const itemNumber = i + 1;
                             contentHtml += `<div>${itemNumber}. ${itemsToPrint[i]}</div>`;
                         }
-                        
                         contentHtml += '</div>';
                     }
                 }
-                
                 pageHtml += contentHtml;
-                
-                // Add signature area only on the last page.
-                // The print logic already ensures page breaks occur exactly at 200 items unless totalItems < 200.
                 if (isLastPage) {
                     pageHtml += generateSignatureArea();
                 } 
-                
                 pageHtml += generatePageFooter();
-                
-                // Move to the next page chunk (max 200 items/page)
                 itemIndex = maxIndexForPage; 
                 pageNumber++;
             }
-            
             el.printArea.innerHTML = pageHtml;
             window.print();
         }
@@ -1427,7 +1313,9 @@
         function downloadCsv(){if(0===currentlyViewingBarcodes.length)return void Swal.fire({title:"No items to download.",icon:"info"});const t=[...currentlyViewingBarcodes].reverse();let e="No,Barcode\n";t.forEach((t,a)=>{e+=`${a+1},"${t}"\n`});const a=new Blob([e],{type:"text/csv;charset=utf-8;"}),s=document.createElement("a");s.href=URL.createObjectURL(a),s.download=`scanned_order_${currentlyViewingSessionId}.csv`,s.click()}
         
         function filterSessionsByDate(){const t=el.searchByDate.value;let e=allSessions.filter(e=>e.id!==currentSessionId);t&&(e=e.filter(e=>{const a=new Date(e.createdAt).toISOString().split('T')[0];return a===t})),el.savedSessionsSelect.innerHTML=`<option value="">Select a previous session</option>`,e.sort((t,e)=>e.createdAt-t.createdAt).forEach(t=>{const e=document.createElement("option");e.value=t.id,e.textContent=t.name,el.savedSessionsSelect.appendChild(e)})}
-        function deleteSelectedSession(){const t=el.savedSessionsSelect.value;if(!t)return void Swal.fire({title:"Please select a session to delete.",icon:"info"});Swal.fire({title:"Are you sure?",text:"This will permanently delete the selected session!",icon:"warning",showCancelButton:!0,confirmButtonColor:"var(--danger)",confirmButtonText:"Yes, delete it"}).then(e=>{e.isConfirmed&&apiCall("deleteSession",{sessionId:t}).then(()=>{Swal.fire("Deleted!","The session has been deleted.","success"),allSessions=allSessions.filter(e=>e.id!==t),filterSessionsByDate(),currentlyViewingSessionId===t&&returnToTodayView()}).catch(()=>{})})}
+        
+        // deleteSelectedSession REMOVED
+        
         function saveDataToGoogleSheet() { 
             if (scannedBarcodes.length === 0) { return Swal.fire("No Data", "There are no barcodes for today to save.", "warning"); } 
             if (!navigator.onLine) { return Swal.fire("Offline Error", "Cannot save to Google Sheet while offline.", "error"); }
@@ -1458,14 +1346,13 @@
             handleOrderScanAddBarcode(); 
             stopCameraScan();
             Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Barcode Scanned!', showConfirmButton: false, timer: 1500 });
-            el.orderScanInput.focus(); // Ensure focus returns after closing the camera
+            el.orderScanInput.focus(); 
         }
         function onScanFailure(error) { /* Do nothing to avoid console spam */ }
         function startCameraScan() {
             el.cameraModal.classList.add('show');
             if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); }
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            // Clear input field before starting scan
             el.orderScanInput.value = ""; 
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
                 .catch(err => { Swal.fire("Camera Error", "Could not start the camera. Please check permissions.", "error"); stopCameraScan(); });
@@ -1473,7 +1360,7 @@
         function stopCameraScan() {
             if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().catch(err => {}); }
             el.cameraModal.classList.remove('show');
-            el.orderScanInput.focus(); // Ensure focus returns to the input after closing the camera
+            el.orderScanInput.focus(); 
         }
         
         document.addEventListener("DOMContentLoaded", initializeApp);
