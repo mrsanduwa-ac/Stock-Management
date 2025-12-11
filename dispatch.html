@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="si">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,10 +14,10 @@
             --bg-main: #f8f9fa;
             --bg-card: #ffffff;
             --bg-card-section: #f1f3f5;
-            --color-primary: #005A9C; /* A professional, deep blue */
+            --color-primary: #005A9C;
             --color-primary-hover: #004B80;
-            --color-secondary: #6c757d; /* Muted gray for secondary text */
-            --text-primary: #212529; /* Dark charcoal for primary text */
+            --color-secondary: #6c757d;
+            --text-primary: #212529;
             --border-color: #dee2e6;
             --border-focus: #80bdff;
             --danger: #d9534f;
@@ -30,89 +30,115 @@
             --info-hover: #31b0d5;
         }
         
-        /* Background Animation Keyframes */
         @keyframes subtleGradientAnimation {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
 
-        /* General Styles */
         html { height: 100%; }
         body {
-            /* Centering the container */
             display: flex;
             flex-direction: column; 
             justify-content: space-between;
             align-items: center;
             min-height: 100vh;
-            
-            /* Animated Background */
             background: linear-gradient(-45deg, #e7f5ff, #f8f9fa, #e9ecef, #dee2e6);
             background-size: 400% 400%;
             animation: subtleGradientAnimation 30s ease infinite;
-
             color: var(--text-primary);
             font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
             padding: 0; 
         }
         
         .main-content-wrapper {
-            /* Ensures main app card takes up most space and stays centered */
-            display: flex;
+            display: none; /* Initial hide */
             justify-content: center;
             align-items: flex-start;
             flex-grow: 1;
             width: 100%;
             padding: 1rem; 
             max-width: 1200px; 
-            /* NEW: Disable touch when locked (set by JS) */
             pointer-events: auto;
         }
 
-        /* NEW: Styles for the Touch Lock Overlay (Blocks all touch events when locked) */
-        #touchLockOverlay {
+        /* --- MODE SELECTION SCREEN STYLES --- */
+        #mode-selection-screen {
             position: fixed;
-            inset: 0; /* top, right, bottom, left set to 0 */
-            z-index: 49; /* Below modal (50) but above everything else */
-            background: transparent;
-            pointer-events: none; /* Default: allow touch */
-            transition: background 0.3s;
-        }
-        #touchLockOverlay.locked {
-            pointer-events: auto; /* Block touch */
-            background: rgba(0, 0, 0, 0.05); /* Subtle dark overlay */
-            cursor: not-allowed;
-        }
-        /* Allow scrolling even when lock is active (if content overflows) */
-        .main-content-wrapper.locked {
-            pointer-events: none;
+            inset: 0;
+            background: linear-gradient(-45deg, #e7f5ff, #f8f9fa, #e9ecef, #dee2e6);
+            background-size: 400% 400%;
+            animation: subtleGradientAnimation 30s ease infinite;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: opacity 0.3s;
         }
 
+        .mode-card {
+            background-color: var(--bg-card);
+            border: 2px solid var(--color-primary);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            width: 100%;
+            max-width: 300px;
+        }
+        .mode-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .mode-icon {
+            color: var(--color-primary);
+            transition: color 0.3s;
+        }
+
+        /* --- LOADING OVERLAY --- */
+        #loadingOverlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-main);
+            display: none; 
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 150;
+            transition: opacity 0.3s ease;
+        }
+        .spinner {
+            --size: 60px;
+            --border: 8px;
+            width: var(--size);
+            height: var(--size);
+            border-radius: 50%;
+            border: var(--border) solid #f3f3f3;
+            border-top: var(--border) solid var(--color-primary);
+            filter: drop-shadow(0 0 5px var(--color-primary));
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Touch Lock Overlay */
+        #touchLockOverlay {
+            position: fixed; inset: 0; z-index: 49; background: transparent; pointer-events: none; transition: background 0.3s;
+        }
+        #touchLockOverlay.locked {
+            pointer-events: auto; background: rgba(0, 0, 0, 0.05); cursor: not-allowed;
+        }
+        .main-content-wrapper.locked { pointer-events: none; }
 
         .overflow-y-auto::-webkit-scrollbar { width: 8px; }
         .overflow-y-auto::-webkit-scrollbar-track { background: #e9ecef; }
         .overflow-y-auto::-webkit-scrollbar-thumb { background: #adb5bd; border-radius: 10px; }
 
-        /* Card and Container Styles */
-        .card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            width: 100%;
-        }
-        .bg-card-section {
-            background-color: var(--bg-card-section);
-        }
-        .border-theme {
-            border-color: var(--border-color);
-        }
-
-        /* Text and Headers */
+        /* Card and Button Styles */
+        .card { background-color: var(--bg-card); border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.08); width: 100%; }
+        .bg-card-section { background-color: var(--bg-card-section); }
+        .border-theme { border-color: var(--border-color); }
         h1, h2 { color: var(--color-primary); }
         .text-secondary { color: var(--color-secondary); }
 
-        /* Buttons */
         .btn { transition: background-color .2s, transform .1s, box-shadow .2s; border: none; }
         .btn:active { transform: scale(.98); }
         .btn-primary { background-color: var(--color-primary); color: white; }
@@ -128,192 +154,49 @@
         .btn-warning { background-color: var(--warning); color: white; }
         .btn-warning:hover { background-color: var(--warning-hover); }
 
-        /* Inputs and Forms */
-        input, select, textarea {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            border-radius: 0.375rem; /* rounded-lg */
-        }
-        input::placeholder, textarea::placeholder { color: var(--color-secondary); opacity: 0.8; }
-        input:focus, select:focus, textarea:focus {
-             outline: none;
-             border-color: var(--border-focus);
-             box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
-        }
+        input, select, textarea { background-color: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.375rem; }
+        input::placeholder { color: var(--color-secondary); opacity: 0.8; }
+        input:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); }
 
-        /* Status Messages */
-        .status-message { transition: all .4s ease-in-out; opacity: 0; transform: translateY(-15px); max-height: 0; margin-top: 0; }
-        .status-message.show { opacity: 1; transform: translateY(0); max-height: 100px; padding: .75rem; margin-top: .75rem; }
+        .status-message { transition: all .4s ease-in-out; opacity: 0; transform: translateY(-15px); max-height: 0; margin-top: 0; padding: 0 !important; }
+        .status-message.show { opacity: 1; transform: translateY(0); max-height: 100px; padding: .75rem !important; margin-top: .75rem; }
         .bg-green-status { background-color: #dff0d8; border: 1px solid #d6e9c6; color: #3c763d; }
         .bg-red-status { background-color: #f2dede; border: 1px solid #ebccd1; color: #a94442; }
         .auto-save-status { opacity: 0; transition: opacity .5s ease; color: var(--success); }
         .auto-save-status.show { opacity: 1; }
         
-        /* Camera Modal */
         #camera-modal { display: none; }
         #camera-modal.show { display: flex; }
-        
-        /* Recycle Bin Modal */
         #recycle-bin-modal { display: none; }
         #recycle-bin-modal.show { display: flex; }
 
-        /* Print Styles (UPDATED FOR SINGLE PAGE VIEW) */
-        @page { 
-            size: auto; 
-            margin: 0; /* Remove default browser print margin */
-        }
-        
+        @page { size: auto; margin: 0; }
         @media print {
-            body { 
-                display: block; 
-                background: #fff !important; 
-            }
-            .card {
-                box-shadow: none !important;
-                border: none !important;
-                max-width: 100% !important;
-            }
-            /* Hide everything except the print area */
-            body > *:not(#print-area):not(footer):not(#touchLockBtnContainer) { display: none !important; }
-            
-            #print-area { 
-                display: block !important; 
-                position: relative; /* Changed to relative for scroll/single page */
-                left: 0; 
-                top: 0; 
-                width: 100%; 
-                padding: 0; 
-                box-sizing: border-box; 
-                font-family: 'Arial', sans-serif; 
-                color: #000; 
-            }
-            
-            /* Hide the main footer during print */
+            body { display: block; background: #fff !important; }
+            .card { box-shadow: none !important; border: none !important; max-width: 100% !important; }
+            body > *:not(#print-area):not(footer):not(#touchLockBtnContainer):not(#loadingOverlay) { display: none !important; }
+            #print-area { display: block !important; position: relative; left: 0; top: 0; width: 100%; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; color: #000; }
             footer { display: none !important; }
-
             .no-print { display: none !important; }
-            
-            /* --- Custom Print Styles for Barcode Layout --- */
-            .print-page {
-                position: relative;
-                /* Remove forced page breaks to allow single page scroll/fit */
-                page-break-after: avoid; 
-                min-height: auto; /* Allow height to collapse */
-                padding: 5mm 10mm 10mm 10mm; 
-                box-sizing: border-box;
-            }
-            
-            .print-header { 
-                display: block; 
-                text-align: center;
-                border-bottom: 2px solid #333; 
-                padding-bottom: 5px; 
-                margin-bottom: 5px; 
-            }
-            .print-title-group { 
-                display: flex; 
-                justify-content: center; 
-                align-items: center; 
-                gap: 20px; 
-                margin-bottom: 5px; 
-            }
+            .print-page { page-break-after: avoid; min-height: auto; padding: 5mm 10mm 10mm 10mm; width: 210mm; height: 297mm; overflow: hidden; }
+            .print-header { display: block; text-align: center; border-bottom: 2px solid #333; padding-bottom: 5px; margin-bottom: 5px; }
+            .print-title-group { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 5px; }
             .print-header .company-logo { height: 35px; }
             .print-header .company-name-print { font-family: 'Impact', 'Arial Narrow Bold', sans-serif; font-size: 16pt; letter-spacing: 1px; }
-            .print-header .print-date { 
-                font-size: 12pt; 
-                font-weight: bold; 
-                display: block; 
-                text-align: center;
-            }
-            
-            .print-list-container {
-                /* Use CSS Grid for robust column layout on a single page */
-                display: grid;
-                grid-template-columns: repeat(5, 1fr); 
-                column-gap: 12px;
-                font-size: 11pt;
-                max-width: 100%;
-                margin-top: 10px;
-                /* Allow content to flow without forced column breaks if possible */
-                /* max-height: 250mm; /* Added constraint for better fit */
-                overflow: visible;
-            }
-
-            .print-column { 
-                /* Allow items within the grid cell to flow */
-                break-inside: avoid; 
-                padding-right: 8px; 
-            }
-            .print-column div { 
-                margin-bottom: 1px; 
-                white-space: nowrap; 
-                /* Force items to break columns if needed, but not pages */
-                page-break-inside: avoid;
-            }
-            
-            /* --- Signature Area --- */
-            .signature-area {
-                /* Place signature area at the bottom of the content section */
-                clear: both; 
-                margin-top: 30px; 
-                padding-top: 10px;
-                border-top: 1px solid #ccc;
-                width: 30%; 
-                margin-left: auto; 
-                font-size: 8pt; 
-                /* Ensure signature area prints at the bottom of the page/content */
-                page-break-before: avoid;
-            }
-            .signature-area p {
-                text-align: center;
-                margin-top: 30px; 
-                font-size: inherit;
-                font-weight: bold;
-            }
-            
-            /* --- Print Watermark --- */
-            .print-watermark-overlay {
-                position: fixed; /* Use fixed for maximum compatibility across print pages */
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                opacity: 0.25; 
-                pointer-events: none;
-                z-index: -1;
-            }
-            .print-watermark-overlay img {
-                width: 500px; 
-                height: auto;
-            }
-            
-            /* --- Print Footer Watermark (The required text) --- */
-            .print-footer-watermark {
-                /* Keep this at the bottom of the content */
-                position: relative;
-                text-align: center;
-                font-size: 8pt;
-                color: #888;
-                padding-top: 3px;
-                margin-top: 15px; /* Added margin for separation */
-            }
+            .print-header .print-date { font-size: 12pt; font-weight: bold; display: block; text-align: center; }
+            .print-list-container { display: grid; grid-template-columns: repeat(5, 1fr); column-gap: 12px; font-size: 11pt; max-width: 100%; margin-top: 10px; height: 240mm; }
+            .print-column div { margin-bottom: 1px; white-space: nowrap; page-break-inside: avoid; }
+            .signature-area { clear: both; margin-top: 5px; padding-top: 5px; border-top: 1px solid #ccc; width: 30%; margin-left: auto; font-size: 8pt; page-break-before: avoid; }
+            .print-watermark-overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.25; pointer-events: none; z-index: -1; }
+            .print-watermark-overlay img { width: 500px; height: auto; }
+            .print-footer-watermark { position: relative; text-align: center; font-size: 8pt; color: #888; padding-top: 3px; margin-top: 5px; }
         }
         
         @keyframes slideInFromLeft{ from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
-
-        /* Custom SVG Icon Styling */
         .icon-online { color: var(--success); }
         .icon-offline { color: var(--danger); }
-        
-        /* NEW: Blinking Effect for Time Alert */
-        @keyframes blink {
-            0%, 49% { opacity: 1; }
-            50%, 100% { opacity: 0; }
-        }
-        .blinking-alert {
-            animation: blink 1s step-start infinite;
-            color: var(--danger) !important; 
-        }
+        @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+        .blinking-alert { animation: blink 1s step-start infinite; color: var(--danger) !important; }
 
         /* Flip Counter Styles */
         .flip-counter { height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; font-family: 'Impact', monospace; }
@@ -321,70 +204,85 @@
         .flip-digit-container:not(:last-child):after { content: ''; position: absolute; right: -2px; top: 0; width: 1px; height: 100%; background-color: #8fbc8f; z-index: 10; }
         .flip-digit { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: bold; color: white; backface-visibility: hidden; line-height: 1; transform: translateY(100%); }
         .flip-digit.current { transform: translateY(0%); }
-        
-        /* NEW: Flip Counter Blinking Animation (on auto-save success) */
-        @keyframes flipCounterSuccessBlink {
-            0%, 100% { background-color: #212529; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
-            50% { background-color: var(--success); box-shadow: 0 0 10px var(--success); }
-        }
+        @keyframes flipCounterSuccessBlink { 0%, 100% { background-color: #212529; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); } 50% { background-color: var(--success); box-shadow: 0 0 10px var(--success); } }
         .flip-counter.success-blink .flip-digit-container { animation: flipCounterSuccessBlink 0.2s ease-in-out 5; }
 
-        /* NEW: Confetti Animation Styles */
-        #confetti-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            overflow: hidden;
-            z-index: 60;
-            display: none;
-        }
-
-        .confetti {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background-color: #f0f0f0;
-            opacity: 0;
-            transform-origin: 50% 50%;
-            animation: confetti-fall 3s linear infinite;
-        }
-
-        @keyframes confetti-fall {
-            0% { transform: translate3d(var(--x-start), var(--y-start), 0) rotate(0deg); opacity: 1; }
-            100% { transform: translate3d(var(--x-end), var(--y-end), 0) rotate(720deg); opacity: 0.2; }
-        }
+        /* Confetti Animation */
+        #confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 60; display: none; }
+        .confetti { position: absolute; width: 10px; height: 10px; background-color: #f0f0f0; opacity: 0; transform-origin: 50% 50%; animation: confetti-fall 3s linear infinite; }
+        @keyframes confetti-fall { 0% { transform: translate3d(var(--x-start), var(--y-start), 0) rotate(0deg); opacity: 1; } 100% { transform: translate3d(var(--x-end), var(--y-end), 0) rotate(720deg); opacity: 0.2; } }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     
-    <!-- NEW: Full-screen overlay to block touch events when locked -->
+    <!-- MODE SELECTION SCREEN -->
+    <div id="mode-selection-screen">
+        <h1 class="text-4xl font-extrabold mb-10 text-primary">World Out Fashion - Dispatch</h1>
+        <p class="text-xl font-medium mb-12 text-secondary">Please Select Operation Mode</p>
+        
+        <!-- Today's Dispatch Count -->
+        <div class="bg-card-section p-6 rounded-xl shadow-inner border border-theme mb-8 w-full max-w-lg text-center">
+            <h2 class="text-xl font-bold mb-2 text-primary">Today's Dispatch Count</h2>
+            <p id="todayCountDisplay" class="text-5xl font-extrabold text-success-hover mb-4">--</p>
+            <button id="printTodayBtn" class="w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-info disabled:opacity-50 disabled:cursor-not-allowed">
+                 Print Current Dispatch List (PDF)
+            </button>
+        </div>
+        
+        <div class="flex flex-col md:flex-row gap-8">
+            <!-- Easy Mode -->
+            <div id="select-easy-mode" class="mode-card mode-card-easy p-8 rounded-xl shadow-xl text-center flex flex-col items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-icon h-16 w-16 mb-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" />
+                </svg>
+                <h2 class="text-2xl font-bold mb-2">Easy Mode</h2>
+                <p class="text-sm text-secondary">Fast scanning. Simplified interface.</p>
+                <span class="mt-4 inline-block px-4 py-1 bg-green-100 text-green-700 rounded-full font-semibold text-xs">Recommended</span>
+            </div>
+
+            <!-- Advanced Mode -->
+            <div id="select-advanced-mode" class="mode-card mode-card-advanced p-8 rounded-xl shadow-xl text-center flex flex-col items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mode-icon h-16 w-16 mb-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 00-1-1h-1a1 1 0 100 2h1a1 1 0 001-1zM15.657 14.243a1 1 0 00.707 1.707l.707-.707a1 1 0 00-1.414-1.414l-.707.707zM11 17a1 1 0 10-2 0v1a1 1 0 102 0v-1zM4.343 14.243a1 1 0 00-.707 1.707l-.707-.707a1 1 0 001.414-1.414l.707.707zM2 10a1 1 0 001 1h1a1 1 0 100-2H3a1 1 0 00-1 1zM4.343 5.757a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414l.707.707z" />
+                    <path fill-rule="evenodd" d="M10 12a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                </svg>
+                <h2 class="text-2xl font-bold mb-2">Advanced Mode</h2>
+                <p class="text-sm text-secondary">Access past data, search, date filters, CSV/Sheet Export.</p>
+                <span class="mt-4 inline-block px-4 py-1 bg-yellow-100 text-yellow-700 rounded-full font-semibold text-xs">Full Features</span>
+            </div>
+        </div>
+        <button id="modeChangeBtn" class="absolute bottom-6 btn btn-secondary px-4 py-2 rounded-full text-sm shadow-lg hidden">Change Mode</button>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="no-print">
+        <div class="spinner mb-4"></div>
+        <p id="loadingText" class="text-xl font-semibold text-primary">Loading...</p>
+    </div>
+    
+    <!-- Touch Lock Overlay -->
     <div id="touchLockOverlay"></div>
 
-    <!-- NEW: Touch Lock Button Container -->
-    <div id="touchLockBtnContainer" class="fixed top-4 right-4 z-50 no-print">
+    <!-- Touch Lock Button -->
+    <div id="touchLockBtnContainer" class="fixed top-4 right-4 z-50 no-print hidden">
         <button id="touchLockBtn" class="p-3 rounded-full shadow-lg btn btn-secondary opacity-70 hover:opacity-100 transition duration-300 transform hover:scale-105">
-            <!-- Unlock Icon (Default) -->
             <svg id="lockIconOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0v4m-5 4h2m-2 4h2m-6-4h2m-2 4h2" />
             </svg>
-            <!-- Lock Icon (Locked state: Hidden initially) -->
             <svg id="lockIconClosed" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="currentColor" viewBox="0 0 20 20">
                  <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2V7a3 3 0 00-6 0v2h6z" clip-rule="evenodd" />
             </svg>
         </button>
     </div>
 
-    <!-- NEW: Confetti Animation Container -->
+    <!-- Confetti Container -->
     <div id="confetti-container"></div>
     
-    <!-- Main Application Content Wrapper -->
+    <!-- Main App Wrapper -->
     <div class="main-content-wrapper">
         <div id="app-container" class="card p-6 lg:p-8 rounded-2xl w-full no-print">
-            <header class="flex justify-between items-center mb-6 flex-wrap gap-4 border-b border-theme pb-4">
+            <header class="flex justify-between items-center mb-4 flex-wrap gap-4 border-b border-theme pb-4">
                 <div class="flex items-center gap-4">
                     <img src="logo.png" alt="Company Logo" class="h-12">
                     <h1 id="appTitle" class="text-2xl lg:text-3xl font-bold"></h1>
@@ -392,17 +290,23 @@
                 <div id="live-clock" class="text-lg lg:text-xl font-semibold text-secondary order-3 lg:order-2 w-full lg:w-auto text-center"></div>
             </header>
             
+             <button id="backToSelectionBtn" class="mb-4 px-4 py-2 rounded-lg font-semibold shadow-md btn btn-secondary flex items-center gap-2 text-sm">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                 </svg>
+                 Back to Mode Selection
+             </button>
+            
             <main class="flex flex-col lg:flex-row gap-8 mt-4">
                 <!-- Left Column -->
-                <section class="w-full lg:w-3/5 flex flex-col gap-y-6">
+                <section id="left-column" class="w-full lg:w-3/5 flex flex-col gap-y-6">
                     <p id="scanOrderDescription" class="text-center text-secondary -mt-2"></p>
                     
                     <div>
                          <div class="flex flex-col sm:flex-row gap-2">
-                            <!-- Input will gain focus from scanner or number pad entry -->
                             <input type="text" id="orderScanInput" class="flex-grow p-3 shadow-sm" />
                             <button id="addOrderBarcodeBtn" class="px-5 py-3 rounded-lg font-semibold shadow-md btn btn-primary"></button>
-                            <button id="openCameraBtn" class="p-3 rounded-lg font-semibold shadow-md btn btn-info" aria-label="Scan with camera"></button>
+                            <button id="openCameraBtn" class="p-3 rounded-lg font-semibold shadow-md btn btn-info"></button>
                         </div>
                         <div id="statusMessage" class="status-message rounded-lg text-center font-semibold p-3"></div>
                     </div>
@@ -418,29 +322,25 @@
                 </section>
 
                 <!-- Right Column -->
-                <aside class="w-full lg:w-2/5 flex flex-col gap-y-8">
-                    <!-- Network Status Display and Animated Counter -->
+                <aside id="right-column" class="w-full lg:w-2/5 flex flex-col gap-y-8">
+                    <!-- Status & Counter -->
                     <div class="p-6 bg-card-section rounded-xl border border-theme shadow-inner h-fit">
                         <div class="mb-4">
-                            <!-- Connection Status -->
                             <div id="connectionStatus" class="flex items-center justify-center gap-2 mb-2 p-2 rounded-lg border border-gray-300">
                                 <span class="font-semibold text-sm text-secondary">Connection:</span>
-                                <!-- Icon and Text will be updated by JavaScript -->
                                 <span id="networkIcon" class="text-xl"></span>
                                 <span id="networkText" class="font-bold">Checking...</span>
                             </div>
 
-                            <!-- NEW: Animated Barcode Count Display -->
                             <div class="p-3 bg-blue-50 rounded-lg border border-blue-200 text-center shadow-inner mt-4">
                                 <p class="text-lg font-semibold text-primary mb-2" id="uniqueOrderCountLabel"></p>
-                                <div id="animatedCounter" class="flex justify-center items-center h-14">
-                                    <!-- Digits will be added here by JS -->
-                                </div>
+                                <div id="animatedCounter" class="flex justify-center items-center h-14"></div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="p-6 bg-card-section rounded-xl border border-theme shadow-inner h-fit -mt-4">
+                    <!-- Advanced Features -->
+                    <div id="advanced-features-section" class="p-6 bg-card-section rounded-xl border border-theme shadow-inner h-fit -mt-4">
                          <h2 id="exportTitle" class="text-xl font-bold mb-4 border-b-2 border-theme pb-2"></h2>
                          <button id="saveToSheetBtn" class="w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-warning">
                             <span id="saveBtnText">Save to Google Sheet</span>
@@ -451,14 +351,14 @@
                          <button id="printScannedOrderBtn" class="w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-info"></button>
                          <button id="downloadCsvBtn" class="mt-4 w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-success"></button>
                     </div>
+                    
+                    <!-- Session Management -->
                     <div class="p-6 bg-card-section rounded-xl border border-theme shadow-inner h-fit">
                         <div class="flex justify-between items-center mb-4 pb-2 border-b-2 border-theme">
                             <h2 id="loadPreviousOrdersTitle" class="text-xl font-bold"></h2>
-                            <!-- This status changes color for errors (red) or shows success (green) -->
                             <span id="autoSaveStatus" class="auto-save-status font-semibold text-sm">✓ Saved</span>
                         </div>
                         
-                        <!-- NEW: Recycle Bin Button -->
                         <button id="openRecycleBinBtn" class="w-full mb-4 px-6 py-2 rounded-lg font-semibold shadow-md btn btn-secondary flex items-center justify-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" />
@@ -466,7 +366,7 @@
                             <span id="recycleBinCount">Recycle Bin (0)</span>
                         </button>
 
-                        <div class="mb-4">
+                        <div id="barcode-search-section" class="mb-4">
                             <label for="barcodeSearchInput" class="block mb-2 text-sm font-medium text-secondary">Search Barcode</label>
                             <div class="flex gap-2">
                                 <input type="text" id="barcodeSearchInput" placeholder="Enter barcode to find..." class="w-full p-2">
@@ -474,7 +374,7 @@
                             </div>
                             <p id="barcodeSearchResult" class="text-center text-sm h-4 mt-2"></p>
                         </div>
-                        <hr class="my-4 border-gray-300">
+                        <hr id="search-hr" class="my-4 border-gray-300">
                         
                         <div id="liveSessionDisplay" class="mb-2 p-3 bg-green-100 rounded-lg text-center border border-green-200 hidden">
                             <p class="text-sm text-green-800">Live Session:</p>
@@ -486,18 +386,19 @@
                             <div id="manualSaveBtnSpinner" class="hidden animate-spin rounded-full h-4 w-4 border-b-2 border-white mx-auto"></div>
                         </button>
                         
-                        <div class="mb-4">
-                             <label id="searchByDateLabel" for="searchByDate" class="block mb-2 text-sm font-medium text-secondary"></label>
-                             <div class="flex gap-2">
-                                <input type="date" id="searchByDate" class="w-full p-2">
-                                <button id="resetDateFilterBtn" class="px-4 py-2 rounded-lg font-semibold shadow-md btn btn-secondary text-xs"></button>
+                        <div id="session-load-section">
+                             <div class="mb-4">
+                                 <label id="searchByDateLabel" for="searchByDate" class="block mb-2 text-sm font-medium text-secondary"></label>
+                                 <div class="flex gap-2">
+                                    <input type="date" id="searchByDate" class="w-full p-2">
+                                    <button id="resetDateFilterBtn" class="px-4 py-2 rounded-lg font-semibold shadow-md btn btn-secondary text-xs"></button>
+                                 </div>
+                             </div>
+                             <div class="flex flex-col sm:flex-row gap-4">
+                                <select id="savedSessionsSelect" class="flex-grow p-3"><option value=""></option></select>
+                                <button id="loadSelectedSessionBtn" class="px-6 py-3 rounded-lg font-semibold shadow-md btn btn-primary"></button>
                              </div>
                         </div>
-                        <div class="flex flex-col sm:flex-row gap-4">
-                            <select id="savedSessionsSelect" class="flex-grow p-3"><option value=""></option></select>
-                            <button id="loadSelectedSessionBtn" class="px-6 py-3 rounded-lg font-semibold shadow-md btn btn-primary"></button>
-                        </div>
-                        <!-- DELETE BUTTON REMOVED AS REQUESTED -->
                     </div>
                 </aside>
             </main>
@@ -513,19 +414,12 @@
         </div>
     </div>
     
-    <!-- NEW: Recycle Bin Modal (unchanged) -->
+    <!-- Recycle Bin Modal -->
     <div id="recycle-bin-modal" class="fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg">
-            <h3 class="text-lg font-bold mb-4 text-center text-primary flex justify-center items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" />
-                </svg>
-                Recycle Bin
-            </h3>
+            <h3 class="text-lg font-bold mb-4 text-center text-primary flex justify-center items-center gap-2">Recycle Bin</h3>
             <div id="recycleBinListContainer" class="bg-card-section p-4 rounded-lg border border-theme max-h-80 overflow-y-auto shadow-inner">
-                <ul id="recycleBinList" class="space-y-2">
-                    <p id="noRecycleItems" class="text-secondary text-center py-4">Recycle bin is empty.</p>
-                </ul>
+                <ul id="recycleBinList" class="space-y-2"><p id="noRecycleItems" class="text-secondary text-center py-4">Recycle bin is empty.</p></ul>
             </div>
             <div class="flex gap-4 mt-4">
                  <button id="restoreSelectedBtn" class="px-5 py-2 rounded-lg font-semibold shadow-md btn btn-success flex-grow">Restore Selected</button>
@@ -534,97 +428,97 @@
         </div>
     </div>
 
-    <!-- NEW: Web Application Footer Watermark (unchanged) -->
+    <!-- Footer -->
     <footer class="w-full p-2 text-center text-xs text-gray-500 bg-white bg-opacity-70 border-t border-gray-200 no-print">
         © 2025 DesignVerse by Sandusha Avishkha. All rights reserved. Crafted with passion in Minuwangoda, Sri Lanka.
     </footer>
 
-    <!-- PRINT AREA (Hidden in UI) -->
-    <div id="print-area" class="hidden">
-        <!-- Print content will be generated here by JavaScript -->
-    </div>
+    <!-- PRINT AREA -->
+    <div id="print-area" class="hidden"></div>
 
-    <!-- Local audio files as per original request -->
+    <!-- Audio Files -->
     <audio id="successSound" src="play.mp3" preload="auto"></audio>
     <audio id="errorSound" src="error.mp3" preload="auto"></audio>
-    <!-- NEW: Milestone Success Sound (from web as requested) -->
-    <audio id="milestoneSound" src="https://assets.mixkit.co/sfx/preview/mixkit-game-success-notification-2079.mp3" preload="auto"></audio>
+    <audio id="milestoneSound" src="goal.mp3" preload="auto"></audio>
+    <audio id="modeSelectSound" src="https://assets.mixkit.co/sfx/preview/mixkit-bonus-reached-858.mp3" preload="auto"></audio>
 
     <script>
-        // =========================================================================
-        // === වැදගත්: මෙතනට ඔබගේ Google Apps Script URL එක ඇතුළත් කරන්න ===
-        // =========================================================================
+        // ==========================================
+        //  CONFIGURATIONS
+        // ==========================================
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyuYsSzGAmbFUClFQEWYbPSYyDKeh3CJn8dn5yPZ4AhFxZtBseTCYurxirFRAzJ25KO/exec"; 
-        // =========================================================================
+        
+        // 🔴🔴🔴 පහත අංකය වෙනස් කිරීමෙන් Milestone එක වෙනස් කළ හැක 🔴🔴🔴
+        const MILESTONE_COUNT = 20; 
+        // ==========================================
 
+        // GLOBAL VARIABLES
         let scannedBarcodes = [];
         let currentSessionId = null;
         let currentlyViewingBarcodes = [];
         let currentlyViewingSessionId = null;
         let allSessions = [];
         let html5QrCode = null;
-        
-        // Time Alert Variables
-        let minuteBeepTimeout = null;
-        let isBeepingActive = false;
-        
-        // NEW: Network Status Tracking
-        let lastOnlineState = navigator.onLine;
-
-        // NEW: TTS Object and Voice Setup
+        let recycleBin = [];
+        let isTouchLocked = false;
+        let appMode = localStorage.getItem('appMode') || null; 
         const tts = window.speechSynthesis;
         let ttsVoice = null;
-        
-        // NEW: Recycle Bin Storage
-        let recycleBin = [];
-        
-        // NEW: Touch Lock State
-        let isTouchLocked = false;
-        
-        // --- TTS Voice Setup (Find a female voice) ---
-        function setTtsVoice() {
-            const voices = tts.getVoices();
-            // Try to find a female voice using common keywords or default
-            ttsVoice = voices.find(voice => voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('girl') || voice.default && (voice.lang.startsWith('en') || voice.lang.startsWith('si'))); 
-            // Fallback to the first available voice if none found
-            if (!ttsVoice && voices.length > 0) {
-                 ttsVoice = voices.find(voice => voice.lang === 'en-US' && voice.name.includes('Google')) || voices[0];
-            }
-        }
-        
-        // Load voices once they are available
-        if (tts.onvoiceschanged !== undefined) {
-             tts.onvoiceschanged = setTtsVoice;
-        } else {
-             setTtsVoice(); 
-        }
+        let lastOnlineState = navigator.onLine;
 
-        // NEW: Speak Status for Network Alerts
-        function speakStatus(text) {
-            // FIX: Cancel existing speech before starting a new one to prevent overlap/bugs
-            if (tts.speaking) {
-                tts.cancel();
-            }
-            if (ttsVoice) {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.voice = ttsVoice;
-                utterance.rate = 1.0; 
-                utterance.pitch = 1.0; 
-                tts.speak(utterance);
-            }
-        }
-        
+        // ELEMENT REFERENCES
         const el = {
-            appContainer: document.getElementById('app-container'), appTitle: document.getElementById("appTitle"), scanOrderDescription: document.getElementById("scanOrderDescription"), uniqueOrderCountLabel: document.getElementById("uniqueOrderCountLabel"), orderScanInput: document.getElementById("orderScanInput"), addOrderBarcodeBtn: document.getElementById("addOrderBarcodeBtn"), statusMessage: document.getElementById("statusMessage"), scannedListHeader: document.getElementById("scannedListHeader"), scannedOrderBarcodesList: document.getElementById("scannedOrderBarcodesList"), noOrderBarcodesMessage: document.getElementById("noOrderBarcodesMessage"), orderListContainer: document.getElementById("orderListContainer"), returnToTodayBtn: document.getElementById("returnToTodayBtn"), exportTitle: document.getElementById("exportTitle"), printScannedOrderBtn: document.getElementById("printScannedOrderBtn"), downloadCsvBtn: document.getElementById("downloadCsvBtn"), loadPreviousOrdersTitle: document.getElementById("loadPreviousOrdersTitle"), autoSaveStatus: document.getElementById("autoSaveStatus"), searchByDateLabel: document.getElementById("searchByDateLabel"), searchByDate: document.getElementById("searchByDate"), resetDateFilterBtn: document.getElementById("resetDateFilterBtn"), savedSessionsSelect: document.getElementById("savedSessionsSelect"), loadSelectedSessionBtn: document.getElementById("loadSelectedSessionBtn"), liveClock: document.getElementById("live-clock"), saveToSheetBtn: document.getElementById('saveToSheetBtn'), saveBtnText: document.getElementById('saveBtnText'), saveBtnSpinner: document.getElementById('saveBtnSpinner'), sheetStatus: document.getElementById('sheetStatus'), liveSessionDisplay: document.getElementById('liveSessionDisplay'), liveSessionName: document.getElementById('liveSessionName'), manualSaveBtn: document.getElementById('manualSaveBtn'), manualSaveBtnText: document.getElementById('manualSaveBtnText'), manualSaveBtnSpinner: document.getElementById('manualSaveBtnSpinner'), barcodeSearchInput: document.getElementById('barcodeSearchInput'), barcodeSearchBtn: document.getElementById('barcodeSearchBtn'), barcodeSearchResult: document.getElementById('barcodeSearchResult'),
-            cameraModal: document.getElementById('camera-modal'), openCameraBtn: document.getElementById('openCameraBtn'), closeCameraBtn: document.getElementById('closeCameraBtn'),
-            // Network Status Elements
+            modeSelectionScreen: document.getElementById('mode-selection-screen'),
+            selectEasyMode: document.getElementById('select-easy-mode'),
+            selectAdvancedMode: document.getElementById('select-advanced-mode'),
+            modeChangeBtn: document.getElementById('modeChangeBtn'),
+            todayCountDisplay: document.getElementById('todayCountDisplay'),      
+            printTodayBtn: document.getElementById('printTodayBtn'),                 
+            loadingOverlay: document.getElementById('loadingOverlay'),               
+            loadingText: document.getElementById('loadingText'),                     
+            appContainer: document.getElementById('app-container'), 
+            appTitle: document.getElementById("appTitle"), 
+            scanOrderDescription: document.getElementById("scanOrderDescription"), 
+            uniqueOrderCountLabel: document.getElementById("uniqueOrderCountLabel"), 
+            orderScanInput: document.getElementById("orderScanInput"), 
+            addOrderBarcodeBtn: document.getElementById("addOrderBarcodeBtn"), 
+            statusMessage: document.getElementById("statusMessage"), 
+            scannedListHeader: document.getElementById("scannedListHeader"), 
+            scannedOrderBarcodesList: document.getElementById("scannedOrderBarcodesList"), 
+            noOrderBarcodesMessage: document.getElementById("noOrderBarcodesMessage"), 
+            orderListContainer: document.getElementById("orderListContainer"), 
+            returnToTodayBtn: document.getElementById("returnToTodayBtn"), 
+            exportTitle: document.getElementById("exportTitle"), 
+            printScannedOrderBtn: document.getElementById("printScannedOrderBtn"), 
+            downloadCsvBtn: document.getElementById("downloadCsvBtn"), 
+            loadPreviousOrdersTitle: document.getElementById("loadPreviousOrdersTitle"), 
+            autoSaveStatus: document.getElementById("autoSaveStatus"), 
+            searchByDateLabel: document.getElementById("searchByDateLabel"), 
+            searchByDate: document.getElementById("searchByDate"), 
+            resetDateFilterBtn: document.getElementById("resetDateFilterBtn"), 
+            savedSessionsSelect: document.getElementById("savedSessionsSelect"), 
+            loadSelectedSessionBtn: document.getElementById("loadSelectedSessionBtn"), 
+            liveClock: document.getElementById("live-clock"), 
+            saveToSheetBtn: document.getElementById('saveToSheetBtn'), 
+            saveBtnText: document.getElementById('saveBtnText'), 
+            saveBtnSpinner: document.getElementById('saveBtnSpinner'), 
+            sheetStatus: document.getElementById('sheetStatus'), 
+            liveSessionDisplay: document.getElementById('liveSessionDisplay'), 
+            liveSessionName: document.getElementById('liveSessionName'), 
+            manualSaveBtn: document.getElementById('manualSaveBtn'), 
+            manualSaveBtnText: document.getElementById('manualSaveBtnText'), 
+            manualSaveBtnSpinner: document.getElementById('manualSaveBtnSpinner'), 
+            barcodeSearchInput: document.getElementById('barcodeSearchInput'), 
+            barcodeSearchBtn: document.getElementById('barcodeSearchBtn'), 
+            barcodeSearchResult: document.getElementById('barcodeSearchResult'),
+            cameraModal: document.getElementById('camera-modal'), 
+            openCameraBtn: document.getElementById('openCameraBtn'), 
+            closeCameraBtn: document.getElementById('closeCameraBtn'),
             connectionStatus: document.getElementById('connectionStatus'),
             networkIcon: document.getElementById('networkIcon'),
             networkText: document.getElementById('networkText'),
-            // Animated Counter Element
             animatedCounter: document.getElementById('animatedCounter'),
             printArea: document.getElementById('print-area'),
-            // Recycle Bin Elements
             openRecycleBinBtn: document.getElementById('openRecycleBinBtn'),
             recycleBinCount: document.getElementById('recycleBinCount'),
             recycleBinModal: document.getElementById('recycle-bin-modal'),
@@ -632,68 +526,226 @@
             recycleBinList: document.getElementById('recycleBinList'),
             noRecycleItems: document.getElementById('noRecycleItems'),
             restoreSelectedBtn: document.getElementById('restoreSelectedBtn'),
-            // NEW: Lock Elements
             touchLockBtn: document.getElementById('touchLockBtn'),
             touchLockOverlay: document.getElementById('touchLockOverlay'),
             lockIconOpen: document.getElementById('lockIconOpen'),
             lockIconClosed: document.getElementById('lockIconClosed'),
             confettiContainer: document.getElementById('confetti-container'),
-            // REMOVED DELETE BUTTON REFERENCE: This element was removed as requested
+            mainContentWrapper: document.querySelector('.main-content-wrapper'),
+            backToSelectionBtn: document.getElementById('backToSelectionBtn'), 
+            advancedFeaturesSection: document.getElementById('advanced-features-section'),
+            barcodeSearchSection: document.getElementById('barcode-search-section'),
+            searchHr: document.getElementById('search-hr'),
+            sessionLoadSection: document.getElementById('session-load-section'),
+            touchLockBtnContainer: document.getElementById('touchLockBtnContainer'),
         };
 
+        // --- CORE FUNCTIONS START ---
+        
+        function setInitialTexts() { 
+            el.appTitle.textContent = "Order Management System"; 
+            el.scanOrderDescription.textContent = "Scan order items for today's session."; 
+            el.uniqueOrderCountLabel.textContent = "Total Scanned"; 
+            el.addOrderBarcodeBtn.textContent = "Add"; 
+            el.returnToTodayBtn.textContent = "Return to Today's Session"; 
+            el.exportTitle.textContent = "Export & Save (Advanced)"; 
+            el.printScannedOrderBtn.textContent = "Print Viewed List (A4)"; 
+            el.downloadCsvBtn.textContent = "Download Viewed List (CSV)"; 
+            el.loadPreviousOrdersTitle.textContent = "View Previous Sessions"; 
+            el.searchByDateLabel.textContent = "Filter by Date"; 
+            el.resetDateFilterBtn.textContent = "Reset"; 
+            el.loadSelectedSessionBtn.textContent = "View"; 
+            el.orderScanInput.placeholder = "Barcode number..."; 
+            el.savedSessionsSelect.innerHTML = `<option value="">Loading...</option>`; 
+            el.manualSaveBtnText.textContent = "Save Current Session"; 
+            el.modeChangeBtn.textContent = "Change Mode";
+            el.printTodayBtn.textContent = "Print Current Dispatch List (PDF)";
+            el.backToSelectionBtn.textContent = "Back to Mode Selection";
+            el.openCameraBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`;
+        }
+        
+        // Show Loading Overlay
+        function showLoading(text = "Loading...") { el.loadingText.textContent = text; el.loadingOverlay.style.display = 'flex'; }
+        function hideLoading() { el.loadingOverlay.style.display = 'none'; }
+        
+        // --- MILESTONE ANIMATION LOGIC ---
+        function showCompletionAnimation() {
+            const container = el.confettiContainer;
+            if (!container) return;
+            
+            // Play Goal Sound
+            const milestoneAudio = document.getElementById('milestoneSound');
+            if (milestoneAudio) { 
+                milestoneAudio.pause(); 
+                milestoneAudio.currentTime = 0; 
+                milestoneAudio.play().catch(e => console.error("Audio Play Error", e)); 
+            }
+            
+            // Show Alert
+            Swal.fire({ title: 'Woohoo!', text: `${MILESTONE_COUNT} items reached! Keep going!`, icon: 'success', toast: true, position: 'top', showConfirmButton: false, timer: 2000 });
+            
+            // Trigger Confetti
+            container.style.display = 'block'; 
+            container.innerHTML = '';
+            const colors = ['#ffcc00', '#ff0066', '#33ccff', '#99ff33', '#f0f0f0'];
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div'); confetti.className = 'confetti';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.setProperty('--x-start', `${Math.random() * 100 - 50}vw`); confetti.style.setProperty('--y-start', `-${Math.random() * 50}vh`);
+                confetti.style.setProperty('--x-end', `${Math.random() * 150 - 75}vw`); confetti.style.setProperty('--y-end', `${150 + Math.random() * 50}vh`);
+                confetti.style.animationDelay = `${Math.random() * 0.5}s`; confetti.style.animationDuration = `${2 + Math.random() * 1.5}s`;
+                container.appendChild(confetti);
+            }
+            setTimeout(() => { container.innerHTML = ''; container.style.display = 'none'; }, 3500); 
+        }
 
-        // --- NEW GLOBAL BARCODE SCANNER CAPTURE LOGIC (Updated for Lock Bypass) ---
+        // --- SCANNING & ADDING BARCODE LOGIC (SIMPLIFIED) ---
+        function handleOrderScanAddBarcode() {
+            const barcode = el.orderScanInput.value.trim();
+            if (barcode === "") { el.orderScanInput.focus(); return; }
+            
+            if (scannedBarcodes.includes(barcode)) {
+                showStatusMessage(`Already Scanned: ${barcode}`, "error");
+                const errorAudio = document.getElementById('errorSound');
+                if (errorAudio) { errorAudio.pause(); errorAudio.currentTime = 0; errorAudio.play().catch(console.error); }
+            } else {
+                // Add New Barcode
+                scannedBarcodes.unshift(barcode); 
+                currentlyViewingBarcodes = scannedBarcodes; 
+                
+                showStatusMessage(`Success: ${barcode}`, "success");
+                
+                const successAudio = document.getElementById('successSound');
+                if (successAudio) { successAudio.pause(); successAudio.currentTime = 0; successAudio.play().catch(console.error); }
+                
+                // CHECK MILESTONE (Using the variable defined at top)
+                if (scannedBarcodes.length > 0 && scannedBarcodes.length % MILESTONE_COUNT === 0) {
+                     showCompletionAnimation();
+                }
+
+                updateUiFromState();
+                autoSaveSession();
+            }
+            // Clear Input
+            el.orderScanInput.value = "";
+            el.orderScanInput.focus();
+        }
+
+        // --- UI UPDATES ---
+        function updateUiFromState() {
+            const currentCount = currentlyViewingBarcodes.length;
+            if (FlipCounter.element) FlipCounter.update(currentCount); 
+            updateRecycleBinUi();
+            
+            el.scannedOrderBarcodesList.innerHTML = "";
+            const isViewingToday = currentlyViewingSessionId === currentSessionId;
+            el.scannedListHeader.textContent = isViewingToday ? "Scanned Barcodes (Today)" : `Viewing Session: ${currentlyViewingSessionId.replace('SESSION-','')}`;
+            el.noOrderBarcodesMessage.style.display = currentCount > 0 ? 'none' : 'block';
+            el.returnToTodayBtn.style.display = isViewingToday ? 'none' : 'block';
+            el.orderScanInput.disabled = !isViewingToday; el.addOrderBarcodeBtn.disabled = !isViewingToday; 
+            el.openCameraBtn.disabled = !isViewingToday || isTouchLocked; 
+            el.orderScanInput.placeholder = isViewingToday ? "Barcode number..." : "Viewing past session...";
+
+            if (currentCount > 0) {
+                currentlyViewingBarcodes.forEach((barcode, index) => {
+                    const li = document.createElement("li");
+                    li.style.animation = `slideInFromLeft 0.5s ease-out forwards`;
+                    const scanNumber = currentCount - index; 
+                    if(isViewingToday) { 
+                        li.className = "flex items-center justify-between p-2 rounded-md text-base bg-white shadow-sm border border-gray-200 text-gray-800";
+                        li.innerHTML = `<div class='flex items-center'><span class="font-semibold text-primary w-12 text-left">#${scanNumber}</span><span>${barcode}</span></div>`;
+                        const deleteBtn = document.createElement('button'); deleteBtn.textContent = "Delete"; deleteBtn.className = "btn btn-danger px-3 py-1 text-xs rounded-md font-semibold"; 
+                        deleteBtn.onclick = () => handleDeleteSingleBarcode(index); 
+                        li.appendChild(deleteBtn);
+                    } else {
+                        li.className = "flex items-center p-2 text-gray-500"; li.textContent = `#${scanNumber}. ${barcode}`;
+                    }
+                    el.scannedOrderBarcodesList.appendChild(li);
+                });
+                el.orderListContainer.scrollTop = 0;
+            }
+            el.liveSessionName.textContent = `For ${currentSessionId.replace('SESSION-', '')}`;
+            el.liveSessionDisplay.classList.remove('hidden');
+            updateNetworkStatus();
+            if (isViewingToday && !isTouchLocked) el.orderScanInput.focus();
+        }
+
+        // --- OTHER HELPERS & EVENT LISTENERS ---
+        
+        // Initialization
+        async function initializeApp() {
+            setInitialTexts(); 
+            currentSessionId = getTodaySessionId(); 
+            document.title = "World Out Fashion - OMS";
+            
+            FlipCounter.initialize(0); 
+            updateClock(); setInterval(updateClock, 1000); 
+            loadRecycleBin(); 
+            
+            el.addOrderBarcodeBtn.addEventListener("click", handleOrderScanAddBarcode);
+            el.returnToTodayBtn.addEventListener("click", returnToTodayView);
+            el.manualSaveBtn.addEventListener("click", handleManualSave);
+            el.loadSelectedSessionBtn.addEventListener("click", loadSelectedSession);
+            el.searchByDate.addEventListener("input", filterSessionsByDate);
+            el.resetDateFilterBtn.addEventListener("click", () => { el.searchByDate.value = ""; filterSessionsByDate(); });
+            el.barcodeSearchBtn.addEventListener("click", handleBarcodeSearch);
+            el.barcodeSearchInput.addEventListener("keypress", (e) => { if (e.key === 'Enter') handleBarcodeSearch(); }); 
+            el.saveToSheetBtn.addEventListener("click", saveDataToGoogleSheet);
+            el.printScannedOrderBtn.addEventListener("click", printScannedOrder);
+            el.downloadCsvBtn.addEventListener("click", downloadCsv);
+            el.openCameraBtn.addEventListener("click", startCameraScan);
+            el.closeCameraBtn.addEventListener("click", stopCameraScan);
+            el.openRecycleBinBtn.addEventListener("click", openRecycleBin);
+            el.closeRecycleBinBtn.addEventListener("click", closeRecycleBin);
+            el.restoreSelectedBtn.addEventListener("click", handleRestoreSelected);
+            el.touchLockBtn.addEventListener("click", handleTouchLockToggle);
+            
+            el.selectEasyMode.addEventListener("click", async () => { showLoading("Loading Easy mode..."); await reloadTodaysData(); setupMode('easy'); });
+            el.selectAdvancedMode.addEventListener("click", async () => { showLoading("Loading Advanced mode..."); await reloadTodaysData(); setupMode('advanced'); });
+            
+            el.modeChangeBtn.addEventListener("click", goToModeSelection);
+            el.printTodayBtn.addEventListener("click", handlePrintTodayFromSelection); 
+            el.backToSelectionBtn.addEventListener("click", goToModeSelection); 
+
+            window.addEventListener('online', updateNetworkStatus);
+            window.addEventListener('offline', updateNetworkStatus);
+            updateNetworkStatus(); 
+            
+            await fetchTodayCount();
+            
+            if (appMode) { await reloadTodaysData(); setupMode(appMode); } 
+            else { el.modeSelectionScreen.style.display = 'flex'; }
+        }
+
+        // Global Scanner Listener (Standardized)
         let barcodeBuffer = '';
         let barcodeTimer = null;
-        const BARCODE_TIMEOUT = 50; 
-
         document.addEventListener('keydown', (e) => {
-            
-            // 1. If the input is ALREADY focused, only listen for Enter key for immediate submission
+            if (el.modeSelectionScreen.style.display !== 'none' || el.loadingOverlay.style.display !== 'none') return;
             if (document.activeElement === el.orderScanInput) {
-                if (e.key === 'Enter') {
-                    e.preventDefault(); 
-                    setTimeout(() => handleOrderScanAddBarcode(), 50); 
-                }
+                if (e.key === 'Enter') { e.preventDefault(); handleOrderScanAddBarcode(); }
                 return; 
             }
-            
-            // 2. If focus is on another interactive form element (e.g., search, select, button), ignore global capture.
-            const activeTag = document.activeElement.tagName;
-            // NOTE: If the app is locked (isTouchLocked is true) the input field might still be disabled/out of focus, but we still want the scanner input to bypass the lock and fill the input.
-            if (activeTag === 'INPUT' || activeTag === 'SELECT' || activeTag === 'TEXTAREA' || activeTag === 'BUTTON') {
-                 return;
-            }
+            if (['INPUT','SELECT','TEXTAREA','BUTTON'].includes(document.activeElement.tagName)) return;
 
-            // --- GLOBAL SCANNER CAPTURE LOGIC (Only runs if input is NOT on a form element or orderScanInput) ---
-            
             clearTimeout(barcodeTimer);
-
             if (e.key === 'Enter') {
                 e.preventDefault(); 
-                
                 if (barcodeBuffer.length > 0) {
                     el.orderScanInput.value = barcodeBuffer;
-                    // Focus must happen before submission if the input was previously unfocused
-                    el.orderScanInput.focus(); 
                     handleOrderScanAddBarcode();
                     barcodeBuffer = ''; 
                 }
                 return;
             }
-
             if (e.key.length === 1 && e.key.match(/[a-zA-Z0-9]/)) {
                 barcodeBuffer += e.key;
                 e.preventDefault(); 
-                
-                barcodeTimer = setTimeout(() => {
-                    barcodeBuffer = '';
-                }, BARCODE_TIMEOUT);
+                barcodeTimer = setTimeout(() => { barcodeBuffer = ''; }, 50);
             }
         });
-        // --- END NEW GLOBAL BARCODE SCANNER CAPTURE LOGIC ---
-        
-        // --- NEW: ANIMATED FLIP COUNTER LOGIC (unchanged) ---
+
+        // Flip Counter Implementation
         const FlipCounter = {
             element: null, value: 0, digitContainers: [],
             initialize: function(initialValue = 0) {
@@ -706,858 +758,365 @@
                 const oldValueStr = String(this.value).padStart(4, '0');
                 this.value = newValue;
                 const newValueStr = String(newValue > 9999 ? 9999 : newValue).padStart(4, '0'); 
-                
                 while (this.digitContainers.length < 4) {
                     const container = document.createElement('div');
                     container.className = 'flip-digit-container';
                     container.innerHTML = `<div class="flip-digit current">0</div><div class="flip-digit next">0</div>`;
-                    if (this.element) {
-                        this.element.appendChild(container);
-                    }
+                    this.element.appendChild(container);
                     this.digitContainers.push(container);
                 }
-
                 for (let i = 0; i < 4; i++) {
                     const newDigit = newValueStr[i];
                     const oldDigit = oldValueStr[i];
                     const container = this.digitContainers[i];
-
-                    if (newDigit !== oldDigit || noAnimation) {
-                        this.animateDigit(container, oldDigit, newDigit, noAnimation);
-                    }
+                    if (newDigit !== oldDigit || noAnimation) this.animateDigit(container, oldDigit, newDigit, noAnimation);
                 }
             },
             blinkSuccess: function() {
                 el.animatedCounter.classList.add('success-blink');
-                setTimeout(() => {
-                    el.animatedCounter.classList.remove('success-blink');
-                }, 1000); 
+                setTimeout(() => { el.animatedCounter.classList.remove('success-blink'); }, 1000); 
             },
             animateDigit: function(container, oldDigit, newDigit, noAnimation) {
                 const currentElement = container.querySelector('.current');
                 const nextElement = container.querySelector('.next');
-                
                 if (noAnimation) {
-                    currentElement.textContent = newDigit;
-                    nextElement.textContent = newDigit;
-                    currentElement.style.transform = 'translateY(0%)';
-                    return;
+                    currentElement.textContent = newDigit; nextElement.textContent = newDigit; currentElement.style.transform = 'translateY(0%)'; return;
                 }
-
                 nextElement.textContent = newDigit;
-                currentElement.style.transition = 'none';
-                nextElement.style.transition = 'none';
-                currentElement.style.transform = 'translateY(0%)';
-                nextElement.style.transform = 'translateY(100%)';
-                
+                currentElement.style.transition = 'none'; nextElement.style.transition = 'none';
+                currentElement.style.transform = 'translateY(0%)'; nextElement.style.transform = 'translateY(100%)';
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
-                        currentElement.style.transition = 'transform 0.5s ease-out';
-                        nextElement.style.transition = 'transform 0.5s ease-out';
-
-                        currentElement.style.transform = 'translateY(-100%)'; 
-                        nextElement.style.transform = 'translateY(0%)';      
-                        
+                        currentElement.style.transition = 'transform 0.5s ease-out'; nextElement.style.transition = 'transform 0.5s ease-out';
+                        currentElement.style.transform = 'translateY(-100%)'; nextElement.style.transform = 'translateY(0%)';      
                         setTimeout(() => {
                             currentElement.textContent = newDigit;
-                            currentElement.style.transition = 'none';
-                            currentElement.style.transform = 'translateY(0%)';
-                            nextElement.style.transition = 'none';
-                            nextElement.style.transform = 'translateY(100%)';
-                            
+                            currentElement.style.transition = 'none'; currentElement.style.transform = 'translateY(0%)';
+                            nextElement.style.transition = 'none'; nextElement.style.transform = 'translateY(100%)';
                         }, 500); 
                     });
                 });
             }
         };
 
-
-        // --- CORE & HELPER FUNCTIONS ---
-        function setInitialTexts() { 
-            el.appTitle.textContent = "Order Management System"; 
-            el.scanOrderDescription.textContent = "Scan order items for today's session."; 
-            el.uniqueOrderCountLabel.textContent = "Total Scanned"; 
-            el.addOrderBarcodeBtn.textContent = "Add"; 
-            el.returnToTodayBtn.textContent = "Return to Today's Session"; 
-            el.exportTitle.textContent = "Export & Save"; 
-            el.printScannedOrderBtn.textContent = "Print Viewed List (A4)"; 
-            el.downloadCsvBtn.textContent = "Download Viewed List (CSV)"; 
-            el.loadPreviousOrdersTitle.textContent = "View Previous Sessions"; 
-            el.searchByDateLabel.textContent = "Filter by Date"; 
-            el.resetDateFilterBtn.textContent = "Reset"; 
-            el.loadSelectedSessionBtn.textContent = "View"; 
-            // el.deleteSelectedSessionBtn.textContent = "Delete"; // REMOVED AS REQUESTED
-            el.orderScanInput.placeholder = "Barcode number..."; 
-            el.savedSessionsSelect.innerHTML = `<option value="">Loading...</option>`; 
-            el.manualSaveBtnText.textContent = "Save Current Session"; 
-            
-            // Camera icon for button
-            el.openCameraBtn.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>`;
-        }
+        // --- REMAINING HELPER FUNCTIONS ---
+        function updateClock() { el.liveClock.textContent = new Date().toLocaleString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: !0 }); }
+        function showStatusMessage(t, e) { el.statusMessage.textContent = t; el.statusMessage.className = "status-message rounded-lg text-center font-semibold"; el.statusMessage.classList.add("success" === e ? "bg-green-status" : "bg-red-status", "show"); setTimeout(() => el.statusMessage.classList.remove("show"), 2500); }
+        function getTodaySessionId() { const today = new Date(); return `SESSION-${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`; }
         
-        // NEW: Confetti Animation for Milestone
-        function showCompletionAnimation() {
-            const container = el.confettiContainer;
-            if (!container) return;
-
-            // Play the motivational sound (FIXED: Ensure sound is played)
-            const milestoneAudio = document.getElementById('milestoneSound');
-            if (milestoneAudio) { 
-                milestoneAudio.pause(); 
-                milestoneAudio.currentTime = 0; 
-                milestoneAudio.play().catch(e => console.error("Error playing milestone sound:", e)); 
-            }
-
-            container.style.display = 'block';
-            container.innerHTML = '';
-            
-            const colors = ['#ffcc00', '#ff0066', '#33ccff', '#99ff33', '#f0f0f0'];
-            const numConfetti = 50;
-
-            for (let i = 0; i < numConfetti; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                
-                // Random starting position (top half of the screen)
-                const xStart = Math.random() * 100 - 50; 
-                const yStart = Math.random() * 50; 
-                
-                // Random ending position (fall off screen)
-                const xEnd = Math.random() * 150 - 75; 
-                const yEnd = 150 + Math.random() * 50; 
-                
-                confetti.style.setProperty('--x-start', `${xStart}vw`);
-                confetti.style.setProperty('--y-start', `-${yStart}vh`);
-                confetti.style.setProperty('--x-end', `${xEnd}vw`);
-                confetti.style.setProperty('--y-end', `${yEnd}vh`);
-                confetti.style.animationDelay = `${Math.random() * 0.5}s`;
-                confetti.style.animationDuration = `${2 + Math.random() * 1.5}s`;
-                
-                container.appendChild(confetti);
-            }
-
-            setTimeout(() => {
-                container.innerHTML = '';
-                container.style.display = 'none';
-            }, 3500); // Animation duration is 3s, keep container for 3.5s
-        }
-
-
-        function updateClock() { 
-            const now = new Date();
-            el.liveClock.textContent = now.toLocaleString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: !0 }); 
-            
-            // NEW: Blinking Logic (7:15 PM to 8:00 PM local time)
-            const hour = now.getHours();
-            const minute = now.getMinutes();
-            const isAlertTime = (hour === 19 && minute >= 15) || (hour === 20 && minute === 0);
-            
-            if (isAlertTime && hour < 20) {
-                el.liveClock.classList.add('blinking-alert');
-                el.appTitle.classList.add('blinking-alert'); 
-            } else {
-                el.liveClock.classList.remove('blinking-alert');
-                el.appTitle.classList.remove('blinking-alert');
-            }
-            
-            updateBeepAlert(isAlertTime && hour < 20, now);
-        }
-
-        // NEW: Time Announcement Logic (Replaces the Beep Sound)
-        function speakTime() {
-            // FIX: Cancel existing speech before starting a new one to prevent overlap/bugs
-            if (tts.speaking) {
-                tts.cancel();
-            }
-            if (ttsVoice) {
-                const now = new Date();
-                const hr = now.getHours() % 12 || 12;
-                const min = now.getMinutes();
-                const ampm = now.getHours() >= 12 ? 'P M' : 'A M';
-                const timeText = `The time is ${hr} ${min === 0 ? '' : min} ${ampm}`;
-                
-                const utterance = new SpeechSynthesisUtterance(timeText);
-                utterance.voice = ttsVoice;
-                utterance.rate = 1.0; 
-                utterance.pitch = 1.0; 
-                tts.speak(utterance);
-            }
-        }
-        
-        function updateBeepAlert(isAlertTime, now) {
-            if (isAlertTime && !isBeepingActive) {
-                isBeepingActive = true;
-                const secondsToNextMinute = 60 - now.getSeconds();
-                
-                minuteBeepTimeout = setTimeout(() => {
-                    speakTime();
-                    
-                    minuteBeepTimeout = setInterval(() => {
-                        const current = new Date();
-                        const currentHour = current.getHours();
-                        if (currentHour < 20) {
-                           speakTime();
-                        } else {
-                            clearInterval(minuteBeepTimeout);
-                            isBeepingActive = false;
-                        }
-                    }, 60000); 
-                    
-                }, secondsToNextMinute * 1000);
-
-            } else if (!isAlertTime && isBeepingActive) {
-                clearTimeout(minuteBeepTimeout);
-                clearInterval(minuteBeepTimeout);
-                isBeepingActive = false;
-            }
-        }
-
-        function showStatusMessage(t, e) { el.statusMessage.textContent = t; el.statusMessage.className = "status-message rounded-lg text-center font-semibold p-3"; el.statusMessage.classList.add("success" === e ? "bg-green-status" : "bg-red-status", "show"); setTimeout(() => el.statusMessage.classList.remove("show"), 2500); }
-        function getTodaySessionId() { const today = new Date(); const yyyy = today.getFullYear(); const mm = String(today.getMonth() + 1).padStart(2, '0'); const dd = String(today.getDate()).padStart(2, '0'); return `SESSION-${yyyy}-${mm}-${dd}`; }
-        
-        // --- API COMMUNICATION (unchanged) ---
-       async function apiCall(action, payload = {}) {
-            if (!navigator.onLine && action !== 'getSessionData' && action !== 'getAllSessions') {
-                 Swal.fire("Offline Error", "Cannot perform this action while offline. Please check your internet connection.", "error");
-                 throw new Error("Offline");
-            }
-
+        async function apiCall(action, payload = {}) {
+            if (!navigator.onLine && action !== 'getSessionData' && action !== 'getAllSessions') throw new Error("Offline");
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'cors',
-                    cache: 'no-cache',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({ action, ...payload })
+                    method: 'POST', mode: 'cors', cache: 'no-cache', headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({ action, ...payload }) 
                 });
-                
-                if (!response.ok && response.status !== 200) throw new Error(`Network response error: ${response.status} ${response.statusText}`);
-
+                if (!response.ok) throw new Error(`Network response error: ${response.status}`);
                 const data = await response.json();
-                
-                if (data.status !== 'success') {
-                    throw new Error(data.message || 'Unknown Google Script error.');
-                }
+                if (data.status !== 'success') throw new Error(data.message || 'Error');
                 return data;
-
-            } catch (error) {
-                console.error(`API Call Failed for action "${action}":`, error);
-                
-                let errorMessage = error.message;
-                
-                if (error instanceof TypeError && (error.message === 'Failed to fetch' || error.message.includes('CORS'))) {
-                    errorMessage = "Critical CORS/Network Error: Cannot connect to Google Script. Ensure your file is hosted on a secure server (HTTPS) and the script URL is correct. Check your browser console for details.";
-                    if (action === 'getAllSessions' || action === 'getSessionData') {
-                       console.error(errorMessage);
-                    } else {
-                       Swal.fire("Critical API Error", errorMessage, "error");
-                    }
-                } else if (!error.message.includes('Session not found') && error.message !== 'Offline') {
-                    Swal.fire("API Error", `An error occurred while communicating with the server: ${error.message}`, "error");
-                }
-                
-                throw new Error(errorMessage); 
-            }
+            } catch (error) { console.error(`API Call Failed:`, error); throw error; }
         }
         
-        // --- NETWORK STATUS LOGIC (Updated for Voice/Popup) ---
-        function getWifiIcon(colorClass) {
-            return `
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ${colorClass}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.447 18.013v0c.34-.146.732-.23 1.144-.23h4.818c.412 0 .804.084 1.144.23l.115.05A7.994 7.994 0 0012 4a7.994 7.994 0 00-5.679 2.373L7.15 7.189c.34-.146.732-.23 1.144-.23h7.411c.412 0 .804.084 1.144.23l.23-.23A7.994 7.994 0 0012 4a7.994 7.994 0 00-5.679 2.373zM5 12a7 7 0 0114 0M3 18a9 9 0 0118 0" />
-                </svg>
-            `;
-        }
-
         function updateNetworkStatus() {
             const isOnline = navigator.onLine;
-
-            if (isOnline) {
-                el.networkIcon.innerHTML = getWifiIcon("icon-online"); 
-                el.networkText.textContent = "Online";
-                el.networkText.className = "font-bold text-success-hover";
-                if (!lastOnlineState) {
-                    // FIX: Ensure TTS does not overlap with Swal.
-                    Swal.fire({ title: "Connected", text: "ජාල සම්බන්ධතාවය නැවත සකසා ඇත.", icon: "success", timer: 3000, showConfirmButton: false });
-                    setTimeout(() => speakStatus("Connected. Network connection restored."), 500); 
-                }
-            } else {
-                el.networkIcon.innerHTML = getWifiIcon("icon-offline"); 
-                el.networkText.textContent = "Offline";
-                el.networkText.className = "font-bold text-danger-hover";
-                if (lastOnlineState) {
-                    // FIX: Ensure TTS does not overlap with Swal.
-                    Swal.fire({ title: "Disconnected!", text: "ජාල සම්බන්ධතාවය විසන්ධි වී ඇත. දත්ත සුරැකීම අක්‍රීයයි.", icon: "error" });
-                    setTimeout(() => speakStatus("Disconnected. Please check your internet connection."), 500);
-                }
-            }
-            
-            el.saveToSheetBtn.disabled = !isOnline;
+            if (isOnline) { el.networkIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 icon-online" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.447 18.013v0c.34-.146.732-.23 1.144-.23h4.818c.412 0 .804.084 1.144.23l.115.05A7.994 7.994 0 0012 4a7.994 7.994 0 00-5.679 2.373L7.15 7.189c.34-.146.732-.23 1.144-.23h7.411c.412 0 .804.084 1.144.23l.23-.23A7.994 7.994 0 0012 4a7.994 7.994 0 00-5.679 2.373zM5 12a7 7 0 0114 0M3 18a9 9 0 0118 0" /></svg>`; el.networkText.textContent = "Online"; el.networkText.className = "font-bold text-success-hover"; } 
+            else { el.networkIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 icon-offline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 011.414 0l4.242 4.242m-9.898-9.9l9.9 9.9" /></svg>`; el.networkText.textContent = "Offline"; el.networkText.className = "font-bold text-danger-hover"; }
+            const disableExport = appMode === 'easy' || !isOnline;
+            el.saveToSheetBtn.disabled = disableExport;
             el.manualSaveBtn.disabled = !isOnline;
-            
+            if (appMode === 'advanced') el.printScannedOrderBtn.disabled = !isOnline && currentlyViewingSessionId !== currentSessionId;
             lastOnlineState = isOnline;
         }
 
-        // --- Touch Lock Logic (UPDATED) ---
-        function handleTouchLockToggle() {
+        function handleTouchLockToggle(event) {
+            if (event && event.type === 'click' && event.target !== el.touchLockBtn && !el.touchLockBtn.contains(event.target)) return;
             isTouchLocked = !isTouchLocked;
-            
             if (isTouchLocked) {
-                // Lock: Change icon, enable overlay, disable input focus
-                el.lockIconOpen.classList.add('hidden');
-                el.lockIconClosed.classList.remove('hidden');
-                el.touchLockOverlay.classList.add('locked');
-                el.touchLockBtn.classList.remove('btn-secondary');
-                el.touchLockBtn.classList.add('btn-danger');
-                
-                // IMPORTANT: Blur input so the keyboard cannot pop up accidentally, but keep the input ENabled for scanner input.
+                el.lockIconOpen.classList.add('hidden'); el.lockIconClosed.classList.remove('hidden');
+                el.touchLockOverlay.classList.add('locked'); el.touchLockBtn.classList.remove('btn-secondary'); el.touchLockBtn.classList.add('btn-danger');
                 el.orderScanInput.blur(); 
-                
                 Swal.fire({ toast: true, position: 'top-right', icon: 'warning', title: 'Touch Locked', showConfirmButton: false, timer: 1500 });
             } else {
-                // Unlock: Change icon, disable overlay, re-focus input
-                el.lockIconOpen.classList.remove('hidden');
-                el.lockIconClosed.classList.add('hidden');
-                el.touchLockOverlay.classList.remove('locked');
-                el.touchLockBtn.classList.remove('btn-danger');
-                el.touchLockBtn.classList.add('btn-secondary');
+                el.lockIconOpen.classList.remove('hidden'); el.lockIconClosed.classList.add('hidden');
+                el.touchLockOverlay.classList.remove('locked'); el.touchLockBtn.classList.remove('btn-danger'); el.touchLockBtn.classList.add('btn-secondary');
                 Swal.fire({ toast: true, position: 'top-right', icon: 'success', title: 'Touch Unlocked', showConfirmButton: false, timer: 1500 });
-                
                 el.orderScanInput.focus();
             }
-            // IMPORTANT: Update camera button state
-            el.openCameraBtn.disabled = isTouchLocked;
-        }
-        
-        // --- RECYCLE BIN LOGIC (using Local Storage) ---
-        function loadRecycleBin() {
-            try {
-                const storedBin = localStorage.getItem('recycleBin');
-                recycleBin = storedBin ? JSON.parse(storedBin) : [];
-            } catch (e) {
-                console.error("Could not load Recycle Bin from localStorage:", e);
-                recycleBin = [];
-            }
+            el.openCameraBtn.disabled = (currentlyViewingSessionId !== currentSessionId) || isTouchLocked;
         }
 
-        function saveRecycleBin() {
-            try {
-                localStorage.setItem('recycleBin', JSON.stringify(recycleBin));
-                updateRecycleBinUi();
-            } catch (e) {
-                console.error("Could not save Recycle Bin to localStorage:", e);
-            }
-        }
-        
+        function loadRecycleBin() { try { recycleBin = JSON.parse(localStorage.getItem('recycleBin')) || []; } catch (e) { recycleBin = []; } }
+        function saveRecycleBin() { localStorage.setItem('recycleBin', JSON.stringify(recycleBin)); updateRecycleBinUi(); }
         function updateRecycleBinUi() {
             el.recycleBinCount.textContent = `Recycle Bin (${recycleBin.length})`;
-            el.recycleBinList.innerHTML = '';
-            el.noRecycleItems.style.display = recycleBin.length > 0 ? 'none' : 'block';
-            el.restoreSelectedBtn.disabled = recycleBin.length === 0;
-
+            el.recycleBinList.innerHTML = ''; el.noRecycleItems.style.display = recycleBin.length > 0 ? 'none' : 'block'; el.restoreSelectedBtn.disabled = recycleBin.length === 0;
             recycleBin.forEach((item, index) => {
-                const listItem = document.createElement("li");
-                listItem.className = "flex items-center justify-between p-2 rounded-md text-sm bg-white shadow-sm border border-gray-200 text-gray-700";
-                
-                // Checkbox for selection
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.value = item.barcode;
-                checkbox.id = `rb-item-${index}`;
-                checkbox.className = 'mr-3 h-4 w-4 text-primary rounded focus:ring-primary';
-
-                // Barcode text and deletion time
-                const textDiv = document.createElement('label');
-                textDiv.htmlFor = `rb-item-${index}`;
-                textDiv.className = 'flex-grow cursor-pointer';
-                const deleteTime = new Date(item.deletedAt).toLocaleTimeString('en-US');
-                textDiv.innerHTML = `
-                    <span class="font-semibold">${item.barcode}</span>
-                    <span class="text-xs text-secondary ml-2"> (Deleted: ${deleteTime})</span>
-                `;
-
-                listItem.appendChild(checkbox);
-                listItem.appendChild(textDiv);
-                el.recycleBinList.appendChild(listItem);
+                const li = document.createElement("li");
+                li.className = "flex items-center justify-between p-2 rounded-md text-sm bg-white shadow-sm border border-gray-200 text-gray-700";
+                li.innerHTML = `<input type='checkbox' value='${item.barcode}' id='rb-item-${index}' class='mr-3 h-4 w-4 rounded'><label for='rb-item-${index}' class='flex-grow cursor-pointer'><span class="font-semibold">${item.barcode}</span><span class="text-xs text-secondary ml-2"> (Deleted: ${new Date(item.deletedAt).toLocaleTimeString()})</span></label>`;
+                el.recycleBinList.appendChild(li);
             });
         }
+        function openRecycleBin() { loadRecycleBin(); updateRecycleBinUi(); el.recycleBinModal.style.display = 'flex'; }
+        function closeRecycleBin() { el.recycleBinModal.style.display = 'none'; }
         
-        function openRecycleBin() {
-            loadRecycleBin();
-            updateRecycleBinUi();
-            el.recycleBinModal.style.display = 'flex';
-        }
-        
-        function closeRecycleBin() {
-            el.recycleBinModal.style.display = 'none';
-        }
-
         function handleRestoreSelected() {
             const selected = Array.from(el.recycleBinList.querySelectorAll('input:checked')).map(cb => cb.value);
-            if (selected.length === 0) {
-                return Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'No items selected!', showConfirmButton: false, timer: 1500 });
-            }
-
-            selected.forEach(barcode => {
-                if (!scannedBarcodes.includes(barcode)) {
-                    scannedBarcodes.unshift(barcode);
-                }
-            });
-            
+            if (selected.length === 0) return Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'No items selected!', showConfirmButton: false, timer: 1500 });
+            selected.forEach(barcode => { if (!scannedBarcodes.includes(barcode)) scannedBarcodes.unshift(barcode); });
             recycleBin = recycleBin.filter(item => !selected.includes(item.barcode));
             saveRecycleBin();
-            
-            returnToTodayView(); 
-            closeRecycleBin();
-            autoSaveSession();
-            
+            returnToTodayView(); closeRecycleBin(); autoSaveSession();
             Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `${selected.length} item(s) restored!`, showConfirmButton: false, timer: 2000 });
         }
-
-
-        // --- UI & STATE MANAGEMENT ---
-        function updateUiFromState() {
-            const currentCount = currentlyViewingBarcodes.length;
-            
-            if (FlipCounter.element) {
-                FlipCounter.update(currentCount); 
-            }
-            updateRecycleBinUi();
-
-            el.scannedOrderBarcodesList.innerHTML = "";
-            const hasBarcodes = currentCount > 0;
-            const isViewingToday = currentlyViewingSessionId === currentSessionId;
-            
-            el.scannedListHeader.textContent = isViewingToday ? "Scanned Barcodes (Today)" : `Viewing Session: ${currentlyViewingSessionId.replace('SESSION-','')}`;
-            el.noOrderBarcodesMessage.textContent = isViewingToday ? "No barcodes scanned yet for today." : "No barcodes were scanned on this day.";
-            el.noOrderBarcodesMessage.style.display = hasBarcodes ? 'none' : 'block';
-            el.returnToTodayBtn.style.display = isViewingToday ? 'none' : 'block';
-            el.orderScanInput.disabled = !isViewingToday; el.addOrderBarcodeBtn.disabled = !isViewingToday; 
-            
-            // Camera Button State relies on isTouchLocked AND isViewingToday
-            el.openCameraBtn.disabled = !isViewingToday || isTouchLocked; 
-            
-            el.orderScanInput.placeholder = isViewingToday ? "Barcode number..." : "Viewing past session...";
-
-            if (hasBarcodes) {
-                currentlyViewingBarcodes.forEach((barcode, index) => {
-                    const listItem = document.createElement("li");
-                    listItem.style.animation = `slideInFromLeft 0.5s ease-out forwards`;
-                    const scanNumber = currentCount - index; 
-                    if(isViewingToday) {
-                        listItem.className = "flex items-center justify-between p-2 rounded-md text-base bg-white shadow-sm border border-gray-200 text-gray-800";
-                        const leftDiv = document.createElement('div'); leftDiv.className = 'flex items-center';
-                        const numberSpan = document.createElement('span'); numberSpan.className = "font-semibold text-primary w-12 text-left"; numberSpan.textContent = `#${scanNumber}`;
-                        const barcodeSpan = document.createElement('span'); barcodeSpan.textContent = barcode;
-                        leftDiv.appendChild(numberSpan); leftDiv.appendChild(barcodeSpan);
-                        
-                        const deleteBtn = document.createElement('button'); 
-                        deleteBtn.textContent = "Delete"; 
-                        deleteBtn.className = "btn btn-danger px-3 py-1 text-xs rounded-md font-semibold"; 
-                        deleteBtn.onclick = () => handleDeleteSingleBarcode(index); 
-                        
-                        listItem.appendChild(leftDiv); 
-                        listItem.appendChild(deleteBtn);
-                    } else {
-                        listItem.className = "flex items-center p-2 text-gray-500";
-                        listItem.textContent = `#${scanNumber}. ${barcode}`;
-                    }
-                    el.scannedOrderBarcodesList.appendChild(listItem);
-                });
-                el.orderListContainer.scrollTop = 0;
-            }
-            el.liveSessionName.textContent = `For ${currentSessionId.replace('SESSION-', '')}`;
-            el.liveSessionDisplay.classList.remove('hidden');
-            
-            updateNetworkStatus();
-            
-            if (isViewingToday && !isTouchLocked) {
-                el.orderScanInput.focus();
-            }
-        }
         
-        // --- APPLICATION LOGIC ---
-        async function initializeApp() {
-            setInitialTexts(); 
-            
-            FlipCounter.initialize(0); 
-            
-            updateClock(); 
-            setInterval(updateClock, 1000); 
-
-            loadRecycleBin(); 
-            
-            currentSessionId = getTodaySessionId(); document.title = "World Out Fashion - OMS";
-            
-            el.addOrderBarcodeBtn.addEventListener("click", handleOrderScanAddBarcode);
-            el.returnToTodayBtn.addEventListener("click", returnToTodayView);
-            el.manualSaveBtn.addEventListener("click", handleManualSave);
-            el.loadSelectedSessionBtn.addEventListener("click", loadSelectedSession);
-            // el.deleteSelectedSessionBtn.addEventListener("click", deleteSelectedSession); // REMOVED AS REQUESTED IN PREVIOUS ROUND
-            el.searchByDate.addEventListener("input", filterSessionsByDate);
-            el.resetDateFilterBtn.addEventListener("click", () => { el.searchByDate.value = ""; filterSessionsByDate(); });
-            el.barcodeSearchBtn.addEventListener("click", handleBarcodeSearch);
-            el.barcodeSearchInput.addEventListener("keypress", (e) => { if (e.key === 'Enter') handleBarcodeSearch(); }); 
-            el.saveToSheetBtn.addEventListener("click", saveDataToGoogleSheet);
-            el.printScannedOrderBtn.addEventListener("click", printScannedOrder);
-            el.downloadCsvBtn.addEventListener("click", downloadCsv);
-            el.openCameraBtn.addEventListener("click", startCameraScan);
-            el.closeCameraBtn.addEventListener("click", stopCameraScan);
-            
-            // NEW Recycle Bin Listeners
-            el.openRecycleBinBtn.addEventListener("click", openRecycleBin);
-            el.closeRecycleBinBtn.addEventListener("click", closeRecycleBin);
-            el.restoreSelectedBtn.addEventListener("click", handleRestoreSelected);
-            
-            // NEW Lock Listener (UPDATED)
-            el.touchLockBtn.addEventListener("click", handleTouchLockToggle);
-
-
-            // Network Initialization
-            window.addEventListener('online', updateNetworkStatus);
-            window.addEventListener('offline', updateNetworkStatus);
-            updateNetworkStatus(); 
-            
-            await reloadTodaysData();
-            
-            try { 
-                el.savedSessionsSelect.innerHTML = `<option value="">Loading previous sessions...</option>`;
-                const data = await apiCall("getAllSessions"); 
-                allSessions = data.sessions; 
-                filterSessionsByDate(); 
-            } catch (error) { 
-                console.warn("Could not load previous sessions:", error.message);
-                el.savedSessionsSelect.innerHTML = `<option value="">Failed to load sessions (API Error)</option>`;
-            }
-            
-            if (!isTouchLocked) {
-                 el.orderScanInput.focus();
-            }
-        }
-        
-        async function reloadTodaysData() {
-             try { 
-                 const data = await apiCall("getSessionData", { sessionId: currentSessionId }); 
-                 scannedBarcodes = data.session.data.barcodes || []; 
-             } 
-             catch (error) { 
-                 if (error.message.includes('Session not found')) { 
-                     scannedBarcodes = []; 
-                 } else {
-                     scannedBarcodes = [];
-                     console.error("Failed to load today's session data due to API error:", error.message);
-                 }
-             }
-            returnToTodayView();
-        }
-        
-        function handleOrderScanAddBarcode() {
-            const barcode = el.orderScanInput.value.trim();
-            if (barcode === "") return;
-            const previousCount = scannedBarcodes.length;
-
-            if (scannedBarcodes.includes(barcode)) {
-                showStatusMessage(`Already Scanned: ${barcode}`, "error");
-                const errorAudio = document.getElementById('errorSound');
-                if (errorAudio) { errorAudio.pause(); errorAudio.currentTime = 0; errorAudio.play().catch(console.error); }
-            } else {
-                scannedBarcodes.unshift(barcode); 
-                // FIX: Ensure a fresh copy is used to trigger UI update reliably and prevent reference issues
-                currentlyViewingBarcodes = [...scannedBarcodes]; 
-                showStatusMessage(`Success: ${barcode}`, "success");
-                const successAudio = document.getElementById('successSound');
-                if (successAudio) { successAudio.pause(); successAudio.currentTime = 0; successAudio.play().catch(console.error); }
-                
-                // NEW: Check for Milestone
-                const currentCount = scannedBarcodes.length;
-                if (currentCount > previousCount && currentCount > 0 && currentCount % 50 === 0) {
-                     showCompletionAnimation();
-                }
-
-                updateUiFromState();
-                autoSaveSession();
-            }
-            el.orderScanInput.value = "";
-            el.orderScanInput.focus();
-        }
-        
-        // --- Remaining helper functions (unchanged logic) ---
         function handleDeleteSingleBarcode(indexToDelete) {
             const barcodeToDelete = currentlyViewingBarcodes[indexToDelete];
-            
             Swal.fire({ 
-                title: 'Are you sure?', 
-                text: `Move barcode: ${barcodeToDelete} to Recycle Bin?`, 
-                icon: 'warning', 
-                showCancelButton: true, 
-                confirmButtonColor: 'var(--danger)', 
-                confirmButtonText: 'Yes, Move to Bin!', 
-                cancelButtonText: 'Cancel'
-            }).then((result) => { 
+                title: 'Are you sure?', text: `Move ${barcodeToDelete} to Recycle Bin?`, icon: 'warning', 
+                showCancelButton: true, confirmButtonColor: 'var(--danger)', confirmButtonText: 'Yes, Move!', cancelButtonText: 'Cancel'
+            }).then((result) => {
                 if (result.isConfirmed) { 
-                    
-                    // 1. Add to Recycle Bin
-                    recycleBin.push({
-                        barcode: barcodeToDelete,
-                        deletedAt: new Date().toISOString()
-                    });
+                    recycleBin.unshift({ barcode: barcodeToDelete, deletedAt: new Date().toISOString() });
                     saveRecycleBin(); 
-
-                    // 2. Delete from the main array
                     scannedBarcodes.splice(indexToDelete, 1); 
-                    currentlyViewingBarcodes = [...scannedBarcodes]; 
-                    
-                    // 3. Update UI and AutoSave
+                    currentlyViewingBarcodes = scannedBarcodes; 
                     updateUiFromState(); 
                     autoSaveSession(); 
-                    
-                    // 4. Show Side Notification (Toast)
-                    Swal.fire({ 
-                        toast: true, 
-                        position: 'top-end', 
-                        icon: 'info', 
-                        title: 'Item moved to Recycle Bin!', 
-                        showConfirmButton: false, 
-                        timer: 2000
-                    });
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Moved to Recycle Bin', showConfirmButton: false, timer: 1500 });
                 } 
             });
         }
         
-        function returnToTodayView() {
-            currentlyViewingSessionId = currentSessionId; currentlyViewingBarcodes = [...scannedBarcodes]; updateUiFromState();
-        }
+        function returnToTodayView() { currentlyViewingSessionId = currentSessionId; currentlyViewingBarcodes = [...scannedBarcodes]; updateUiFromState(); }
         
         async function loadSelectedSession() {
             const sessionId = el.savedSessionsSelect.value;
-            if (!sessionId) { return Swal.fire({ title: "Please select a session to view.", icon: 'info' }); }
+            if (!sessionId) { return Swal.fire({ title: "Please select a session.", icon: 'info' }); }
             el.loadSelectedSessionBtn.disabled = true; el.loadSelectedSessionBtn.textContent = "Loading...";
-            
             try { 
                 const data = await apiCall("getSessionData", { sessionId: sessionId }); 
                 currentlyViewingSessionId = sessionId; 
                 currentlyViewingBarcodes = data.session.data.barcodes || []; 
                 updateUiFromState(); 
             } catch (error) { 
-                console.error("Failed to load selected session:", error.message);
-                 if (!error.message.includes('Session not found')) {
-                     Swal.fire("Load Error", `Could not load session data: ${error.message}. Returning to today's view.`, "error");
-                 }
+                 Swal.fire("Load Error", "Could not load session data.", "error");
                 returnToTodayView(); 
-            } finally { 
-                el.loadSelectedSessionBtn.disabled = false; 
-                el.loadSelectedSessionBtn.textContent = "View"; 
-            }
+            } finally { el.loadSelectedSessionBtn.disabled = false; el.loadSelectedSessionBtn.textContent = "View"; }
         }
 
         async function handleBarcodeSearch() {
+            if (appMode !== 'advanced') return;
             const barcodeToSearch = el.barcodeSearchInput.value.trim();
-            if (!barcodeToSearch) { el.barcodeSearchResult.textContent = "Please enter a barcode."; el.barcodeSearchResult.style.color = "var(--warning)"; return; }
+            if (!barcodeToSearch) { el.barcodeSearchResult.textContent = "Enter barcode."; el.barcodeSearchResult.style.color = "var(--warning)"; return; }
             el.barcodeSearchBtn.disabled = true; el.barcodeSearchResult.textContent = "Searching..."; el.barcodeSearchResult.style.color = "var(--info)";
-            try { const data = await apiCall("searchBarcode", { barcode: barcodeToSearch });
-                if (data.found) { el.barcodeSearchResult.textContent = `Found in session: ${data.date}`; el.barcodeSearchResult.style.color = "var(--success)"; } 
-                else { el.barcodeSearchResult.textContent = "Barcode not found in any session."; el.barcodeSearchResult.style.color = "var(--danger)"; }
-            } catch (error) { el.barcodeSearchResult.textContent = "Search failed."; el.barcodeSearchResult.style.color = "var(--danger)"; } 
+            try { 
+                const data = await apiCall("searchBarcode", { barcode: barcodeToSearch });
+                if (data.found) { el.barcodeSearchResult.textContent = `Found: ${data.date}`; el.barcodeSearchResult.style.color = "var(--success)"; } 
+                else { el.barcodeSearchResult.textContent = "Not found."; el.barcodeSearchResult.style.color = "var(--danger)"; }
+            } catch (error) { el.barcodeSearchResult.textContent = "Error."; el.barcodeSearchResult.style.color = "var(--danger)"; } 
             finally { el.barcodeSearchBtn.disabled = false; }
         }
         
         async function handleManualSave() {
             el.manualSaveBtn.disabled = true; el.manualSaveBtnText.classList.add('hidden'); el.manualSaveBtnSpinner.classList.remove('hidden');
-            try { await autoSaveSession(true); } 
-            catch (error) { 
-                // Error handling is done inside autoSaveSession now
-            } 
-            finally { 
-                el.manualSaveBtn.disabled = !navigator.onLine; 
-                el.manualSaveBtnText.classList.remove('hidden'); el.manualSaveBtnSpinner.classList.add('hidden'); 
-            }
+            try { await autoSaveSession(true); await fetchTodayCount(); } catch (error) {} 
+            finally { el.manualSaveBtn.disabled = !navigator.onLine; el.manualSaveBtnText.classList.remove('hidden'); el.manualSaveBtnSpinner.classList.add('hidden'); }
         }
         
         async function autoSaveSession(isManual = false) {
             if (!navigator.onLine) {
-                el.autoSaveStatus.textContent = '✗ Offline'; 
-                el.autoSaveStatus.style.color = 'var(--danger)'; 
-                el.autoSaveStatus.classList.add("show"); 
-                setTimeout(() => { 
-                    el.autoSaveStatus.classList.remove("show"); 
-                    el.autoSaveStatus.textContent = '✓ Saved'; 
-                    el.autoSaveStatus.style.color = 'var(--success)'; 
-                }, 3000);
+                el.autoSaveStatus.textContent = '✗ Offline'; el.autoSaveStatus.style.color = 'var(--danger)'; el.autoSaveStatus.classList.add("show"); 
+                setTimeout(() => { el.autoSaveStatus.classList.remove("show"); el.autoSaveStatus.textContent = '✓ Saved'; el.autoSaveStatus.style.color = 'var(--success)'; }, 3000);
                 return;
             }
             try { 
                 await apiCall("saveSession", { sessionId: currentSessionId, barcodes: scannedBarcodes });
                 FlipCounter.blinkSuccess();
-                
-                if (isManual) { 
-                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Session saved!', showConfirmButton: false, timer: 2000 }); 
-                } else { 
-                    el.autoSaveStatus.classList.remove("show"); 
-                    el.autoSaveStatus.textContent = '✓ Saved'; 
-                    el.autoSaveStatus.style.color = 'var(--success)'; 
-                    el.autoSaveStatus.classList.add("show"); 
+                if (isManual) Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Saved!', showConfirmButton: false, timer: 1500 }); 
+                else { 
+                    el.autoSaveStatus.classList.remove("show"); el.autoSaveStatus.textContent = '✓ Saved'; el.autoSaveStatus.style.color = 'var(--success)'; el.autoSaveStatus.classList.add("show"); 
                     setTimeout(() => { el.autoSaveStatus.classList.remove("show") }, 2000); 
                 }
             } catch (error) { 
-                el.autoSaveStatus.textContent = '✗ Save Failed'; 
-                el.autoSaveStatus.style.color = 'var(--danger)'; 
-                el.autoSaveStatus.classList.add("show"); 
-                setTimeout(() => { 
-                    el.autoSaveStatus.classList.remove("show"); 
-                    el.autoSaveStatus.textContent = '✓ Saved'; 
-                    el.autoSaveStatus.style.color = 'var(--success)'; 
-                }, 3000); 
+                el.autoSaveStatus.textContent = '✗ Failed'; el.autoSaveStatus.style.color = 'var(--danger)'; el.autoSaveStatus.classList.add("show"); 
+                setTimeout(() => { el.autoSaveStatus.classList.remove("show"); el.autoSaveStatus.textContent = '✓ Saved'; el.autoSaveStatus.style.color = 'var(--success)'; }, 3000); 
             }
         }
         
         function printScannedOrder() {
+            if (currentlyViewingBarcodes.length === 0) return Swal.fire({ title: "No items.", icon: "info" });
             const barcodes = currentlyViewingBarcodes;
-            if (barcodes.length === 0) {
-                return Swal.fire({ title: "No items to print.", icon: "info" });
-            }
-
-            // The list is stored newest first, but print should be oldest first (#1, #2, ...)
             const itemsToPrint = [...barcodes].reverse(); 
             const totalItems = itemsToPrint.length;
-            
-            // Print constants
-            const maxItemsPerColumn = 40;
-            const columnsPerPage = 5;
-            const maxItemsPerPage = maxItemsPerColumn * columnsPerPage; // 200 items per page
-            
-            el.printArea.innerHTML = ""; // Clear existing print area
-
-            let pageHtml = "";
-            let itemIndex = 0;
-            let pageNumber = 1;
-
-            const generatePageHeader = (page) => `
-                <div class="print-page">
-                    <div class="print-watermark-overlay">
-                        <img src="logo.png" alt="Watermark Logo">
-                    </div>
-                    <div class="print-header">
-                        <div class="print-title-group">
-                            <img src="logo.png" alt="Company Logo" class="company-logo">
-                            <h1 class="company-name-print">World Out Fashion</h1>
-                        </div>
-                        <p class="print-date">Date: ${new Date().toLocaleString('en-US')}</p>
-                    </div>
-                    <div class="print-list-container">
-            `;
-            
-            const generateSignatureArea = () => `
-                <div class="signature-area">
-                    <p style="text-align: center; margin-top: 0; margin-bottom: 5px; font-weight: normal;">Signature:</p>
-                    <p style="border-top: 1px solid #000; padding-top: 5px;">Prepared By</p>
-                </div>
-            `;
-            
-            const generatePageFooter = () => `
-                    </div> <!-- Close print-list-container -->
-                    <div class="print-footer-watermark">
-                        © 2025 DesignVerse by Sandusha Avishkha. All rights reserved. Crafted with passion in Minuwangoda, Sri Lanka.
-                    </div>
-                </div>
-            `;
-            
-            // Loop through all pages (FIXED LOGIC: Use maxItemsPerPage only if needed, focus on one large page)
-            // Since the user wants it on one page, we only generate one print-page element.
-            // The column logic remains the same to organize content within that page.
-            
-            // Start Page 1 Header
-            pageHtml += generatePageHeader(1);
+            const maxItemsPerColumn = 40; const columnsPerPage = 5;
+            el.printArea.innerHTML = ""; 
+            let pageHtml = `<div class="print-page"><div class="print-watermark-overlay"><img src="logo.png" alt="Watermark Logo"></div><div class="print-header"><div class="print-title-group"><img src="logo.png" class="company-logo"><h1 class="company-name-print">World Out Fashion</h1></div><p class="print-date">Date: ${new Date().toLocaleString('en-US')}</p></div><div class="print-list-container">`;
             let contentHtml = '';
-            
-            // Loop through columns
             for (let col = 0; col < columnsPerPage; col++) {
                 const startColIndex = col * maxItemsPerColumn;
-                
-                // Only start a column if there are items left to display
                 if (startColIndex < totalItems) {
                     contentHtml += '<div class="print-column">';
-                    
-                    // Determine the end index for this column
                     const endColIndex = Math.min(startColIndex + maxItemsPerColumn, totalItems);
-                    
-                    // Loop through items in this column
-                    for (let i = startColIndex; i < endColIndex; i++) {
-                        const itemNumber = i + 1;
-                        contentHtml += `<div>${itemNumber}. ${itemsToPrint[i]}</div>`;
-                    }
-                    
+                    for (let i = startColIndex; i < endColIndex; i++) { contentHtml += `<div>${i + 1}. ${itemsToPrint[i]}</div>`; }
                     contentHtml += '</div>';
                 }
             }
-            
             pageHtml += contentHtml;
-            
-            // Add signature area and footer to the end of the single page
-            pageHtml += generateSignatureArea();
-            pageHtml += generatePageFooter();
-            
+            pageHtml += `</div><div class="signature-area"><p style="text-align: center; margin-top: 0; margin-bottom: 5px; font-weight: normal;">Signature:</p><p style="border-top: 1px solid #000; padding-top: 5px;">Prepared By</p></div><div class="print-footer-watermark">© 2025 DesignVerse by Sandusha Avishkha. All rights reserved. Crafted with passion in Minuwangoda, Sri Lanka.</div></div>`;
             el.printArea.innerHTML = pageHtml;
             window.print();
         }
         
-        function downloadCsv(){if(0===currentlyViewingBarcodes.length)return void Swal.fire({title:"No items to download.",icon:"info"});const t=[...currentlyViewingBarcodes].reverse();let e="No,Barcode\n";t.forEach((t,a)=>{e+=`${a+1},"${t}"\n`});const a=new Blob([e],{type:"text/csv;charset=utf-8;"}),s=document.createElement("a");s.href=URL.createObjectURL(a),s.download=`scanned_order_${currentlyViewingSessionId}.csv`,s.click()}
+        function downloadCsv(){
+            if (appMode !== 'advanced') return Swal.fire("Error", "Advanced Mode Only.", "error");
+            if(0===currentlyViewingBarcodes.length)return void Swal.fire({title:"No items.",icon:"info"});
+            const t=[...currentlyViewingBarcodes].reverse();
+            let e="No,Barcode\n"; t.forEach((t,a)=>{e+=`${a+1},"${t}"\n`});
+            const a=new Blob([e],{type:"text/csv;charset=utf-8;"}),s=document.createElement("a");
+            s.href=URL.createObjectURL(a),s.download=`scanned_order_${currentlyViewingSessionId}.csv`,s.click()
+        }
         
-        function filterSessionsByDate(){const t=el.searchByDate.value;let e=allSessions.filter(e=>e.id!==currentSessionId);t&&(e=e.filter(e=>{const a=new Date(e.createdAt).toISOString().split('T')[0];return a===t})),el.savedSessionsSelect.innerHTML=`<option value="">Select a previous session</option>`,e.sort((t,e)=>e.createdAt-t.createdAt).forEach(t=>{const e=document.createElement("option");e.value=t.id,e.textContent=t.name,el.savedSessionsSelect.appendChild(e)})}
+        function filterSessionsByDate(){
+            if (appMode !== 'advanced') return;
+            const t=el.searchByDate.value;
+            let e=allSessions.filter(e=>e.id!==currentSessionId);
+            t&&(e=e.filter(e=>{const a=new Date(e.createdAt).toISOString().split('T')[0];return a===t})),
+            el.savedSessionsSelect.innerHTML=`<option value="">Select a previous session</option>`,
+            e.sort((t,e)=>e.createdAt-t.createdAt).forEach(t=>{const e=document.createElement("option");e.value=t.id,e.textContent=t.name,el.savedSessionsSelect.appendChild(e)})
+        }
         
         function saveDataToGoogleSheet() { 
-            if (scannedBarcodes.length === 0) { return Swal.fire("No Data", "There are no barcodes for today to save.", "warning"); } 
-            if (!navigator.onLine) { return Swal.fire("Offline Error", "Cannot save to Google Sheet while offline.", "error"); }
-            
+            if (appMode !== 'advanced') return Swal.fire("Error", "Advanced Mode Only.", "error");
+            if (scannedBarcodes.length === 0) return Swal.fire("No Data", "No barcodes.", "warning"); 
+            if (!navigator.onLine) return Swal.fire("Offline", "Check connection.", "error");
             el.saveToSheetBtn.disabled = true; el.saveBtnText.classList.add('hidden'); el.saveBtnSpinner.classList.remove('hidden'); 
             el.sheetStatus.textContent = "Saving..."; el.sheetStatus.style.color = "var(--info)"; 
-            const payload = { barcodes: [...scannedBarcodes].reverse(), sessionId: currentSessionId }; 
-            
-            apiCall("saveData", payload).then(() => { 
-                el.sheetStatus.textContent = "Data saved successfully!"; el.sheetStatus.style.color = "var(--success)"; 
-                Swal.fire("Success!", "Today's data has been saved to the daily sheet.", "success"); 
-            }).catch((error) => { 
-                if (error.message !== 'Offline') {
-                    el.sheetStatus.textContent = "Save failed."; el.sheetStatus.style.color = "var(--danger)"; 
-                } else {
-                    el.sheetStatus.textContent = "Offline. Try again later."; el.sheetStatus.style.color = "var(--danger)";
-                }
+            apiCall("saveData", { barcodes: [...scannedBarcodes].reverse(), sessionId: currentSessionId }).then(() => { 
+                el.sheetStatus.textContent = "Saved!"; el.sheetStatus.style.color = "var(--success)"; 
+                Swal.fire("Success!", "Data saved to daily sheet.", "success"); 
+            }).catch((error) => { el.sheetStatus.textContent = "Failed."; el.sheetStatus.style.color = "var(--danger)"; 
             }).finally(() => { 
                 el.saveToSheetBtn.disabled = !navigator.onLine; 
                 el.saveBtnText.classList.remove('hidden'); el.saveBtnSpinner.classList.add('hidden'); 
-                setTimeout(() => { el.sheetStatus.textContent = "" }, 5000); 
             }); 
         }
 
-        // --- Camera Scan Logic (UPDATED for Lock Bypass) ---
-        function onScanSuccess(decodedText, decodedResult) {
-            el.orderScanInput.value = decodedText; 
-            handleOrderScanAddBarcode(); 
-            stopCameraScan();
-            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Barcode Scanned!', showConfirmButton: false, timer: 1500 });
-            // Re-focusing is handled by stopCameraScan -> updateUiFromState -> focus()
+        function setupMode(mode) {
+            showLoading(`Loading ${mode} mode...`);
+            appMode = mode;
+            localStorage.setItem('appMode', mode);
+            setTimeout(async () => {
+                el.modeSelectionScreen.style.display = 'none';
+                el.mainContentWrapper.style.display = 'flex';
+                el.touchLockBtnContainer.classList.remove('hidden');
+                el.backToSelectionBtn.classList.remove('hidden'); 
+                const isAdvanced = mode === 'advanced';
+                el.advancedFeaturesSection.style.display = isAdvanced ? 'block' : 'none';
+                el.barcodeSearchSection.style.display = isAdvanced ? 'block' : 'none';
+                el.searchHr.style.display = isAdvanced ? 'block' : 'none';
+                el.sessionLoadSection.style.display = isAdvanced ? 'block' : 'none';
+                el.loadPreviousOrdersTitle.textContent = isAdvanced ? "View Previous Sessions" : "Data & Settings";
+                if (isAdvanced) await loadAllSessions(); 
+                updateUiFromState();
+                const modeSelectAudio = document.getElementById('modeSelectSound');
+                if (modeSelectAudio) { modeSelectAudio.play().catch(console.error); }
+                hideLoading();
+            }, 50);
         }
-        function onScanFailure(error) { /* Do nothing to avoid console spam */ }
+        
+        function goToModeSelection() {
+            showLoading("Switching Mode...");
+            setTimeout(() => {
+                el.modeSelectionScreen.style.display = 'flex';
+                el.mainContentWrapper.style.display = 'none';
+                el.touchLockBtnContainer.classList.add('hidden');
+                appMode = null;
+                localStorage.removeItem('appMode');
+                fetchTodayCount(); 
+                hideLoading();
+            }, 300);
+        }
+        
+        async function fetchTodayCount() {
+            if (!navigator.onLine && scannedBarcodes.length === 0) { el.todayCountDisplay.textContent = 'Err'; return; }
+            if (el.todayCountDisplay.textContent === '--') el.todayCountDisplay.textContent = '...';
+            el.printTodayBtn.disabled = true;
+            try {
+                const data = await apiCall("getSessionData", { sessionId: currentSessionId });
+                const fetchedBarcodes = data.session.data.barcodes || [];
+                el.todayCountDisplay.textContent = fetchedBarcodes.length;
+                scannedBarcodes = fetchedBarcodes;
+                if (el.mainContentWrapper.style.display === 'flex' && currentlyViewingSessionId === currentSessionId) {
+                     currentlyViewingBarcodes = [...scannedBarcodes];
+                     updateUiFromState(); 
+                }
+                el.printTodayBtn.disabled = fetchedBarcodes.length === 0;
+            } catch (error) {
+                if (!error.message.includes('Session not found')) el.todayCountDisplay.textContent = 'Err'; 
+                else el.todayCountDisplay.textContent = '0';
+                el.printTodayBtn.disabled = true;
+            }
+        }
+        
+        function handlePrintTodayFromSelection() {
+            if (scannedBarcodes.length === 0) return Swal.fire({ title: "No items to print.", icon: "info" });
+            showLoading("Generating Preview...");
+            const originalSessionId = currentlyViewingSessionId;
+            const originalBarcodes = currentlyViewingBarcodes;
+            currentlyViewingSessionId = currentSessionId;
+            currentlyViewingBarcodes = [...scannedBarcodes]; 
+            setTimeout(() => {
+                try { printScannedOrder(); } catch (e) { console.error(e); } finally {
+                    currentlyViewingSessionId = originalSessionId; currentlyViewingBarcodes = originalBarcodes; updateUiFromState();
+                    setTimeout(goToModeSelection, 1000); hideLoading();
+                }
+            }, 50);
+        }
+
+        async function reloadTodaysData() {
+             try { 
+                 const data = await apiCall("getSessionData", { sessionId: currentSessionId }); 
+                 scannedBarcodes = data.session.data.barcodes || []; 
+             } catch (error) { scannedBarcodes = []; }
+            returnToTodayView();
+        }
+        
+        async function loadAllSessions() {
+             try { 
+                el.savedSessionsSelect.innerHTML = `<option value="">Loading previous sessions...</option>`;
+                const data = await apiCall("getAllSessions"); 
+                allSessions = data.sessions; 
+                filterSessionsByDate(); 
+            } catch (error) { el.savedSessionsSelect.innerHTML = `<option value="">Failed to load sessions (API Error)</option>`; }
+        }
+
+        // Camera Logic
+        function onScanSuccess(decodedText, decodedResult) {
+            el.orderScanInput.value = decodedText; handleOrderScanAddBarcode(); stopCameraScan();
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Scanned!', showConfirmButton: false, timer: 1500 });
+        }
+        function onScanFailure(error) {}
+        
         function startCameraScan() {
-            // Check lock status before opening camera (prevents camera from triggering while lock is active)
             if (isTouchLocked) return;
-            
             el.cameraModal.classList.add('show');
-            if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); }
+            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            Html5Qrcode.getCameras().then(devices => {
+                if (devices && devices.length) {
+                    const backCamera = devices.find(device => device.label.toLowerCase().includes('back')) || devices[0];
+                    html5QrCode.start({ deviceId: { exact: backCamera.id } }, config, onScanSuccess, onScanFailure).catch(err => { 
+                        Swal.fire("Camera Error", "Check permissions.", "error"); stopCameraScan(); 
+                    });
+                } else { Swal.fire("Error", "No camera found.", "error"); stopCameraScan(); }
+            }).catch(err => { Swal.fire("Error", "Camera error.", "error"); stopCameraScan(); });
             el.orderScanInput.value = ""; 
-            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
-                .catch(err => { Swal.fire("Camera Error", "Could not start the camera. Please check permissions.", "error"); stopCameraScan(); });
         }
         function stopCameraScan() {
-            if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().catch(err => {}); }
-            el.cameraModal.classList.remove('show');
-            // Ensure UI status update and focus call runs
-            updateUiFromState(); 
+            if (html5QrCode && html5QrCode.isScanning) html5QrCode.stop().catch(err => {});
+            el.cameraModal.classList.remove('show'); updateUiFromState(); 
         }
         
         document.addEventListener("DOMContentLoaded", initializeApp);
