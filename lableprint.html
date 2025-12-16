@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Out Fashion Label Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* =========================================
+           CUSTOMIZATION SECTION (මෙතැනින් වෙනස් කරන්න)
+           ========================================= */
+        :root {
+            /* අතුරු මුහුණතේ වර්ණ */
+            --primary-color: #003366;
+            --bg-color: #eef2f5;
+            
+            /* COD Settings */
+            --cod-font: 'Arial Black', 'Impact', sans-serif;
+            --cod-text-size: 18px; 
+            
+            /* ================================================== 
+               LOGO & WATERMARK SETTINGS 
+               ================================================== */
+            --footer-logo-width: 80px;   /* ලෝගෝ එකේ විශාලත්වය */
+            --footer-logo-opacity: 0.5;  /* ලෝගෝ එකේ මූලික පෙනුම (0.1 - 1.0) */
+            --footer-text-color: #888;   /* අකුරු වල පාට */
+        }
+
+        /* UI Styles (Print නොවන කොටස්) */
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .no-print {
+            max-width: 800px;
+            margin: 0 auto 30px auto;
+            text-align: center;
+        }
+
+        .main-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            min-height: 400px; /* කාඩ් එකේ අවම උස */
+        }
+
+        h1 { color: var(--primary-color); margin-bottom: 5px; }
+        .subtitle { color: #666; margin-bottom: 20px; font-size: 14px; }
+
+        /* Drag & Drop */
+        .upload-area {
+            border: 3px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 40px 20px;
+            background-color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .upload-area:hover { border-color: var(--primary-color); background-color: #f0f7ff; }
+        .file-input { display: none; } 
+
+        /* Buttons */
+        .btn-group {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            min-height: 50px; /* බටන් නැති විටත් ඉඩ තබා ගැනීමට */
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn-print { background: var(--primary-color); color: white; display: none; }
+        .btn-print:hover { transform: translateY(-2px); }
+
+        .btn-reset { background: #ff4757; color: white; display: none; }
+        .btn-reset:hover { transform: translateY(-2px); }
+
+        /* --- Footer Branding Section (Always Visible) --- */
+        .branding-footer {
+            margin-top: auto; /* පහළටම තල්ලු කිරීමට */
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            display: flex;
+            flex-direction: row; /* තනි පේළියට */
+            justify-content: center; /* මැදට */
+            align-items: center;     /* උස අනුව මැදට */
+            gap: 12px;               /* අකුරු සහ ලෝගෝ අතර පරතරය */
+        }
+
+        .powered-text {
+            font-size: 11px;
+            color: var(--footer-text-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .footer-logo {
+            width: var(--footer-logo-width);
+            opacity: var(--footer-logo-opacity); 
+            filter: grayscale(100%);
+            transition: all 0.3s ease;
+        }
+        
+        /* Highlight Effect on Hover */
+        .branding-footer:hover .footer-logo {
+            opacity: 1; 
+            filter: grayscale(0%);
+        }
+
+        /* --- Label & Print Styles --- */
+        .a4-page {
+            width: 210mm;
+            height: 296mm;
+            background: white;
+            margin: 0 auto 20px auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            padding: 8mm;
+            box-sizing: border-box;
+            gap: 8mm;
+            page-break-after: always;
+        }
+        .a4-page:last-child { page-break-after: auto; }
+
+        .label-container {
+            border: 1px solid #686868;
+            padding: 5px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            box-sizing: border-box;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .header { width: 100%; height: 85px; margin-bottom: 5px; display: flex; justify-content: center; align-items: center; border-bottom: none; }
+        .header img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        .content-wrapper { padding: 0 5px; flex-grow: 1; display: flex; flex-direction: column; }
+        .section-title { color: var(--primary-color); font-weight: bold; text-transform: uppercase; font-size: 12px; margin: 5px 0 3px 0; text-decoration: underline; }
+        .info-row { display: flex; font-size: 11px; margin-bottom: 3px; line-height: 1.2; }
+        .info-label { width: 90px; font-weight: bold; color: #333; flex-shrink: 0; }
+        .info-value { flex: 1; font-weight: 700; color: #000; word-wrap: break-word; }
+
+        .footer-area { margin-top: auto; border-top: 1px dashed #ccc; padding-top: 5px; }
+
+        .cod-wrapper { display: flex; justify-content: center; margin-top: 15px; margin-bottom: 25px; }
+        .cod-box { background: transparent; border: none; padding: 0; text-align: center; }
+        .cod-label { font-size: 10px; text-transform: uppercase; font-weight: bold; display: block; color: #555; }
+        .cod-amount { font-family: var(--cod-font); font-size: var(--cod-text-size); font-weight: 900; color: #000; line-height: 1; }
+
+        .sign-area { display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; margin-bottom: 5px; }
+        .line { display: inline-block; width: 70px; border-bottom: 1px solid #4b4b4b; }
+        .barcode-area { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 2px; }
+        .barcode-img { height: 42px; }
+        .qr-img { height: 55px; width: 55px; }
+        .code-text { text-align: center; font-size: 10px; font-weight: bold; font-family: monospace; }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: none; margin: 0; padding: 0; }
+            .a4-page { margin: 0; border: none; padding: 5mm; }
+            @page { size: A4; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print">
+        <div class="main-card">
+            <h1><i class="fas fa-tags"></i> Label Generator</h1>
+            <div class="subtitle">World Out Fashion System</div>
+            
+            <div class="upload-area" id="drop-zone" onclick="document.getElementById('upload').click()">
+                <i class="fas fa-cloud-upload-alt" style="font-size: 50px; color: #003366; margin-bottom: 10px;"></i>
+                <h3>Drag & Drop Excel File</h3>
+                <p>or click here to browse</p>
+                <!-- Hidden Input -->
+                <input type="file" id="upload" class="file-input" accept=".xlsx, .xls" />
+            </div>
+
+            <!-- Buttons (Hidden initially) -->
+            <div class="btn-group">
+                <button class="btn btn-print" id="print-btn" onclick="window.print()">
+                    <i class="fas fa-print"></i> Print Labels
+                </button>
+                <button class="btn btn-reset" id="reset-btn" onclick="location.reload()">
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+            </div>
+
+            <!-- BRANDING FOOTER (Always Visible Now) -->
+            <div class="branding-footer">
+                <span class="powered-text">Powered By DesignVerse</span>
+                <!-- smartx.png එක ෆයිල් එක තියෙන තැනම තිබිය යුතුය -->
+                <img src="smartx.png" alt="DesignVerse" class="footer-logo">
+            </div>
+        </div>
+    </div>
+
+    <div id="print-area"></div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('upload');
+        const printBtn = document.getElementById('print-btn');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // Drag & Drop Handling
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = '#003366'; dropZone.style.backgroundColor = '#f0f7ff'; });
+        dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = '#cbd5e0'; dropZone.style.backgroundColor = '#fff'; });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#cbd5e0'; 
+            dropZone.style.backgroundColor = '#fff';
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+        function handleFile(file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var data = new Uint8Array(e.target.result);
+                var workbook = XLSX.read(data, {type: 'array'});
+
+                if(!workbook.Sheets["Table Data"]) {
+                    alert('Error: "Table Data" Sheet not found!');
+                    return;
+                }
+
+                var sheetData = XLSX.utils.sheet_to_json(workbook.Sheets["Table Data"]);
+                var cleanData = sheetData.filter(function(row) {
+                    return (row['Receiver Name'] && row['Receiver Name'].toString().trim() !== "") || 
+                           (row['Tracking No'] && row['Tracking No'].toString().trim() !== "");
+                });
+
+                if(cleanData.length === 0) {
+                    alert("No valid data found in Excel.");
+                    return;
+                }
+
+                generateLabels(cleanData);
+                
+                // Show Buttons only (Footer is already visible)
+                printBtn.style.display = 'flex';
+                resetBtn.style.display = 'flex';
+                dropZone.innerHTML = '<i class="fas fa-check-circle" style="color:green; font-size:40px;"></i><h3>File Loaded!</h3><p>'+ cleanData.length +' Labels Ready</p>';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function generateLabels(data) {
+            const printArea = document.getElementById('print-area');
+            printArea.innerHTML = ''; 
+            let pageDiv = null;
+
+            data.forEach((row, index) => {
+                if (index % 4 === 0) {
+                    pageDiv = document.createElement('div');
+                    pageDiv.className = 'a4-page';
+                    printArea.appendChild(pageDiv);
+                }
+
+                let remarkText = row['Remark'] ? row['Remark'].toString() : "";
+                let piecesCount = 1;
+                if(remarkText.trim() !== "") {
+                    let parts = remarkText.split(',').filter(item => item.trim() !== "");
+                    piecesCount = parts.length > 0 ? parts.length : 1;
+                }
+
+                let rawValue = row['Value'];
+                let codAmount = "0.00";
+                if(rawValue) { codAmount = parseFloat(rawValue).toLocaleString('en-LK', {minimumFractionDigits: 2}); }
+                
+                let trackingNum = row['Tracking No'] ? row['Tracking No'].toString().trim() : ("WF" + String(index + 1).padStart(4, '0'));
+                let contactNo = row['Receiver Contact No 1'] || "";
+
+                const labelHTML = `
+                    <div class="label-container">
+                        <div class="header"><img src="logo3.png" alt="LOGO"></div>
+                        <div class="content-wrapper">
+                            <div class="section-title">SENDER DETAILS</div>
+                            <div class="info-row"><span class="info-label">Name:</span> <span class="info-value">WORLD OUT FASHION (CCP)</span></div>
+                            <div class="info-row"><span class="info-label">Address:</span> <span class="info-value">NO:152/40, AIRPORT ROAD PEELAWATTA MINUWANGODA</span></div>
+                            <div class="info-row"><span class="info-label">Contact No:</span> <span class="info-value">0767490069</span></div>
+
+                            <div class="section-title">RECEIVER DETAILS</div>
+                            <div class="info-row"><span class="info-label">Name:</span> <span class="info-value">${row['Receiver Name'] || ''}</span></div>
+                            <div class="info-row"><span class="info-label">Address:</span> <span class="info-value">${row['Receiver Address'] || ''}</span></div>
+                            <div class="info-row"><span class="info-label">City:</span> <span class="info-value">${row['Receiver City'] || ''}</span></div>
+                            <div class="info-row"><span class="info-label">Contact No:</span> <span class="info-value">${contactNo}</span></div>
+
+                            <div class="section-title">PACKAGE DETAILS</div>
+                            <div class="info-row"><span class="info-label">Description:</span> <span class="info-value">${remarkText}</span></div>
+                            <div class="info-row"><span class="info-label">Weight:</span> <span class="info-value">${row['Weight'] || ''}</span></div>
+                            <div class="info-row"><span class="info-label">Pieces:</span> <span class="info-value">${piecesCount}</span></div>
+
+                            <div class="footer-area">
+                                <div class="cod-wrapper">
+                                    <div class="cod-box">
+                                        <span class="cod-label">COD Amount</span>
+                                        <div class="cod-amount">Rs. ${codAmount}</div>
+                                    </div>
+                                </div>
+                                <div class="sign-area">
+                                    <div>Receiver Sign: <span class="line"></span></div>
+                                    <div>Date: <span class="line"></span></div>
+                                </div>
+                                <div class="barcode-area">
+                                    <div style="text-align: center;">
+                                        <img src="https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(trackingNum)}&height=9&scale=2&incltext=false" class="barcode-img">
+                                        <div class="code-text">${trackingNum}</div>
+                                    </div>
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackingNum)}" class="qr-img">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                let tempDiv = document.createElement('div');
+                tempDiv.innerHTML = labelHTML.trim();
+                pageDiv.appendChild(tempDiv.firstChild);
+            });
+        }
+    </script>
+</body>
+</html>
