@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics - World Out Fashion</title>
+    <title>Enterprise Analytics - World Out Fashion</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -15,6 +15,7 @@
             --primary: #005A9C;
             --accent: #00d2ff;
             --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            --tour-red: #ef4444;
         }
 
         body {
@@ -32,13 +33,13 @@
             transition: all 0.3s ease;
         }
 
-        /* Pulse / Blinking Effect for Loading */
+        /* --- BLINKING / PULSE ANIMATION --- */
         .loading-pulse {
-            animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            animation: pulse-blink 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
-        @keyframes pulse {
+        @keyframes pulse-blink {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            50% { opacity: 0.4; }
         }
 
         .loader-overlay {
@@ -56,19 +57,83 @@
         .search-btn { background: linear-gradient(135deg, #005A9C, #00d2ff); }
         .search-btn:hover { filter: brightness(1.1); transform: scale(1.02); }
 
-        /* Slider Styling */
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 8px; background: #e2e8f0; border-radius: 10px; }
         input[type=range]::-webkit-slider-thumb { height: 24px; width: 24px; border-radius: 50%; background: var(--primary); cursor: pointer; -webkit-appearance: none; margin-top: -8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+
+        /* --- SMART TOUR STYLING --- */
+        #tourOverlay {
+            position: fixed; inset: 0; 
+            background: transparent;
+            z-index: 9998; 
+            display: none;
+        }
+
+        .tour-highlight {
+            position: relative;
+            z-index: 10000 !important;
+            outline: 6px solid var(--tour-red) !important;
+            outline-offset: 4px;
+            border-radius: 2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.4) !important;
+        }
+
+        #tipBox {
+            position: fixed;
+            z-index: 10001;
+            display: none;
+            width: 300px;
+            background: white;
+            padding: 1.8rem;
+            border-radius: 1.8rem;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+            animation: slideUpBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes slideUpBounce {
+            from { opacity: 0; transform: translateY(30px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .tip-arrow {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: white;
+            transform: rotate(45deg);
+        }
+
+        .barcode-item-row:hover { background: #f1f5f9; cursor: default; }
+
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
 <body class="p-4 md:p-10 pb-24">
 
-    <!-- Loading Overlay -->
+    <!-- Global Loading Overlay -->
     <div id="loader" class="loader-overlay">
         <div class="text-center">
             <div class="spinner mx-auto mb-4"></div>
             <p class="text-slate-600 font-bold animate-pulse">Establishing Secure Connection...</p>
+        </div>
+    </div>
+
+    <!-- Tour Infrastructure -->
+    <div id="tourOverlay"></div>
+    <div id="tipBox">
+        <button onclick="endTour()" class="absolute top-4 right-4 p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+        <div id="tipArrow" class="tip-arrow"></div>
+        <div class="mb-6">
+            <h4 id="tipTitle" class="font-black text-red-600 text-[12px] uppercase tracking-widest mb-2">Title</h4>
+            <p id="tipText" class="text-slate-700 text-[14px] font-bold leading-relaxed">Description...</p>
+        </div>
+        <div class="flex justify-between items-center pt-4 border-t border-slate-100">
+            <button id="prevBtn" onclick="moveTour(-1)" class="text-[11px] font-black text-slate-400 hover:text-indigo-600 uppercase tracking-widest disabled:opacity-30 transition-colors">← Prev</button>
+            <button id="nextBtn" onclick="moveTour(1)" class="bg-red-600 text-white px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-100">Next →</button>
         </div>
     </div>
 
@@ -78,67 +143,54 @@
         <header class="flex flex-col md:flex-row justify-between items-center gap-4 animate__animated animate__fadeIn">
             <div>
                 <h1 class="text-4xl font-black text-slate-900 tracking-tighter">WOF <span class="text-blue-600">ANALYTICS</span></h1>
-                <p class="text-slate-500 font-semibold uppercase tracking-widest text-[11px]">Mandela Management System</p>
+                <p class="text-slate-500 font-semibold uppercase tracking-widest text-[11px]">Dispatch Control Center</p>
             </div>
-            <div id="syncBadge" class="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-2xl text-[11px] font-black border border-emerald-100 flex items-center gap-2">
-                <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> SYSTEM ONLINE
+            <div class="flex items-center gap-4">
+                <button onclick="startTour()" class="bg-indigo-50 text-indigo-600 px-6 py-3 rounded-[20px] text-[12px] font-black border border-indigo-100 flex items-center gap-2 hover:bg-indigo-100 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    SYSTEM TIPS
+                </button>
+                <div id="syncBadge" class="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-2xl text-[11px] font-black border border-emerald-100 flex items-center gap-2">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> ONLINE
+                </div>
             </div>
         </header>
 
-        <!-- TOP ROW: GRAPHS & SUMMARIES -->
+        <!-- TOP ROW -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            <!-- Dispatch Chart (Left) -->
-            <div id="chartContainer" class="lg:col-span-8 glass-card p-8 animate__animated animate__fadeInLeft loading-pulse">
+            <div id="tour-chart" class="lg:col-span-8 glass-card p-8 animate__animated animate__fadeInLeft loading-pulse">
                 <div class="flex justify-between items-center mb-4">
                     <div>
                         <h2 class="text-xl font-black text-slate-800">Dispatch History</h2>
-                        <p class="text-[11px] text-slate-400 font-bold uppercase">Sequential Performance Insight</p>
+                        <p class="text-[11px] text-slate-400 font-bold uppercase">Performance Monitoring</p>
                     </div>
                     <div class="text-right">
                         <span id="rangeDisplay" class="text-xs font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">Last 6 Days</span>
                     </div>
                 </div>
-
                 <div class="h-80 mb-6"><canvas id="dispatchChart"></canvas></div>
-
-                <!-- Range Slider Area -->
                 <div class="px-4 py-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <div class="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
-                        <span>Min: 6 Days</span>
-                        <span>Drag to adjust range</span>
-                        <span>Max: 15 Days</span>
-                    </div>
                     <input type="range" id="dayRangeSlider" min="6" max="15" value="6" oninput="updateRangeLabel(this.value)" onchange="loadAnalytics()">
                 </div>
             </div>
 
-            <!-- Return Summary (Right) -->
-            <div id="returnContainer" class="lg:col-span-4 glass-card p-8 bg-slate-900 text-white animate__animated animate__fadeInRight relative overflow-hidden loading-pulse">
+            <div id="tour-returns" class="lg:col-span-4 glass-card p-8 bg-slate-900 text-white animate__animated animate__fadeInRight relative overflow-hidden loading-pulse">
                 <div class="absolute -top-10 -right-10 opacity-10 rotate-12"><svg class="w-48 h-48" fill="currentColor" viewBox="0 0 24 24"><path d="M13 3l-1-1-6.72 6.72a.75.75 0 000 1.06L12 16.5l1-1-5.47-5.47H21v-1.5H7.53L13 3z"/></svg></div>
-                
-                <h2 class="text-xl font-black mb-6 flex items-center gap-3">
-                    <span class="bg-red-500 w-2 h-6 rounded-full"></span> Recent Returns
-                </h2>
-                
-                <div id="returnList" class="space-y-4 relative z-10">
-                    <p class="text-slate-500 text-xs font-bold py-10 text-center uppercase tracking-widest">Gathering Return Logs...</p>
-                </div>
+                <h2 class="text-xl font-black mb-6 flex items-center gap-3"><span class="bg-red-500 w-2 h-6 rounded-full"></span> Recent Returns</h2>
+                <div id="returnList" class="space-y-4 relative z-10"></div>
             </div>
         </div>
 
-        <!-- BOTTOM ROW: SEARCH & PERFORMANCE -->
+        <!-- BOTTOM ROW -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 animate__animated animate__fadeInUp">
-            
-            <!-- 1. Date Lookup -->
-            <div class="glass-card p-8">
+            <div id="tour-date" class="glass-card p-8">
                 <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">Date Archive</h3>
                 <div class="flex gap-2">
                     <input type="date" id="targetDate" class="flex-grow p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:border-blue-400 transition-all">
                     <button onclick="fetchSpecificDate()" class="search-btn text-white p-4 rounded-2xl shadow-lg shadow-blue-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></button>
                 </div>
-                <div id="dateResult" class="mt-6 p-5 bg-blue-50 rounded-2xl hidden">
-                    <p class="text-[11px] text-blue-500 font-bold uppercase mb-1">Items Found</p>
+                <div id="dateResult" onclick="showBarcodeListModal()" class="mt-6 p-5 bg-blue-50 rounded-2xl hidden cursor-pointer hover:bg-blue-100 transition-all">
+                    <p class="text-[11px] text-blue-500 font-bold uppercase mb-1">Items Found (Click to view)</p>
                     <div class="flex justify-between items-end">
                         <span id="resCount" class="text-3xl font-black text-blue-900">0</span>
                         <span id="resDate" class="text-xs font-bold text-slate-400"></span>
@@ -146,22 +198,16 @@
                 </div>
             </div>
 
-            <!-- 2. Barcode/Status Lookup -->
-            <div class="glass-card p-8">
+            <div id="tour-search" class="glass-card p-8">
                 <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">Full Status Search</h3>
                 <div class="flex flex-col gap-3">
                     <input type="text" id="barcodeInput" placeholder="Enter barcode number..." class="p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:border-blue-400">
-                    <button onclick="searchFullStatus()" class="search-btn text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-100 flex justify-center items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg> Search Status
-                    </button>
+                    <button onclick="searchFullStatus()" class="search-btn text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-100 flex justify-center items-center gap-2 transition-all">Search Status</button>
                 </div>
                 <p id="searchStatus" class="mt-4 text-[11px] text-center font-bold text-slate-400 uppercase"></p>
             </div>
 
-            <!-- 3. Yesterday Performance -->
-            <div id="yesterdayContainer" class="bg-indigo-600 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-indigo-200 relative overflow-hidden group loading-pulse">
-                <div class="absolute -right-6 -bottom-6 opacity-20 group-hover:scale-110 transition-transform"><svg class="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></div>
-                
+            <div id="tour-yesterday" class="bg-indigo-600 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-indigo-200 relative overflow-hidden group loading-pulse">
                 <h3 class="text-[11px] font-black opacity-60 uppercase tracking-[0.25em] mb-4">Yesterday's Reach</h3>
                 <div class="flex items-baseline gap-2">
                     <span id="yesterdayCount" class="text-6xl font-black">0</span>
@@ -172,7 +218,6 @@
                     <span id="yesterdayDate" class="text-[10px] font-bold">-- -- ----</span>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -182,21 +227,17 @@
             <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Powered By Designverse</span>
             <span class="mx-1 text-slate-200 font-light">|</span>
             <a href="https://www.facebook.com/share/17cb414CrE/?mibextid=wwXIfr" target="_blank" class="hover:scale-110 transition-transform active:scale-95 flex items-center">
-                <!-- Using smartx.png with fallback -->
                 <img src="smartx.png" alt="SmartX" class="h-6 w-auto" onerror="this.src='https://cdn-icons-png.flaticon.com/512/888/888879.png'; this.style.filter='hue-rotate(180deg)'">
             </a>
-            <span class="mx-1 text-slate-200 font-light">|</span>
-            <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Mandela System</span>
         </div>
     </footer>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbyuYsSzGAmbFUClFQEWYbPSYyDKeh3CJn8dn5yPZ4AhFxZtBseTCYurxirFRAzJ25KO/exec";
         let chart;
+        let currentBarcodeList = [];
 
-        function updateRangeLabel(val) {
-            document.getElementById('rangeDisplay').textContent = `Last ${val} Days`;
-        }
+        function updateRangeLabel(val) { document.getElementById('rangeDisplay').textContent = `Last ${val} Days`; }
 
         async function callAPI(action, payload = {}) {
             try {
@@ -207,10 +248,7 @@
                     body: JSON.stringify({ action, ...payload })
                 });
                 return await response.json();
-            } catch (error) {
-                console.error("API Error:", error);
-                return null;
-            }
+            } catch (error) { return null; }
         }
 
         window.onload = async function() {
@@ -219,75 +257,63 @@
         };
 
         async function loadAnalytics() {
-            // Re-apply pulse effect if refresh is triggered
-            document.getElementById('chartContainer').classList.add('loading-pulse');
-            document.getElementById('returnContainer').classList.add('loading-pulse');
-            document.getElementById('yesterdayContainer').classList.add('loading-pulse');
+            // Apply pulse effect to all loading targets
+            document.getElementById('tour-chart').classList.add('loading-pulse');
+            document.getElementById('tour-returns').classList.add('loading-pulse');
+            document.getElementById('tour-yesterday').classList.add('loading-pulse');
 
             const rangeDays = parseInt(document.getElementById('dayRangeSlider').value);
             const today = new Date();
-            let dispatchLabels = [];
-            let dispatchData = [];
-            
-            let current = new Date(today);
+            let labels = [], data = [], workingDays = 0, current = new Date(today);
             current.setDate(current.getDate() - 1); 
 
-            let workingDaysProcessed = 0;
-            let yesterdayCounted = false;
-
             renderChartSkeleton([], []);
-
-            // 1. Fetch Return Sessions
             fetchRecentReturns();
 
-            // 2. Fetch Dispatch History
-            while (workingDaysProcessed < rangeDays) {
+            while (workingDays < rangeDays) {
                 if (current.getDay() !== 0) {
                     const ds = current.toISOString().split('T')[0];
                     const dRes = await callAPI("getSessionData", { sessionId: `SESSION-${ds}` });
                     const dCount = (dRes && dRes.status === 'success') ? dRes.session.data.barcodes.length : 0;
-
-                    if (!yesterdayCounted) {
+                    
+                    if (workingDays === 0) {
                         document.getElementById('yesterdayCount').textContent = dCount;
                         document.getElementById('yesterdayDate').textContent = ds;
-                        document.getElementById('yesterdayContainer').classList.remove('loading-pulse');
-                        yesterdayCounted = true;
+                        document.getElementById('tour-yesterday').classList.remove('loading-pulse');
                     }
 
-                    dispatchLabels.unshift(new Date(ds).toLocaleDateString('en-US', {weekday: 'short', day: 'numeric'}));
-                    dispatchData.unshift(dCount);
+                    labels.unshift(new Date(ds).toLocaleDateString('en-US', {weekday: 'short', day: 'numeric'}));
+                    data.unshift(dCount);
                     
-                    updateChartLive(dispatchLabels, dispatchData);
-                    workingDaysProcessed++;
-                    await new Promise(r => setTimeout(r, 80)); 
+                    updateChartLive(labels, data);
+                    workingDays++;
+                    // Delay for sequential effect
+                    await new Promise(r => setTimeout(r, 60)); 
                 }
                 current.setDate(current.getDate() - 1);
             }
 
-            // Remove pulse effect when done
-            document.getElementById('chartContainer').classList.remove('loading-pulse');
-            document.getElementById('returnContainer').classList.remove('loading-pulse');
+            // Remove pulse effect from remaining targets
+            document.getElementById('tour-chart').classList.remove('loading-pulse');
+            document.getElementById('tour-returns').classList.remove('loading-pulse');
         }
 
         async function fetchRecentReturns() {
-            const rList = document.getElementById('returnList');
             const res = await callAPI("getAllReturnSessions");
-            
             if (res && res.status === 'success') {
-                let foundSessions = [];
+                let found = [];
                 for (let s of res.sessions) {
-                    if (foundSessions.length >= 6) break;
+                    if (found.length >= 6) break;
                     const sData = await callAPI("getReturnSessionData", { sessionId: s.id });
                     if (sData && sData.status === 'success' && sData.session.data.items.length > 0) {
-                        foundSessions.push({
-                            date: s.id.replace('RETURN-', ''),
-                            count: sData.session.data.items.length
-                        });
+                        found.push({ date: s.id.replace('RETURN-', ''), count: sData.session.data.items.length });
                     }
                 }
-                renderReturns(foundSessions);
-            } else {
-                rList.innerHTML = '<p class="text-slate-500 text-center py-10 font-bold">No Returns Found</p>';
+                document.getElementById('returnList').innerHTML = found.map(it => `
+                    <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5 hover:bg-white/10 transition-all animate__animated animate__fadeInUp">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">${it.date}</span>
+                        <span class="text-xl font-black text-red-400">${it.count}</span>
+                    </div>`).join('');
             }
         }
 
@@ -296,48 +322,24 @@
             if(chart) chart.destroy();
             chart = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Dispatched',
-                        data: data,
-                        backgroundColor: '#4f46e5',
-                        borderRadius: 12,
-                        barThickness: 'flex',
-                        maxBarThickness: 35
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: { duration: 500 },
-                    plugins: { legend: { display: false } },
+                data: { labels, datasets: [{ label: 'Dispatched', data, backgroundColor: '#4f46e5', borderRadius: 12, maxBarThickness: 35 }] },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } }, 
                     scales: { 
-                        y: { beginAtZero: true, border: {display: false}, grid: {color: '#f1f5f9'} },
-                        x: { border: {display: false}, grid: {display: false} }
-                    }
+                        y: { beginAtZero: true, grid: {color: '#f1f5f9'} }, 
+                        x: { grid: {display: false} } 
+                    },
+                    animation: { duration: 400 }
                 }
             });
         }
 
-        function updateChartLive(labels, data) {
-            chart.data.labels = [...labels];
-            chart.data.datasets[0].data = [...data];
-            chart.update('none');
-        }
-
-        function renderReturns(items) {
-            const list = document.getElementById('returnList');
-            if (items.length === 0) {
-                list.innerHTML = '<p class="text-slate-500 text-center py-10">Waiting for data...</p>';
-                return;
-            }
-            list.innerHTML = items.map(it => `
-                <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5 hover:bg-white/10 transition-all animate__animated animate__fadeInUp">
-                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">${it.date}</span>
-                    <span class="text-xl font-black text-red-400">${it.count}</span>
-                </div>
-            `).join('');
+        function updateChartLive(labels, data) { 
+            chart.data.labels = [...labels]; 
+            chart.data.datasets[0].data = [...data]; 
+            chart.update('none'); 
         }
 
         async function fetchSpecificDate() {
@@ -345,49 +347,133 @@
             if(!dateVal) return;
             document.getElementById('loader').classList.remove('hidden');
             const res = await callAPI("getSessionData", { sessionId: `SESSION-${dateVal}` });
-            document.getElementById('resCount').textContent = (res && res.status === 'success') ? res.session.data.barcodes.length : "0";
+            currentBarcodeList = (res && res.status === 'success') ? res.session.data.barcodes : [];
+            document.getElementById('resCount').textContent = currentBarcodeList.length;
             document.getElementById('resDate').textContent = dateVal;
             document.getElementById('dateResult').classList.remove('hidden');
             document.getElementById('loader').classList.add('hidden');
         }
 
+        function showBarcodeListModal() {
+            if (currentBarcodeList.length === 0) return;
+            Swal.fire({
+                title: 'Barcode Inventory',
+                html: `
+                    <div class="text-left mt-4 max-h-[400px] overflow-y-auto pr-2 custom-scroll">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] font-black">
+                                <tr><th class="p-3 text-left">#</th><th class="p-3 text-left">Barcode ID</th></tr>
+                            </thead>
+                            <tbody>
+                                ${currentBarcodeList.map((bc, i) => `
+                                    <tr class="border-b border-slate-50 barcode-item-row">
+                                        <td class="p-3 font-bold text-slate-300">${i + 1}</td>
+                                        <td class="p-3 font-black text-slate-700 tracking-tight">${bc}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `,
+                showCloseButton: true,
+                showConfirmButton: false,
+                customClass: { popup: 'rounded-[40px] p-8', title: 'font-black text-2xl tracking-tight' }
+            });
+        }
+
+        // ==========================================
+        // SYSTEM TOUR LOGIC (SINHALA)
+        // ==========================================
+        const tourSteps = [
+            { id: 'tour-chart', title: 'ඩිස්පැච් ප්‍රස්ථාරය', text: 'දෛනිකව සිදුකළ ඩිස්පැච් ප්‍රමාණයන් මෙතැනින් බලන්න. Slider එකෙන් පරාසය වෙනස් කළ හැක.' },
+            { id: 'tour-returns', title: 'රිටර්න් වාර්තා', text: 'මෑතකදී ආපසු ලැබුණු අයිතම ලැයිස්තුව මෙහි දැක්වේ.' },
+            { id: 'tour-date', title: 'දින සෙවුම', text: 'ඕනෑම දිනයක් තෝරා එම දිනයේ අයිතම ප්‍රමාණය බලන්න. නිල් පැහැති Count එක මත ක්ලික් කර සම්පූර්ණ ලැයිස්තුව නැරඹිය හැකිය.' },
+            { id: 'tour-search', title: 'බාර්කෝඩ් සෙවුම', text: 'බාර්කෝඩ් අංකයක වත්මන් තත්ත්වය (Status) මෙතැනින් සෙවිය හැක.' },
+            { id: 'tour-yesterday', title: 'ඊයේ දත්ත', text: 'ඊයේ සිදුකළ සම්පූර්ණ වැඩ ප්‍රමාණය මෙහි සටහන් වේ.' }
+        ];
+
+        let tourIdx = 0;
+
+        function startTour() {
+            tourIdx = 0;
+            document.getElementById('tourOverlay').style.display = 'block';
+            document.getElementById('tipBox').style.display = 'block';
+            showStep(0);
+        }
+
+        function moveTour(dir) {
+            tourIdx += dir;
+            if (tourIdx < 0) tourIdx = 0;
+            if (tourIdx >= tourSteps.length) { endTour(); return; }
+            showStep(tourIdx);
+        }
+
+        function showStep(idx) {
+            const step = tourSteps[idx];
+            const target = document.getElementById(step.id);
+            const tipBox = document.getElementById('tipBox');
+            const arrow = document.getElementById('tipArrow');
+            
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            document.querySelectorAll('.tour-highlight').forEach(el => el.classList.remove('tour-highlight'));
+            target.classList.add('tour-highlight');
+
+            document.getElementById('tipTitle').innerText = step.title;
+            document.getElementById('tipText').innerText = step.text;
+            document.getElementById('prevBtn').disabled = (idx === 0);
+            document.getElementById('nextBtn').innerText = (idx === tourSteps.length - 1) ? "Finish" : "Next →";
+
+            const rect = target.getBoundingClientRect();
+            const boxWidth = 300;
+            const isMobile = window.innerWidth < 1024;
+
+            if (isMobile) {
+                tipBox.style.top = "50%"; tipBox.style.left = "50%";
+                tipBox.style.transform = "translate(-50%, -50%)";
+                arrow.style.display = "none";
+            } else {
+                tipBox.style.transform = "none"; arrow.style.display = "block";
+                let leftPos, topPos;
+                if (rect.left > boxWidth + 80) {
+                    leftPos = rect.left - boxWidth - 50;
+                    arrow.style.right = "-7px"; arrow.style.left = "auto";
+                    arrow.style.transform = "rotate(45deg)";
+                } else {
+                    leftPos = rect.right + 50;
+                    arrow.style.left = "-7px"; arrow.style.right = "auto";
+                    arrow.style.transform = "rotate(225deg)";
+                }
+                topPos = rect.top + (rect.height / 2) - 100;
+                const windowHeight = window.innerHeight;
+                if (topPos + 280 > windowHeight) topPos = windowHeight - 310;
+                if (topPos < 20) topPos = 20;
+                tipBox.style.left = leftPos + "px";
+                tipBox.style.top = topPos + "px";
+                arrow.style.top = "40px";
+            }
+        }
+
+        function endTour() {
+            document.querySelectorAll('.tour-highlight').forEach(el => el.classList.remove('tour-highlight'));
+            document.getElementById('tourOverlay').style.display = 'none';
+            document.getElementById('tipBox').style.display = 'none';
+        }
+
         async function searchFullStatus() {
             const bc = document.getElementById('barcodeInput').value.trim();
             if(!bc) return;
-            document.getElementById('searchStatus').textContent = "Establishing Satellite Uplink...";
-            
-            const result = await callAPI("searchBarcodeStatus", { barcode: bc });
-
-            if(result && result.status === 'FOUND_RETURNED') {
-                Swal.fire({
-                    title: 'Status: RETURNED',
-                    html: `<div class="p-6 bg-red-50 rounded-3xl text-red-800">
-                            <p class="font-black text-3xl mb-2">Unit Returned</p>
-                            <p class="font-bold opacity-60 uppercase text-xs tracking-widest">Received On: ${result.returnDate}</p>
-                           </div>`,
-                    icon: 'warning',
-                    confirmButtonColor: '#ef4444',
-                    customClass: { popup: 'rounded-[40px]' }
-                });
-                document.getElementById('searchStatus').textContent = `Returned On: ${result.returnDate}`;
-            } else if(result && result.status === 'FOUND_DELIVERED') {
-                Swal.fire({
-                    title: 'Status: DISPATCHED',
-                    html: `<div class="p-6 bg-blue-50 rounded-3xl text-blue-800">
-                            <p class="font-black text-3xl mb-2">Unit Dispatched</p>
-                            <p class="font-bold opacity-60 uppercase text-xs tracking-widest">Sent On: ${result.dispatchDate}</p>
-                           </div>`,
-                    icon: 'success',
-                    confirmButtonColor: '#005A9C',
-                    customClass: { popup: 'rounded-[40px]' }
-                });
-                document.getElementById('searchStatus').textContent = `Dispatched On: ${result.dispatchDate}`;
+            document.getElementById('searchStatus').textContent = "Processing...";
+            const res = await callAPI("searchBarcodeStatus", { barcode: bc });
+            if(res && res.status === 'FOUND_RETURNED') {
+                Swal.fire({ title: 'Status: RETURNED', html: `<div class="p-6 bg-red-50 rounded-3xl"><p class="font-black text-3xl text-red-600">Returned Unit</p><p class="font-bold opacity-60 text-xs">Date: ${res.returnDate}</p></div>`, icon: 'warning', confirmButtonColor: '#ef4444', customClass: { popup: 'rounded-[40px]' } });
+            } else if(res && res.status === 'FOUND_DELIVERED') {
+                Swal.fire({ title: 'Status: DISPATCHED', html: `<div class="p-6 bg-blue-50 rounded-3xl"><p class="font-black text-3xl text-blue-600">Dispatched Unit</p><p class="font-bold opacity-60 text-xs">Date: ${res.dispatchDate}</p></div>`, icon: 'success', confirmButtonColor: '#005A9C', customClass: { popup: 'rounded-[40px]' } });
             } else {
-                Swal.fire('Not Found', 'This unit has no recorded history in our systems.', 'error');
-                document.getElementById('searchStatus').textContent = "Not in Database";
+                Swal.fire('Not Found', 'Unit not in database.', 'error');
             }
+            document.getElementById('searchStatus').textContent = "";
         }
     </script>
 </body>
 </html>
-
