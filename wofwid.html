@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WOF Live Widget</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* =========================================
+           WIDGET UI STYLES (Screen Only)
+           ========================================= */
+        body {
+            background-color: #0f172a;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0; padding: 0;
+            user-select: none;
+        }
+
+        .widget-container {
+            height: 100vh; width: 100vw;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: radial-gradient(circle at 50% 0%, #1e293b, #0f172a);
+            position: relative; overflow: hidden;
+        }
+
+        .glow-effect {
+            position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%);
+            width: 150px; height: 150px; background: #0ea5e9;
+            filter: blur(80px); opacity: 0.2; border-radius: 50%;
+            animation: pulseGlow 4s infinite alternate;
+        }
+        @keyframes pulseGlow { 0% { opacity: 0.2; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1.2); } }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px; padding: 20px;
+            width: 90%; max-width: 350px; text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); z-index: 10;
+        }
+
+        .count-today-box {
+            margin: 15px 0; padding: 15px; border-radius: 15px;
+            background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(34, 197, 94, 0.3);
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.1); position: relative; overflow: hidden;
+        }
+        .count-today-box::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, #4ade80, transparent);
+            animation: scanline 2s linear infinite;
+        }
+        @keyframes scanline { 0% { left: -100%; } 100% { left: 100%; } }
+
+        .label-today { font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; color: #4ade80; font-weight: bold; margin-bottom: 5px; }
+        .value-today { font-size: 4rem; font-weight: 900; color: #fff; line-height: 1; text-shadow: 0 0 20px rgba(74, 222, 128, 0.5); }
+
+        .count-yesterday-box {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255, 255, 255, 0.03); padding: 10px 15px;
+            border-radius: 10px; margin-bottom: 15px;
+        }
+        .label-yesterday { color: #94a3b8; font-size: 0.9rem; }
+        .value-yesterday { color: #cbd5e1; font-weight: bold; font-size: 1.2rem; }
+
+        .btn-print {
+            width: 100%; padding: 12px;
+            background: linear-gradient(to right, #0ea5e9, #2563eb);
+            color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer;
+            transition: transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-print:hover { filter: brightness(1.1); }
+        .btn-print:active { transform: scale(0.98); }
+        .spinner { border: 2px solid rgba(255,255,255,0.1); border-left-color: #fff; border-radius: 50%; width: 10px; height: 10px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* =========================================
+           FIXED PRINT STYLES
+           ========================================= */
+        @page { size: auto; margin: 0; }
+
+        @media print {
+            body { background: #fff !important; overflow: visible !important; display: block !important; margin: 0 !important; padding: 0 !important; }
+            .widget-container, .no-print { display: none !important; }
+            #print-area { display: block !important; position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; font-family: 'Arial', sans-serif; color: #000; }
+            
+            .print-page { 
+                position: relative; width: 210mm; height: 297mm; 
+                page-break-after: always; padding: 10mm; overflow: hidden; 
+            }
+            .print-page:last-child { page-break-after: auto; }
+
+            .print-header { display: block; text-align: center; border-bottom: 2px solid #333; padding-bottom: 5px; margin-bottom: 5px; }
+            .print-title-group { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 5px; }
+            .print-header .company-logo { height: 35px; }
+            .print-header .company-name-print { font-family: 'Impact', 'Arial Narrow Bold', sans-serif; font-size: 16pt; letter-spacing: 1px; }
+            .print-header .print-date { font-size: 12pt; font-weight: bold; display: block; text-align: center; }
+            
+            .print-list-container { 
+                display: grid; grid-template-columns: repeat(5, 1fr); column-gap: 12px; 
+                font-size: 11pt; max-width: 100%; margin-top: 10px; height: 240mm; 
+            }
+            .print-column div { margin-bottom: 1px; white-space: nowrap; page-break-inside: avoid; }
+
+            /* --- FIXED FOOTER & WATERMARK --- */
+            
+            /* 1. Main Signature & Total Box Container */
+            .footer-container { 
+                position: absolute; 
+                bottom: 25mm; /* Moved UP to avoid hitting copyright text */
+                left: 10mm; 
+                right: 10mm; 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: flex-end; 
+                z-index: 20;
+            }
+            .total-box { border: 2px solid #000; padding: 10px 20px; font-weight: bold; font-size: 14pt; background: #fff; }
+            .signature-area { width: 30%; font-size: 10pt; text-align: center; }
+            .signature-line { border-top: 1px solid #000; padding-top: 5px; margin-top: 30px; }
+            
+            /* 2. Center Page Watermark */
+            .print-watermark-overlay { 
+                position: fixed; 
+                top: 50%; left: 50%; 
+                transform: translate(-50%, -50%); 
+                width: 100%; height: 100%;
+                display: flex; justify-content: center; align-items: center;
+                pointer-events: none; 
+                z-index: -1; 
+                opacity: 0.1; /* Light opacity */
+            }
+            .print-watermark-overlay img { width: 400px; height: auto; display: block; }
+            
+            /* 3. Bottom Copyright Text */
+            .print-footer-watermark { 
+                position: absolute; 
+                bottom: 5mm; 
+                left: 0; 
+                width: 100%; 
+                text-align: center; 
+                font-size: 8pt; 
+                color: #888; 
+                z-index: 10;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+    <!-- WIDGET VIEW -->
+    <div class="widget-container">
+        <div class="glow-effect"></div>
+        <div class="glass-card">
+            <div class="flex justify-between items-center mb-2 px-1">
+                <div class="flex items-center gap-2">
+                    <img src="logo.png" class="h-6 opacity-80" alt="Logo">
+                    <span class="text-xs font-bold text-blue-200 tracking-wider">LIVE MONITOR</span>
+                </div>
+                <div id="statusIndicator" class="text-[10px] text-gray-400">Syncing...</div>
+            </div>
+
+            <div class="count-yesterday-box">
+                <span class="label-yesterday">Yesterday</span>
+                <span id="yesterdayCount" class="value-yesterday">--</span>
+            </div>
+
+            <div class="count-today-box">
+                <div class="label-today">● TODAY'S LIVE</div>
+                <div id="todayCount" class="value-today">--</div>
+            </div>
+
+            <button id="printBtn" class="btn-print">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Print Today's List
+            </button>
+        </div>
+        <div class="absolute bottom-2 text-[10px] text-gray-600">WOF Widget v3.0</div>
+    </div>
+
+    <!-- PRINT AREA -->
+    <div id="print-area" style="display:none;"></div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyuYsSzGAmbFUClFQEWYbPSYyDKeh3CJn8dn5yPZ4AhFxZtBseTCYurxirFRAzJ25KO/exec";
+        let todaysBarcodes = [];
+
+        function getDateString(offsetDays = 0) {
+            const date = new Date();
+            date.setDate(date.getDate() - offsetDays);
+            return `SESSION-${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+
+        async function fetchData() {
+            const statusInd = document.getElementById('statusIndicator');
+            statusInd.innerHTML = '<span class="spinner"></span>';
+            const todayId = getDateString(0);
+            const yesterdayId = getDateString(1);
+
+            try {
+                const [resToday, resYest] = await Promise.all([
+                    fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'getSessionData', sessionId: todayId }) }),
+                    fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'getSessionData', sessionId: yesterdayId }) })
+                ]);
+
+                const jsonToday = await resToday.json();
+                const jsonYest = await resYest.json();
+
+                const todayCount = (jsonToday.status === 'success' && jsonToday.session.data.barcodes) ? jsonToday.session.data.barcodes.length : 0;
+                todaysBarcodes = (jsonToday.status === 'success' && jsonToday.session.data.barcodes) ? jsonToday.session.data.barcodes : [];
+
+                const yestCount = (jsonYest.status === 'success' && jsonYest.session.data.barcodes) ? jsonYest.session.data.barcodes.length : 0;
+
+                const todayEl = document.getElementById('todayCount');
+                if (todayEl.innerText !== String(todayCount).padStart(2, '0') && todayEl.innerText !== '--') {
+                    todayEl.style.transform = "scale(1.1)";
+                    setTimeout(() => todayEl.style.transform = "scale(1)", 200);
+                }
+                
+                todayEl.innerText = String(todayCount).padStart(2, '0');
+                document.getElementById('yesterdayCount').innerText = String(yestCount).padStart(2, '0');
+                
+                statusInd.innerText = "● Online";
+                statusInd.className = "text-[10px] text-green-400 font-bold";
+
+            } catch (error) {
+                console.error(error);
+                statusInd.innerText = "● Offline";
+                statusInd.className = "text-[10px] text-red-500 font-bold";
+            }
+        }
+
+        function generatePrintLayout() {
+            if (todaysBarcodes.length === 0) {
+                return Swal.fire({ toast: true, position: 'center', icon: 'info', title: 'No items to print.', showConfirmButton: false, timer: 1500 });
+            }
+
+            const itemsToPrint = [...todaysBarcodes].reverse();
+            const totalItems = itemsToPrint.length;
+            const ITEMS_PER_PAGE = 200; 
+            const ITEMS_PER_COLUMN = 40; 
+            const COLUMNS_PER_PAGE = 5;
+
+            const printArea = document.getElementById('print-area');
+            printArea.innerHTML = "";
+            let printContentHtml = "";
+
+            for (let i = 0; i < totalItems; i += ITEMS_PER_PAGE) {
+                const pageItems = itemsToPrint.slice(i, i + ITEMS_PER_PAGE);
+                const isLastPage = (i + ITEMS_PER_PAGE) >= totalItems;
+                
+                printContentHtml += `<div class="print-page">`;
+                
+                // FIXED: Centered Watermark Structure
+                printContentHtml += `<div class="print-watermark-overlay"><img src="logo.png" alt="Watermark Logo"></div>`;
+                
+                printContentHtml += `
+                    <div class="print-header">
+                        <div class="print-title-group">
+                            <img src="logo.png" class="company-logo">
+                            <h1 class="company-name-print">World Out Fashion</h1>
+                        </div>
+                        <p class="print-date">Date: ${new Date().toLocaleString('en-US')}</p>
+                    </div>`;
+                
+                printContentHtml += `<div class="print-list-container">`;
+                for (let col = 0; col < COLUMNS_PER_PAGE; col++) {
+                     const startIdx = col * ITEMS_PER_COLUMN;
+                     if(startIdx < pageItems.length) {
+                         printContentHtml += '<div class="print-column">';
+                         const endIdx = Math.min(startIdx + ITEMS_PER_COLUMN, pageItems.length);
+                         for(let j = startIdx; j < endIdx; j++) {
+                             const globalIndex = i + j + 1;
+                             printContentHtml += `<div>${globalIndex}. ${pageItems[j]}</div>`;
+                         }
+                         printContentHtml += '</div>';
+                     }
+                }
+                printContentHtml += `</div>`; 
+
+                if (isLastPage) {
+                    printContentHtml += `
+                    <div class="footer-container">
+                        <div class="total-box">Total Qty: ${totalItems}</div>
+                        <div class="signature-area">
+                            <p style="text-align: center; margin-top: 0; margin-bottom: 5px; font-weight: normal;">Signature:</p>
+                            <p class="signature-line">Prepared By</p>
+                        </div>
+                    </div>`;
+                }
+
+                printContentHtml += `<div class="print-footer-watermark">© 2025 DesignVerse by Sandusha Avishkha. All rights reserved. Crafted with passion in Minuwangoda, Sri Lanka.</div>`;
+                printContentHtml += `</div>`;
+            }
+            
+            printArea.innerHTML = printContentHtml;
+            window.print();
+        }
+
+        document.getElementById('printBtn').addEventListener('click', generatePrintLayout);
+        fetchData();
+        setInterval(fetchData, 5000); 
+    </script>
+</body>
+</html>
