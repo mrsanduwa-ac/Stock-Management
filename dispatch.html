@@ -220,6 +220,27 @@
         #recycle-bin-modal { display: none; }
         #recycle-bin-modal.show { display: flex; }
 
+        /* --- CUSTOM TOGGLE SWITCH STYLES --- */
+        .toggle-checkbox:checked { right: 0; border-color: #68D391; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #68D391; }
+        .toggle-checkbox:checked + .toggle-label:before { transform: translateX(100%); }
+        .toggle-label { width: 50px; height: 26px; background-color: #CBD5E0; border-radius: 9999px; position: relative; cursor: pointer; transition: background-color 0.2s ease-in; }
+        .toggle-label:before { content: ''; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; background-color: white; border-radius: 50%; transition: transform 0.2s ease-in; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        .lang-btn { padding: 4px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+        .lang-btn.active { background-color: var(--color-primary); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .lang-btn.inactive { background-color: #e2e8f0; color: #718096; }
+        .lang-btn.inactive:hover { background-color: #cbd5e0; }
+
+        /* --- NEW CAMERA UI STYLES --- */
+        #camera-modal { background-color: #000; }
+        #camFlashOverlay { pointer-events: none; transition: opacity 0.2s ease-out; }
+        .flash-green { background-color: rgba(34, 197, 94, 0.6); opacity: 1 !important; }
+        .flash-red { background-color: rgba(239, 68, 68, 0.6); opacity: 1 !important; }
+        #camControlBtn:active { transform: scale(0.95); }
+        .cam-btn-inner { transition: all 0.3s; }
+        #camControlBtn:active .cam-btn-inner, .cam-active .cam-btn-inner { transform: scale(0.8); background-color: #ef4444; } /* Red when pressing */
+        
         @page { size: auto; margin: 0; }
         @media print {
             body { display: block; background: #fff !important; }
@@ -298,13 +319,12 @@
         @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
         .blinking-alert { animation: blink 1s step-start infinite; color: var(--danger) !important; }
 
-        /* Flip Counter Styles - FIXED VISUAL GLITCH */
+        /* Flip Counter Styles */
         .flip-counter { 
             height: 100%; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            /* Removed overflow:hidden to prevent clipping, centering handled by flex */
             font-family: 'Impact', monospace; 
         }
         .flip-digit-container { 
@@ -328,7 +348,7 @@
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            font-size: 36px; /* Adjusted font size to fit better */
+            font-size: 36px; 
             font-weight: bold; 
             color: white; 
             backface-visibility: hidden; 
@@ -348,7 +368,7 @@
 </head>
 <body>
     
-    <!-- MODE SELECTION SCREEN (UPDATED: Live Gradient BG + Shadow Pulse Box) -->
+    <!-- MODE SELECTION SCREEN -->
     <div id="mode-selection-screen">
         <!-- Live Floating Shapes -->
         <div class="bg-shape shape-1"></div>
@@ -364,11 +384,10 @@
                 <p class="text-lg text-slate-500 mt-2 font-medium tracking-widest uppercase">Dispatch Management System</p>
             </div>
             
-            <!-- Today's Dispatch Count (Shadow Pulse Effect) -->
+            <!-- Today's Dispatch Count -->
             <div class="glass-panel p-6 md:p-8 rounded-2xl mb-10 w-full max-w-lg text-center transform transition duration-500 animate-box-pulse">
                 <h2 class="text-lg font-bold mb-2 text-slate-500 uppercase tracking-wider">Live Dispatch Count</h2>
                 <div class="flex justify-center items-center mb-6">
-                    <!-- Text is solid now, Box pulses -->
                     <p id="todayCountDisplay" class="text-7xl font-black text-slate-800">--</p>
                 </div>
                 <button id="printTodayBtn" class="w-full px-6 py-3 rounded-xl font-bold text-sm uppercase tracking-wide shadow-md btn btn-info text-white hover:bg-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
@@ -405,7 +424,7 @@
                 </div>
             </div>
             
-             <footer class="mt-auto pb-4 text-slate-400 text-xs font-semibold">System Version 2.5 (Live Sync)</footer>
+             <footer class="mt-auto pb-4 text-slate-400 text-xs font-semibold">System Version 2.8 (Final Fixes)</footer>
         </div>
         
         <button id="modeChangeBtn" class="absolute bottom-6 btn btn-secondary px-4 py-2 rounded-full text-sm shadow-lg hidden">Change Mode</button>
@@ -438,12 +457,38 @@
     <!-- Main App Wrapper -->
     <div class="main-content-wrapper">
         <div id="app-container" class="card p-6 lg:p-8 rounded-2xl w-full no-print">
+            
+            <!-- HEADER (Balanced Layout) -->
             <header class="flex justify-between items-center mb-4 flex-wrap gap-4 border-b border-theme pb-4">
+                <!-- Left: Logo & Title -->
                 <div class="flex items-center gap-4">
                     <img src="logo.png" alt="Company Logo" class="h-12">
                     <h1 id="appTitle" class="text-2xl lg:text-3xl font-bold"></h1>
                 </div>
-                <div id="live-clock" class="text-lg lg:text-xl font-semibold text-secondary order-3 lg:order-2 w-full lg:w-auto text-center"></div>
+
+                <!-- Right: Audio Controls & Clock -->
+                <div class="flex items-center gap-6 ml-auto order-2">
+                     <!-- AUDIO CONTROL PANEL -->
+                     <div id="audio-control-panel" class="flex items-center gap-3 p-1">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Sound</span>
+                        
+                        <!-- Toggle Switch -->
+                        <div class="relative inline-block w-12 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" id="audioToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"/>
+                            <label for="audioToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                        </div>
+                        
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Voice</span>
+
+                        <!-- Language Selector (Hidden by default) -->
+                        <div id="voiceLangSelector" class="flex bg-gray-200 rounded-full p-1 ml-1 hidden transition-all duration-300">
+                            <button id="langEnBtn" class="lang-btn active" onclick="setVoiceLang('en')">En</button>
+                            <button id="langSiBtn" class="lang-btn inactive" onclick="setVoiceLang('si')">සිං</button>
+                        </div>
+                    </div>
+
+                    <div id="live-clock" class="text-lg lg:text-xl font-semibold text-secondary w-full lg:w-auto text-center hidden sm:block"></div>
+                </div>
             </header>
             
              <button id="backToSelectionBtn" class="mb-4 px-4 py-2 rounded-lg font-semibold shadow-md btn btn-secondary flex items-center gap-2 text-sm">
@@ -462,7 +507,13 @@
                          <div class="flex flex-col sm:flex-row gap-2">
                             <input type="text" id="orderScanInput" class="flex-grow p-3 shadow-sm" />
                             <button id="addOrderBarcodeBtn" class="px-5 py-3 rounded-lg font-semibold shadow-md btn btn-primary"></button>
-                            <button id="openCameraBtn" class="p-3 rounded-lg font-semibold shadow-md btn btn-info"></button>
+                            <!-- Updated Camera Button (Green Icon) -->
+                            <button id="openCameraBtn" class="p-3 rounded-lg font-semibold shadow-md btn btn-success text-white">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </button>
                         </div>
                         <div id="statusMessage" class="status-message rounded-lg text-center font-semibold p-3"></div>
                     </div>
@@ -562,12 +613,52 @@
         </div>
     </div>
     
-    <!-- Camera Modal -->
-    <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg">
-            <h3 class="text-lg font-bold mb-4 text-center text-primary">Scan Barcode</h3>
-            <div id="reader" width="100%"></div>
-            <button id="closeCameraBtn" class="mt-4 w-full px-6 py-3 rounded-lg font-semibold shadow-md btn btn-danger">Close Camera</button>
+    <!-- === UPDATED CAMERA MODAL === -->
+    <div id="camera-modal" class="fixed inset-0 bg-black z-50 flex flex-col hidden">
+        <!-- Top Bar: Total Count & Close -->
+        <div class="flex justify-between items-center p-4 bg-gray-900 text-white z-20">
+            <div class="text-xl font-bold flex items-center gap-2">
+                <span class="text-gray-400 text-sm uppercase tracking-wide">Total:</span>
+                <span id="camTotalCount" class="text-3xl text-green-400 font-mono">0</span>
+            </div>
+            <button id="closeCameraBtn" class="p-2 text-gray-400 hover:text-white bg-gray-800 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Camera Viewport -->
+        <div class="relative flex-grow bg-black overflow-hidden flex flex-col justify-center">
+            <div id="reader" class="w-full h-full object-cover"></div>
+            
+            <!-- Flash Overlay (Green/Red Feedback) -->
+            <div id="camFlashOverlay" class="absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-200 z-10"></div>
+            
+            <!-- Initial Instruction -->
+            <div id="camInstruction" class="absolute inset-0 flex items-center justify-center text-gray-400 pointer-events-none z-0">
+                <div class="bg-black/50 px-4 py-2 rounded-lg text-sm">Camera is OFF. Tap or Hold button below.</div>
+            </div>
+        </div>
+
+        <!-- Bottom Section: Recent & Controls -->
+        <div class="bg-gray-900 pt-2 pb-8 px-4 rounded-t-3xl -mt-4 relative z-20 flex flex-col items-center shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+            <!-- Pull Bar Visual -->
+            <div class="w-12 h-1 bg-gray-700 rounded-full mb-3"></div>
+
+            <!-- Last 3 Scans -->
+            <div class="w-full mb-4">
+                <p class="text-xs text-gray-500 mb-1 text-center uppercase tracking-wider">Recent Scans</p>
+                <ul id="camRecentList" class="space-y-1 text-center max-h-24 overflow-y-auto">
+                    <li class="text-gray-500 text-sm italic">No recent scans</li>
+                </ul>
+            </div>
+
+            <!-- BIG CAMERA CONTROL BUTTON -->
+            <button id="camControlBtn" class="w-20 h-20 rounded-full border-4 border-gray-600 bg-gray-800 hover:bg-gray-700 active:border-green-500 transition-all flex items-center justify-center relative shadow-lg">
+                <div class="cam-btn-inner w-16 h-16 rounded-full bg-red-500 pointer-events-none shadow-inner"></div>
+            </button>
+            <p class="text-[10px] text-gray-500 mt-2 font-medium">TAP: Single Scan | HOLD: Continuous</p>
         </div>
     </div>
     
@@ -604,8 +695,6 @@
         //  CONFIGURATIONS
         // ==========================================
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyuYsSzGAmbFUClFQEWYbPSYyDKeh3CJn8dn5yPZ4AhFxZtBseTCYurxirFRAzJ25KO/exec"; 
-        
-        // 🔴🔴🔴 පහත අංකය වෙනස් කිරීමෙන් Milestone එක වෙනස් කළ හැක 🔴🔴🔴
         const MILESTONE_COUNT = 10; 
         // ==========================================
 
@@ -619,12 +708,16 @@
         let recycleBin = [];
         let isTouchLocked = false;
         let appMode = localStorage.getItem('appMode') || null; 
-        const tts = window.speechSynthesis;
-        let ttsVoice = null;
-        let lastOnlineState = navigator.onLine;
-        
-        // New Variable for Auto Update Interval
         let countUpdateInterval = null;
+
+        // Audio Variables
+        let isVoiceMode = false;
+        let voiceLanguage = 'en';
+
+        // Camera Variables
+        let camHoldTimer = null;
+        let camIsHolding = false;
+        let camScanMode = 'idle'; // idle, single, continuous
 
         // ELEMENT REFERENCES
         const el = {
@@ -698,6 +791,16 @@
             searchHr: document.getElementById('search-hr'),
             sessionLoadSection: document.getElementById('session-load-section'),
             touchLockBtnContainer: document.getElementById('touchLockBtnContainer'),
+            audioToggle: document.getElementById('audioToggle'),
+            voiceLangSelector: document.getElementById('voiceLangSelector'),
+            langEnBtn: document.getElementById('langEnBtn'),
+            langSiBtn: document.getElementById('langSiBtn'),
+            // New Cam Elements
+            camTotalCount: document.getElementById('camTotalCount'),
+            camRecentList: document.getElementById('camRecentList'),
+            camControlBtn: document.getElementById('camControlBtn'),
+            camFlashOverlay: document.getElementById('camFlashOverlay'),
+            camInstruction: document.getElementById('camInstruction')
         };
 
         // --- CORE FUNCTIONS START ---
@@ -721,30 +824,17 @@
             el.modeChangeBtn.textContent = "Change Mode";
             el.printTodayBtn.textContent = "Print Current Dispatch List (PDF)";
             el.backToSelectionBtn.textContent = "Back to Mode Selection";
-            el.openCameraBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`;
         }
         
-        // Show Loading Overlay
         function showLoading(text = "Loading...") { el.loadingText.textContent = text; el.loadingOverlay.style.display = 'flex'; }
         function hideLoading() { el.loadingOverlay.style.display = 'none'; }
         
-        // --- MILESTONE ANIMATION LOGIC ---
         function showCompletionAnimation() {
             const container = el.confettiContainer;
             if (!container) return;
-            
-            // Play Goal Sound
             const milestoneAudio = document.getElementById('milestoneSound');
-            if (milestoneAudio) { 
-                milestoneAudio.pause(); 
-                milestoneAudio.currentTime = 0; 
-                milestoneAudio.play().catch(e => console.error("Audio Play Error", e)); 
-            }
-            
-            // Show Alert
+            if (milestoneAudio) { milestoneAudio.pause(); milestoneAudio.currentTime = 0; milestoneAudio.play().catch(e => console.error("Audio Play Error", e)); }
             Swal.fire({ title: 'Woohoo!', text: `${MILESTONE_COUNT} items reached! Keep going!`, icon: 'success', toast: true, position: 'top', showConfirmButton: false, timer: 2000 });
-            
-            // Trigger Confetti
             container.style.display = 'block'; 
             container.innerHTML = '';
             const colors = ['#ffcc00', '#ff0066', '#33ccff', '#99ff33', '#f0f0f0'];
@@ -759,44 +849,159 @@
             setTimeout(() => { container.innerHTML = ''; container.style.display = 'none'; }, 3500); 
         }
 
-        // --- SCANNING & ADDING BARCODE LOGIC ---
-        function handleOrderScanAddBarcode() {
-            const barcode = el.orderScanInput.value.trim();
-            if (barcode === "") { el.orderScanInput.focus(); return; }
+        // --- UPDATED SCAN LOGIC (FIXED WARNING SOUND) ---
+        function handleOrderScanAddBarcode(scannedCode = null) {
+            const barcode = scannedCode || el.orderScanInput.value.trim();
+            if (barcode === "") { if(!scannedCode) el.orderScanInput.focus(); return false; }
             
+            let isSuccess = false;
+
+            // CHECK DUPLICATES
             if (scannedBarcodes.includes(barcode)) {
                 showStatusMessage(`Already Scanned: ${barcode}`, "error");
+                
+                // FORCE ERROR SOUND ALWAYS (Regardless of Voice Mode)
                 const errorAudio = document.getElementById('errorSound');
-                if (errorAudio) { errorAudio.pause(); errorAudio.currentTime = 0; errorAudio.play().catch(console.error); }
+                if (errorAudio) { 
+                    errorAudio.pause(); 
+                    errorAudio.currentTime = 0; 
+                    errorAudio.play().catch(console.error); 
+                }
+                isSuccess = false;
             } else {
-                // Add New Barcode
+                // SUCCESS
                 scannedBarcodes.unshift(barcode); 
                 currentlyViewingBarcodes = scannedBarcodes; 
-                
                 showStatusMessage(`Success: ${barcode}`, "success");
                 
-                const successAudio = document.getElementById('successSound');
-                if (successAudio) { successAudio.pause(); successAudio.currentTime = 0; successAudio.play().catch(console.error); }
+                if (isVoiceMode) {
+                    const count = scannedBarcodes.length;
+                    speakCount(count); // Speak
+                } else {
+                    const successAudio = document.getElementById('successSound');
+                    if (successAudio) { successAudio.pause(); successAudio.currentTime = 0; successAudio.play().catch(console.error); }
+                }
                 
-                // CHECK MILESTONE
                 if (scannedBarcodes.length > 0 && scannedBarcodes.length % MILESTONE_COUNT === 0) {
                      showCompletionAnimation();
                 }
 
                 updateUiFromState();
                 autoSaveSession();
+                isSuccess = true;
             }
-            // Clear Input
-            el.orderScanInput.value = "";
-            el.orderScanInput.focus();
+            
+            if(!scannedCode) {
+                el.orderScanInput.value = "";
+                el.orderScanInput.focus();
+            }
+            return isSuccess;
         }
 
-        // --- UI UPDATES ---
+        // --- UPDATED SPEECH LOGIC (CUSTOM SINHALA) ---
+        function speakCount(number) {
+            window.speechSynthesis.cancel();
+            
+            let textToSpeak = number.toString();
+            let langCode = 'en-US';
+
+            if (voiceLanguage === 'si') {
+                // Use Custom Sinhala Generator
+                textToSpeak = getSinhalaNumberText(number);
+                // Try to force a voice that might sound better, otherwise default
+                langCode = 'si-LK'; 
+            }
+
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            
+            // Try to find a FEMALE voice
+            const voices = window.speechSynthesis.getVoices();
+            let selectedVoice = null;
+            
+            if (voiceLanguage === 'si') {
+                 // For Sinhala, browser support is limited. We use default but hint 'si-LK'
+                 utterance.lang = 'si-LK';
+            } else {
+                 // For English, look for female voices (Google US English, Microsoft Zira, etc.)
+                 selectedVoice = voices.find(v => v.lang.includes('en') && (v.name.includes('Google') || v.name.includes('Female') || v.name.includes('Zira')));
+                 if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('en'));
+                 if (selectedVoice) utterance.voice = selectedVoice;
+            }
+
+            utterance.rate = 1.0; 
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // --- SINHALA NUMBER LOGIC (EDIT HERE) ---
+        function getSinhalaNumberText(n) {
+            if (n === 0) return "Binduwa";
+            if (n > 999) return n.toString(); // Fallback for very large numbers
+
+            const units = ["", "Eka", "Deka", "Thuna", "Hathara", "Paha", "Haya", "Hatha", "Ata", "Namaya"];
+            const teens = ["Dahaya", "Ekolaha", "Dolaha", "Dahathuna", "Dahahathara", "Pahalawa", "Dahaseya", "Dahahatha", "Daha ata", "Dahanamaya"];
+            const tens = ["", "Dahaya", "Vissa", "Thiha", "Hathaliha", "Panaha", "Heta", "Heththa", "Asuwa", "Anuwa"];
+            const tensCombining = ["", "Daha", "Visi", "This", "Hathalis", "Panas", "Heta", "Heththi", "Asu", "Anu"];
+            
+            let text = "";
+
+            // Hundreds
+            if (n >= 100) {
+                const h = Math.floor(n / 100);
+                if (h === 1) text += "Eka Siiya "; // 100
+                else if (h === 2) text += "De Siiya "; // 200
+                else if (h === 3) text += "Thun Siiya "; // 300
+                else if (h === 4) text += "Hara Siiya "; // 400
+                else text += units[h] + " Siiya "; // 500+ (Paha Siiya...)
+                
+                n %= 100; // Remaining part
+                if (n === 0) return text.trim();
+            }
+
+            // Tens & Units
+            if (n < 10) {
+                text += units[n];
+            } else if (n >= 10 && n < 20) {
+                text += teens[n - 10];
+            } else {
+                const t = Math.floor(n / 10);
+                const u = n % 10;
+                if (u === 0) {
+                    text += tens[t]; // e.g. 20 -> Vissa
+                } else {
+                    text += tensCombining[t] + " " + units[u]; // e.g. 21 -> Visi Eka
+                }
+            }
+            return text.trim();
+        }
+        // ----------------------------------------
+
+        function toggleAudioMode() {
+            isVoiceMode = el.audioToggle.checked;
+            if (isVoiceMode) { el.voiceLangSelector.classList.remove('hidden'); updateLangButtons(); } 
+            else { el.voiceLangSelector.classList.add('hidden'); }
+        }
+        
+        window.setVoiceLang = function(lang) { voiceLanguage = lang; updateLangButtons(); }
+        function updateLangButtons() {
+            if (voiceLanguage === 'en') {
+                el.langEnBtn.classList.add('active'); el.langEnBtn.classList.remove('inactive');
+                el.langSiBtn.classList.remove('active'); el.langSiBtn.classList.add('inactive');
+            } else {
+                el.langSiBtn.classList.add('active'); el.langSiBtn.classList.remove('inactive');
+                el.langEnBtn.classList.remove('active'); el.langEnBtn.classList.add('inactive');
+            }
+        }
+
         function updateUiFromState() {
             const currentCount = currentlyViewingBarcodes.length;
             if (FlipCounter.element) FlipCounter.update(currentCount); 
             updateRecycleBinUi();
             
+            // Sync Camera Modal UI
+            if(el.camTotalCount) el.camTotalCount.textContent = currentCount;
+            updateCamRecentList();
+
             el.scannedOrderBarcodesList.innerHTML = "";
             const isViewingToday = currentlyViewingSessionId === currentSessionId;
             el.scannedListHeader.textContent = isViewingToday ? "Scanned Barcodes (Today)" : `Viewing Session: ${currentlyViewingSessionId.replace('SESSION-','')}`;
@@ -827,12 +1032,27 @@
             el.liveSessionName.textContent = `For ${currentSessionId.replace('SESSION-', '')}`;
             el.liveSessionDisplay.classList.remove('hidden');
             updateNetworkStatus();
-            if (isViewingToday && !isTouchLocked) el.orderScanInput.focus();
+            if (isViewingToday && !isTouchLocked && el.cameraModal.classList.contains('hidden')) el.orderScanInput.focus();
         }
 
-        // --- OTHER HELPERS & EVENT LISTENERS ---
-        
-        // Initialization
+        // Camera Recent List Logic
+        function updateCamRecentList() {
+            if(!el.camRecentList) return;
+            el.camRecentList.innerHTML = "";
+            if (currentlyViewingBarcodes.length === 0) {
+                el.camRecentList.innerHTML = `<li class="text-gray-500 text-sm italic">No recent scans</li>`;
+                return;
+            }
+            // Show top 3
+            const top3 = currentlyViewingBarcodes.slice(0, 3);
+            top3.forEach(code => {
+                const li = document.createElement("li");
+                li.className = "text-white text-lg font-mono font-semibold bg-gray-800 rounded px-2 py-1";
+                li.textContent = code;
+                el.camRecentList.appendChild(li);
+            });
+        }
+
         async function initializeApp() {
             setInitialTexts(); 
             currentSessionId = getTodaySessionId(); 
@@ -842,7 +1062,7 @@
             updateClock(); setInterval(updateClock, 1000); 
             loadRecycleBin(); 
             
-            el.addOrderBarcodeBtn.addEventListener("click", handleOrderScanAddBarcode);
+            el.addOrderBarcodeBtn.addEventListener("click", () => handleOrderScanAddBarcode());
             el.returnToTodayBtn.addEventListener("click", returnToTodayView);
             el.manualSaveBtn.addEventListener("click", handleManualSave);
             el.loadSelectedSessionBtn.addEventListener("click", loadSelectedSession);
@@ -853,13 +1073,17 @@
             el.saveToSheetBtn.addEventListener("click", saveDataToGoogleSheet);
             el.printScannedOrderBtn.addEventListener("click", printScannedOrder);
             el.downloadCsvBtn.addEventListener("click", downloadCsv);
-            el.openCameraBtn.addEventListener("click", startCameraScan);
-            el.closeCameraBtn.addEventListener("click", stopCameraScan);
+            el.openCameraBtn.addEventListener("click", openSmartCamera);
+            el.closeCameraBtn.addEventListener("click", closeSmartCamera);
             el.openRecycleBinBtn.addEventListener("click", openRecycleBin);
             el.closeRecycleBinBtn.addEventListener("click", closeRecycleBin);
             el.restoreSelectedBtn.addEventListener("click", handleRestoreSelected);
             el.touchLockBtn.addEventListener("click", handleTouchLockToggle);
-            
+            el.audioToggle.addEventListener('change', toggleAudioMode);
+
+            // Camera Control Button Logic
+            setupCameraControls();
+
             el.selectEasyMode.addEventListener("click", async () => { showLoading("Loading Easy mode..."); await reloadTodaysData(); setupMode('easy'); });
             el.selectAdvancedMode.addEventListener("click", async () => { showLoading("Loading Advanced mode..."); await reloadTodaysData(); setupMode('advanced'); });
             
@@ -872,33 +1096,25 @@
             updateNetworkStatus(); 
             
             await fetchTodayCount();
-            
-            // Start polling count on Login Screen
             startPollingCount();
             
             if (appMode) { await reloadTodaysData(); setupMode(appMode); } 
             else { el.modeSelectionScreen.style.display = 'flex'; }
         }
 
-        // Count Polling Functions (Updates every 2 seconds)
         function startPollingCount() {
             if (countUpdateInterval) clearInterval(countUpdateInterval);
             countUpdateInterval = setInterval(() => {
-                // Only poll if on selection screen and online
                 if (el.modeSelectionScreen.style.display !== 'none' && navigator.onLine) {
-                    fetchTodayCount(true); // true = silent mode
+                    fetchTodayCount(true); 
                 }
             }, 2000);
         }
 
         function stopPollingCount() {
-            if (countUpdateInterval) {
-                clearInterval(countUpdateInterval);
-                countUpdateInterval = null;
-            }
+            if (countUpdateInterval) { clearInterval(countUpdateInterval); countUpdateInterval = null; }
         }
 
-        // Global Scanner Listener (Standardized)
         let barcodeBuffer = '';
         let barcodeTimer = null;
         document.addEventListener('keydown', (e) => {
@@ -926,7 +1142,6 @@
             }
         });
 
-        // Flip Counter Implementation
         const FlipCounter = {
             element: null, value: 0, digitContainers: [],
             initialize: function(initialValue = 0) {
@@ -980,13 +1195,11 @@
             }
         };
 
-        // --- REMAINING HELPER FUNCTIONS ---
         function updateClock() { el.liveClock.textContent = new Date().toLocaleString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: !0 }); }
         function showStatusMessage(t, e) { el.statusMessage.textContent = t; el.statusMessage.className = "status-message rounded-lg text-center font-semibold"; el.statusMessage.classList.add("success" === e ? "bg-green-status" : "bg-red-status", "show"); setTimeout(() => el.statusMessage.classList.remove("show"), 2500); }
         function getTodaySessionId() { const today = new Date(); return `SESSION-${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`; }
         
         async function apiCall(action, payload = {}) {
-            // Allow polling (fetchTodayCount silent) even if checking status, but generally guard offline
             if (!navigator.onLine && action !== 'getSessionData' && action !== 'getAllSessions') throw new Error("Offline");
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
@@ -1127,78 +1340,40 @@
             }
         }
         
-        // --- UPDATED PRINT LOGIC (PAGINATION 200 & TOTAL BOX) ---
         function printScannedOrder() {
             if (currentlyViewingBarcodes.length === 0) return Swal.fire({ title: "No items.", icon: "info" });
-            
             const barcodes = currentlyViewingBarcodes;
-            const itemsToPrint = [...barcodes].reverse(); // Print 1 to X
+            const itemsToPrint = [...barcodes].reverse(); 
             const totalItems = itemsToPrint.length;
-            const ITEMS_PER_PAGE = 200; // Force break after 200 items
+            const ITEMS_PER_PAGE = 200; 
             const ITEMS_PER_COLUMN = 40; 
             const COLUMNS_PER_PAGE = 5;
 
             el.printArea.innerHTML = "";
             let printContentHtml = "";
 
-            // Chunk items into pages of 200
             for (let i = 0; i < totalItems; i += ITEMS_PER_PAGE) {
                 const pageItems = itemsToPrint.slice(i, i + ITEMS_PER_PAGE);
                 const isLastPage = (i + ITEMS_PER_PAGE) >= totalItems;
-                
-                printContentHtml += `<div class="print-page">`;
-                
-                // Watermark
-                printContentHtml += `<div class="print-watermark-overlay"><img src="logo.png" alt="Watermark Logo"></div>`;
-                
-                // Header (Repeated on every page)
-                printContentHtml += `
-                    <div class="print-header">
-                        <div class="print-title-group">
-                            <img src="logo.png" class="company-logo">
-                            <h1 class="company-name-print">World Out Fashion</h1>
-                        </div>
-                        <p class="print-date">Date: ${new Date().toLocaleString('en-US')}</p>
-                    </div>`;
-                
-                // List Container
-                printContentHtml += `<div class="print-list-container">`;
-                
-                // Create Columns for this page
-                // We have up to 200 items, needing up to 5 columns of 40
+                printContentHtml += `<div class="print-page"><div class="print-watermark-overlay"><img src="logo.png" alt="Watermark Logo"></div><div class="print-header"><div class="print-title-group"><img src="logo.png" class="company-logo"><h1 class="company-name-print">World Out Fashion</h1></div><p class="print-date">Date: ${new Date().toLocaleString('en-US')}</p></div><div class="print-list-container">`;
                 for (let col = 0; col < COLUMNS_PER_PAGE; col++) {
                      const startIdx = col * ITEMS_PER_COLUMN;
                      if(startIdx < pageItems.length) {
                          printContentHtml += '<div class="print-column">';
                          const endIdx = Math.min(startIdx + ITEMS_PER_COLUMN, pageItems.length);
                          for(let j = startIdx; j < endIdx; j++) {
-                             // Correct global index calculation
                              const globalIndex = i + j + 1;
                              printContentHtml += `<div>${globalIndex}. ${pageItems[j]}</div>`;
                          }
                          printContentHtml += '</div>';
                      }
                 }
-                
-                printContentHtml += `</div>`; // End print-list-container
-
-                // Footer Area (Only on the LAST page)
+                printContentHtml += `</div>`;
                 if (isLastPage) {
-                    printContentHtml += `
-                    <div class="footer-container">
-                        <div class="total-box">Total Qty: ${totalItems}</div>
-                        <div class="signature-area">
-                            <div class="signature-line">Prepared By</div>
-                        </div>
-                    </div>`;
+                    printContentHtml += `<div class="footer-container"><div class="total-box">Total Qty: ${totalItems}</div><div class="signature-area"><div class="signature-line">Prepared By</div></div></div>`;
                 }
-
-                // Small Footer Text (Every page)
-                printContentHtml += `<div class="print-footer-watermark">© 2025 DesignVerse by Sandusha Avishkha. All rights reserved. Crafted with passion in Minuwangoda, Sri Lanka.</div>`;
-
-                printContentHtml += `</div>`; // End print-page
+                printContentHtml += `<div class="print-footer-watermark">© 2025 DesignVerse by Sandusha Avishkha. All rights reserved. Crafted with passion in Minuwangoda, Sri Lanka.</div></div>`;
             }
-            
             el.printArea.innerHTML = printContentHtml;
             window.print();
         }
@@ -1239,7 +1414,7 @@
 
         function setupMode(mode) {
             showLoading(`Loading ${mode} mode...`);
-            stopPollingCount(); // Stop the interval when entering app
+            stopPollingCount(); 
             appMode = mode;
             localStorage.setItem('appMode', mode);
             setTimeout(async () => {
@@ -1270,27 +1445,19 @@
                 appMode = null;
                 localStorage.removeItem('appMode');
                 fetchTodayCount(); 
-                startPollingCount(); // Restart polling
+                startPollingCount(); 
                 hideLoading();
             }, 300);
         }
         
         async function fetchTodayCount(silent = false) {
-            // If offline and silent (auto update), just exit to avoid errors
-            if (!navigator.onLine) {
-                 if (!silent) { if (scannedBarcodes.length === 0) el.todayCountDisplay.textContent = 'Err'; }
-                 return;
-            }
-
+            if (!navigator.onLine) { if (!silent) { if (scannedBarcodes.length === 0) el.todayCountDisplay.textContent = 'Err'; } return; }
             if (!silent && el.todayCountDisplay.textContent === '--') el.todayCountDisplay.textContent = '...';
-            
             try {
                 const data = await apiCall("getSessionData", { sessionId: currentSessionId });
                 const fetchedBarcodes = data.session.data.barcodes || [];
                 el.todayCountDisplay.textContent = fetchedBarcodes.length;
                 scannedBarcodes = fetchedBarcodes;
-                
-                // Only update Main UI if we are actually viewing the main screen, not login
                 if (el.mainContentWrapper.style.display === 'flex' && currentlyViewingSessionId === currentSessionId) {
                      currentlyViewingBarcodes = [...scannedBarcodes];
                      updateUiFromState(); 
@@ -1337,31 +1504,120 @@
             } catch (error) { el.savedSessionsSelect.innerHTML = `<option value="">Failed to load sessions (API Error)</option>`; }
         }
 
-        // Camera Logic
+        // ==========================================
+        //  NEW CAMERA LOGIC (BATTERY SAVER + CONTROLS)
+        // ==========================================
+
         function onScanSuccess(decodedText, decodedResult) {
-            el.orderScanInput.value = decodedText; handleOrderScanAddBarcode(); stopCameraScan();
-            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Scanned!', showConfirmButton: false, timer: 1500 });
+            // Success Logic
+            const result = handleOrderScanAddBarcode(decodedText);
+            
+            // Visual Feedback
+            const overlay = el.camFlashOverlay;
+            overlay.className = result ? 'absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-200 z-10 flash-green' : 'absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-200 z-10 flash-red';
+            // Trigger Flash
+            setTimeout(() => { overlay.style.opacity = '1'; }, 10);
+            setTimeout(() => { overlay.style.opacity = '0'; }, 300);
+
+            // Logic: If Single Mode -> Stop Camera
+            if (camScanMode === 'single') {
+                stopCameraScan();
+            }
         }
-        function onScanFailure(error) {}
-        
-        function startCameraScan() {
+
+        function openSmartCamera() {
             if (isTouchLocked) return;
-            el.cameraModal.classList.add('show');
-            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            Html5Qrcode.getCameras().then(devices => {
-                if (devices && devices.length) {
-                    const backCamera = devices.find(device => device.label.toLowerCase().includes('back')) || devices[0];
-                    html5QrCode.start({ deviceId: { exact: backCamera.id } }, config, onScanSuccess, onScanFailure).catch(err => { 
-                        Swal.fire("Camera Error", "Check permissions.", "error"); stopCameraScan(); 
-                    });
-                } else { Swal.fire("Error", "No camera found.", "error"); stopCameraScan(); }
-            }).catch(err => { Swal.fire("Error", "Camera error.", "error"); stopCameraScan(); });
-            el.orderScanInput.value = ""; 
+            el.cameraModal.classList.remove('hidden');
+            el.cameraModal.classList.add('flex');
+            
+            // Camera is INITIALLY OFF to save battery
+            el.camInstruction.style.display = 'flex';
         }
+
+        function closeSmartCamera() {
+            stopCameraScan();
+            el.cameraModal.classList.add('hidden');
+            el.cameraModal.classList.remove('flex');
+            updateUiFromState(); // Sync back to main UI
+        }
+        
+        // Internal helper to actually start/stop stream
+        function startCameraStream() {
+            el.camInstruction.style.display = 'none';
+            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+            
+            // Only start if not already scanning
+            if (!html5QrCode.isScanning) {
+                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                Html5Qrcode.getCameras().then(devices => {
+                    if (devices && devices.length) {
+                        const backCamera = devices.find(device => device.label.toLowerCase().includes('back')) || devices[0];
+                        html5QrCode.start({ deviceId: { exact: backCamera.id } }, config, onScanSuccess)
+                        .catch(err => { 
+                             console.error(err);
+                             Swal.fire({ toast: true, position: 'top', icon: 'error', title: 'Camera Error', showConfirmButton: false, timer: 1500 });
+                             stopCameraStream();
+                        });
+                    }
+                }).catch(err => console.error(err));
+            }
+        }
+
         function stopCameraScan() {
-            if (html5QrCode && html5QrCode.isScanning) html5QrCode.stop().catch(err => {});
-            el.cameraModal.classList.remove('show'); updateUiFromState(); 
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    el.camInstruction.style.display = 'flex';
+                    // Reset Active State Visuals
+                    el.camControlBtn.classList.remove('cam-active');
+                }).catch(err => console.error(err));
+            }
+        }
+
+        // Button Control Logic
+        function setupCameraControls() {
+            const btn = el.camControlBtn;
+
+            const handleStart = (e) => {
+                e.preventDefault();
+                camIsHolding = true;
+                btn.classList.add('cam-active');
+                
+                // Start Timer to distinguish Tap vs Hold
+                const startTime = Date.now();
+                
+                // Start Camera Immediately
+                startCameraStream();
+
+                camHoldTimer = { startTime };
+            };
+
+            const handleEnd = (e) => {
+                e.preventDefault();
+                if (!camIsHolding) return;
+                camIsHolding = false;
+                
+                const duration = Date.now() - camHoldTimer.startTime;
+                
+                if (duration < 500) {
+                    // Short Press (Tap) -> Single Mode
+                    camScanMode = 'single';
+                    // Camera stays ON until 1 scan success (handled in onScanSuccess)
+                } else {
+                    // Long Press (Hold) -> Continuous Mode -> Stop Now
+                    camScanMode = 'idle';
+                    stopCameraScan();
+                    btn.classList.remove('cam-active');
+                }
+            };
+
+            // Touch Events
+            btn.addEventListener('touchstart', handleStart);
+            btn.addEventListener('touchend', handleEnd);
+            
+            // Mouse Events (for testing on PC)
+            btn.addEventListener('mousedown', handleStart);
+            btn.addEventListener('mouseup', handleEnd);
+            btn.addEventListener('mouseleave', (e) => { if(camIsHolding) handleEnd(e); });
         }
         
         document.addEventListener("DOMContentLoaded", initializeApp);
