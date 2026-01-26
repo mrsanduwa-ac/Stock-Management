@@ -237,6 +237,7 @@
         #camFlashOverlay { pointer-events: none; transition: opacity 0.2s ease-out; }
         .flash-green { background-color: rgba(34, 197, 94, 0.6); opacity: 1 !important; }
         .flash-red { background-color: rgba(239, 68, 68, 0.6); opacity: 1 !important; }
+        #camControlBtn { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         #camControlBtn:active { transform: scale(0.95); }
         .cam-btn-inner { transition: all 0.3s; }
         #camControlBtn:active .cam-btn-inner, .cam-active .cam-btn-inner { transform: scale(0.8); background-color: #ef4444; } /* Red when pressing */
@@ -718,6 +719,7 @@
         let camHoldTimer = null;
         let camIsHolding = false;
         let camScanMode = 'idle'; // idle, single, continuous
+        let isCameraBusy = false;
 
         // ELEMENT REFERENCES
         const el = {
@@ -1543,23 +1545,28 @@
         
         // Internal helper to actually start/stop stream
         function startCameraStream() {
+            if(isCameraBusy) return;
+            
             el.camInstruction.style.display = 'none';
             if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
             
             // Only start if not already scanning
             if (!html5QrCode.isScanning) {
+                isCameraBusy = true;
                 const config = { fps: 10, qrbox: { width: 250, height: 250 } };
                 Html5Qrcode.getCameras().then(devices => {
                     if (devices && devices.length) {
                         const backCamera = devices.find(device => device.label.toLowerCase().includes('back')) || devices[0];
                         html5QrCode.start({ deviceId: { exact: backCamera.id } }, config, onScanSuccess)
+                        .then(() => { isCameraBusy = false; })
                         .catch(err => { 
                              console.error(err);
+                             isCameraBusy = false;
                              Swal.fire({ toast: true, position: 'top', icon: 'error', title: 'Camera Error', showConfirmButton: false, timer: 1500 });
                              stopCameraStream();
                         });
-                    }
-                }).catch(err => console.error(err));
+                    } else { isCameraBusy = false; Swal.fire("Error", "No camera found.", "error"); }
+                }).catch(err => { console.error(err); isCameraBusy = false; });
             }
         }
 
@@ -1570,15 +1577,18 @@
                     // Reset Active State Visuals
                     el.camControlBtn.classList.remove('cam-active');
                 }).catch(err => console.error(err));
+            } else {
+                el.camInstruction.style.display = 'flex';
+                el.camControlBtn.classList.remove('cam-active');
             }
         }
 
-        // Button Control Logic
+        // Button Control Logic (UPDATED: Pointer Events)
         function setupCameraControls() {
             const btn = el.camControlBtn;
 
             const handleStart = (e) => {
-                e.preventDefault();
+                // Remove preventDefault to allow click on some devices if needed, but here we handle logic manually
                 camIsHolding = true;
                 btn.classList.add('cam-active');
                 
@@ -1592,7 +1602,6 @@
             };
 
             const handleEnd = (e) => {
-                e.preventDefault();
                 if (!camIsHolding) return;
                 camIsHolding = false;
                 
@@ -1610,14 +1619,10 @@
                 }
             };
 
-            // Touch Events
-            btn.addEventListener('touchstart', handleStart);
-            btn.addEventListener('touchend', handleEnd);
-            
-            // Mouse Events (for testing on PC)
-            btn.addEventListener('mousedown', handleStart);
-            btn.addEventListener('mouseup', handleEnd);
-            btn.addEventListener('mouseleave', (e) => { if(camIsHolding) handleEnd(e); });
+            // Modern Pointer Events (Works for Touch & Mouse)
+            btn.addEventListener('pointerdown', handleStart);
+            btn.addEventListener('pointerup', handleEnd);
+            btn.addEventListener('pointerleave', (e) => { if(camIsHolding) handleEnd(e); });
         }
         
         document.addEventListener("DOMContentLoaded", initializeApp);
