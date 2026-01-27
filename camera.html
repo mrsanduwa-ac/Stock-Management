@@ -28,6 +28,11 @@
         /* Recent List Animation */
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .recent-item { animation: slideDown 0.3s ease-out forwards; }
+
+        /* Scrollbar Styling for Recent List */
+        #camRecentList::-webkit-scrollbar { width: 4px; }
+        #camRecentList::-webkit-scrollbar-track { background: #1f2937; }
+        #camRecentList::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 2px; }
     </style>
 </head>
 <body class="flex flex-col h-screen text-white">
@@ -70,10 +75,11 @@
         <!-- Pull Bar Visual -->
         <div class="w-12 h-1 bg-gray-700 rounded-full mb-3"></div>
 
-        <!-- Last 3 Scans List -->
+        <!-- Last Scans List (Fixed Height ~2 Items) -->
         <div class="w-full mb-4">
             <p class="text-[10px] text-gray-500 mb-1 text-center uppercase tracking-wider">Recent Scans</p>
-            <ul id="camRecentList" class="space-y-1 w-full max-h-24 overflow-y-auto px-2">
+            <!-- Height set to show approx 2 items (85px), Scrollable -->
+            <ul id="camRecentList" class="space-y-1 w-full max-h-[85px] overflow-y-auto px-2">
                 <li class="text-gray-500 text-sm italic text-center">No scans yet</li>
             </ul>
         </div>
@@ -147,7 +153,7 @@
             // Check Duplicate
             if (scannedBarcodes.includes(code)) {
                 triggerFeedback(false, "Already Scanned!");
-                // Force Stop if Single Mode (even on error)
+                // Force Stop if Single Mode (even on error to prevent stuck state)
                 if (camScanMode === 'single') stopCamera();
                 return;
             }
@@ -166,7 +172,9 @@
             }
 
             // Stop if Single Mode
-            if (camScanMode === 'single') stopCamera();
+            if (camScanMode === 'single') {
+                setTimeout(() => stopCamera(), 500); // Slight delay for feedback
+            }
         }
 
         function saveData() {
@@ -181,10 +189,10 @@
             if (scannedBarcodes.length === 0) {
                 el.camRecentList.innerHTML = '<li class="text-gray-500 text-sm italic text-center">No scans yet</li>';
             } else {
-                const top3 = scannedBarcodes.slice(0, 3);
-                top3.forEach(code => {
+                // Show ALL scanned items but let CSS handle height/scroll
+                scannedBarcodes.forEach(code => {
                     const li = document.createElement('li');
-                    li.className = 'recent-item bg-gray-800 rounded px-3 py-2 flex justify-between items-center border border-gray-700';
+                    li.className = 'recent-item bg-gray-800 rounded px-3 py-2 flex justify-between items-center border border-gray-700 mb-1';
                     li.innerHTML = `<span class="text-white font-mono font-bold tracking-wider">${code}</span> <span class="text-xs text-green-400">✓</span>`;
                     el.camRecentList.appendChild(li);
                 });
@@ -217,74 +225,96 @@
             }
         }
 
-        // --- CAMERA CONTROLS ---
+        // --- CAMERA CONTROLS (ROBUST FIX) ---
         function startCamera() {
-            if (isCameraBusy) return;
+            if (isCameraBusy) return; // Prevent double trigger
+            
             el.camInstruction.style.display = 'none';
             
-            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+            // Re-initialize Html5Qrcode if needed
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
 
             const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
             
             isCameraBusy = true;
+            
             Html5Qrcode.getCameras().then(devices => {
                 if (devices && devices.length) {
                     const backCam = devices.find(d => d.label.toLowerCase().includes('back')) || devices[0];
+                    // IMPORTANT: Start only if not already scanning
                     html5QrCode.start({ deviceId: { exact: backCam.id } }, config, (decodedText) => {
                         handleScan(decodedText);
+                    }).then(() => {
+                        // Started successfully
+                        isCameraBusy = false; 
                     }).catch(err => {
-                        console.error(err);
+                        console.error("Start Error", err);
                         triggerFeedback(false, "Camera Error");
                         isCameraBusy = false;
+                        stopCamera(); // Ensure cleanup
                     });
                 } else {
                     triggerFeedback(false, "No Camera");
                     isCameraBusy = false;
                 }
             }).catch(err => {
-                console.error(err);
+                console.error("Perms Error", err);
                 isCameraBusy = false;
             });
         }
 
         function stopCamera() {
-            if (html5QrCode && html5QrCode.isScanning) {
+            if (html5QrCode) {
+                // Ensure we try to stop even if state implies otherwise, to be safe
                 html5QrCode.stop().then(() => {
-                    el.camInstruction.style.display = 'flex';
-                    el.camControlBtn.classList.remove('cam-active');
-                    html5QrCode.clear();
-                }).catch(err => console.error(err));
+                    console.log("Camera Stopped");
+                    cleanupAfterStop();
+                }).catch(err => {
+                    console.log("Stop warning (might be already stopped):", err);
+                    cleanupAfterStop(); // Force cleanup anyway
+                });
             } else {
-                el.camInstruction.style.display = 'flex';
-                el.camControlBtn.classList.remove('cam-active');
+                cleanupAfterStop();
             }
+        }
+
+        function cleanupAfterStop() {
+            el.camInstruction.style.display = 'flex';
+            el.camControlBtn.classList.remove('cam-active');
+            isCameraBusy = false; 
+            // We do NOT clear html5QrCode instance to reuse it faster, 
+            // or we clear it if we want fresh start. Let's keep instance but clear stream.
+            if(html5QrCode) html5QrCode.clear(); 
         }
 
         function setupControls() {
             const btn = el.camControlBtn;
 
             const handleStart = (e) => {
-                e.preventDefault(); // Prevent ghost clicks
+                // e.preventDefault(); // Removed preventDefault to allow click if needed, but handled manually
+                if(isCameraBusy && camScanMode !== 'idle') return; // Don't interrupt if busy setting up
+
                 camIsHolding = true;
                 btn.classList.add('cam-active');
                 
                 const startTime = Date.now();
                 camHoldTimer = { startTime };
                 
-                startCamera(); // Start immediately
+                startCamera(); // Start immediately on touch
             };
 
             const handleEnd = (e) => {
-                e.preventDefault();
                 if (!camIsHolding) return;
                 camIsHolding = false;
                 
                 const duration = Date.now() - camHoldTimer.startTime;
                 
                 if (duration < 500) {
-                    // Tap -> Single Scan
+                    // Tap -> Single Scan Mode
                     camScanMode = 'single';
-                    // Don't stop camera here, wait for scan success
+                    // Do NOT stop camera here. Let it scan once.
                 } else {
                     // Hold -> Continuous -> Stop Now
                     camScanMode = 'idle';
@@ -292,11 +322,10 @@
                 }
             };
 
-            btn.addEventListener('touchstart', handleStart, { passive: false });
-            btn.addEventListener('touchend', handleEnd, { passive: false });
-            btn.addEventListener('mousedown', handleStart);
-            btn.addEventListener('mouseup', handleEnd);
-            btn.addEventListener('mouseleave', (e) => { if(camIsHolding) handleEnd(e); });
+            // Use Pointer Events for unified Touch/Mouse support
+            btn.addEventListener('pointerdown', handleStart);
+            btn.addEventListener('pointerup', handleEnd);
+            btn.addEventListener('pointerleave', (e) => { if(camIsHolding) handleEnd(e); });
         }
 
         // --- VOICE ENGINE (COPIED FROM MAIN) ---
@@ -310,7 +339,6 @@
 
             const utterance = new SpeechSynthesisUtterance(textToSpeak);
             
-            // Voice selection logic
             const voices = window.speechSynthesis.getVoices();
             let selectedVoice = null;
             if (voiceLanguage !== 'si') {
