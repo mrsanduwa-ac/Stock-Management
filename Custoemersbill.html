@@ -6,10 +6,10 @@
     <title>World Out Fashion Invoice</title>
     <style>
         :root {
-            --primary-color: #0d47a1; /* Dark Blue */
-            --secondary-color: #e3f2fd; /* Light Blue Background */
-            --border-color: #bbdefb;
-            --text-color: #2c3e50;
+            --primary-color: #0288d1; /* Original Blue from screenshot */
+            --secondary-color: #e1f5fe; /* Light Blue Background */
+            --border-color: #b3e5fc;
+            --text-color: #333333;
             --success-color: #27ae60;
             --whatsapp-color: #25D366;
             --bg-color: #f4f6f9;
@@ -25,7 +25,7 @@
             margin: 0;
             padding: 12px; 
             color: var(--text-color);
-            -webkit-tap-highlight-color: transparent; /* Removes blue tap highlight on mobile */
+            -webkit-tap-highlight-color: transparent; 
         }
 
         /* Navigation Bar */
@@ -62,7 +62,7 @@
             background: #ffffff;
             box-shadow: 0 8px 30px rgba(0,0,0,0.08);
             border-radius: 12px;
-            padding: 30px 40px;
+            padding: 40px;
             position: relative;
             overflow: hidden;
             display: flex;
@@ -77,7 +77,7 @@
             transform: translate(-50%, -50%);
             width: 70%;
             height: auto;
-            opacity: 0.05;
+            opacity: 0.08; /* Slightly increased for better visibility under blur */
             pointer-events: none;
             z-index: 0;
         }
@@ -89,55 +89,55 @@
             align-items: center;
             border-bottom: 3px solid var(--primary-color);
             padding-bottom: 20px;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             position: relative;
             z-index: 1;
             flex-wrap: wrap; 
             gap: 15px;
         }
 
-        /* ලෝගෝ එක විශාල කිරීම */
-        .logo-area img { max-height: 140px; border-radius: 8px; }
+        /* ලෝගෝ එක විශාල කිරීම සහ රවුම ඉවත් කිරීම */
+        .logo-area img { max-height: 140px; border-radius: 0; }
 
         .company-info { text-align: right; }
         .company-info h1 { margin: 0 0 5px 0; color: var(--primary-color); text-transform: uppercase; font-size: 24px; letter-spacing: 1px; font-weight: 800;}
         .company-info p { margin: 3px 0; font-size: 14px; color: #555; font-weight: 500;}
 
-        /* Invoice Meta */
+        /* Invoice Meta - බොක්ස් එක ඉවත් කර ඇත */
         .invoice-meta {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             position: relative;
             z-index: 1;
             flex-wrap: wrap; 
             gap: 15px;
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
+            background: transparent; /* No box background */
+            padding: 0;
+            border: none;
         }
 
         .bill-to, .invoice-data { width: 48%; }
-        .label { font-weight: 700; color: var(--primary-color); display: block; margin-bottom: 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;}
+        .label { font-weight: 700; color: var(--primary-color); display: block; margin-bottom: 8px; font-size: 15px;}
 
-        /* Inputs - Mobile App Feel */
+        /* Inputs - Mobile App Feel & Glassy */
         input {
             width: 100%; 
-            padding: 12px 14px; 
-            border: 1px solid #ced4da; 
-            border-radius: 8px;
+            padding: 10px 12px; 
+            border: 1px solid rgba(0,0,0,0.1); 
+            border-radius: 6px;
             font-family: inherit; 
             font-size: 15px; 
-            background: #ffffff; 
+            background: rgba(255, 255, 255, 0.6); /* Glassy input */
+            backdrop-filter: blur(4px);
             transition: all 0.2s ease;
         }
-        input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.1); }
+        input:focus { outline: none; border-color: var(--primary-color); background: #ffffff; }
 
-        .clean-input { border: 1px solid transparent; background: transparent; padding: 10px; font-weight: 500; border-bottom: 1px solid #dee2e6; border-radius: 0; }
-        .clean-input:hover, .clean-input:focus { border-bottom: 2px solid var(--primary-color); background: #f8fbff; }
+        .clean-input { border: 1px solid transparent; background: transparent; padding: 8px; font-weight: 500; border-radius: 0; backdrop-filter: none; }
+        .clean-input:hover, .clean-input:focus { border-bottom: 1px solid var(--border-color); background: rgba(244, 249, 255, 0.8); }
 
-        /* Table */
+        /* Table - Image Reference Design */
         table {
             width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 15px;
             position: relative; z-index: 1;
@@ -146,22 +146,38 @@
         th {
             background-color: var(--secondary-color); 
             color: var(--primary-color);
-            padding: 12px 8px; text-align: left; 
-            font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+            padding: 12px 10px; 
+            text-align: left; 
+            font-size: 14px; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
             border-bottom: 2px solid var(--primary-color);
+            border-radius: 6px 6px 0 0;
         }
-        th:first-child { border-top-left-radius: 6px; }
-        th:last-child { border-top-right-radius: 6px; }
         
-        td { padding: 10px 8px; border-bottom: 1px solid #eee; vertical-align: middle; background: #ffffff; word-wrap: break-word;}
-        tr:hover td { background-color: #f0f7ff; }
+        /* Glassmorphism for Table Rows to show Watermark cleanly */
+        td { 
+            padding: 10px 8px; 
+            border-bottom: 1px solid #eee; 
+            vertical-align: middle; 
+            background: rgba(255, 255, 255, 0.5); 
+            backdrop-filter: blur(3px); /* Glassy Blur */
+            word-wrap: break-word;
+        }
+        tr:hover td { background-color: rgba(240, 247, 255, 0.8); }
 
         /* Column Widths */
         .col-desc { width: 42%; }
         .col-qty { width: 14%; text-align: center; }
         .col-price { width: 18%; text-align: right; }
-        .col-total { width: 18%; text-align: right; font-weight: 600; color: var(--primary-color);}
+        .col-total { width: 18%; text-align: right; font-weight: 600; color: var(--text-color);}
         .col-action { width: 8%; text-align: center; }
+
+        /* Align Headers to match image */
+        th.col-qty { text-align: center; }
+        th.col-price { text-align: right; }
+        th.col-total { text-align: right; }
 
         /* SVG Icons inside buttons */
         .icon { width: 20px; height: 20px; flex-shrink: 0; }
@@ -176,8 +192,8 @@
         }
         .btn:active { transform: scale(0.98); }
         
-        .btn-add { background-color: #e8f5e9; color: var(--success-color); border: 1px dashed var(--success-color); display: inline-flex; width: auto; padding: 10px 20px; margin-top: 5px;}
-        .btn-add:hover { background-color: #c8e6c9; }
+        .btn-add { background-color: transparent; color: var(--success-color); border: 1px dashed var(--success-color); display: inline-flex; width: auto; padding: 10px 20px; margin-top: 5px;}
+        .btn-add:hover { background-color: rgba(39, 174, 96, 0.1); }
         
         .btn-group {
             display: flex; gap: 12px; margin-top: 35px; flex-direction: row; flex-wrap: wrap; justify-content: center;
@@ -187,10 +203,10 @@
         .btn-whatsapp { background-color: var(--whatsapp-color); color: white; flex: 1; min-width: 180px;}
         
         .row-del-btn {
-            background: #ffebee; color: #e53935; border: none; border-radius: 6px;
+            background: transparent; color: #e53935; border: none; border-radius: 6px;
             width: 32px; height: 32px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s;
         }
-        .row-del-btn:hover { background: #e53935; color: white; }
+        .row-del-btn:hover { background: rgba(229, 57, 53, 0.1); }
 
         /* Toggle Switch Styling */
         .switch-container {
@@ -244,14 +260,22 @@
         .history-action-btn { background: var(--secondary-color); color: var(--primary-color); border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; width: 100%;}
         .history-action-btn:active { background: #d0e8f8; }
 
-        /* Summary */
+        /* Summary - Glassmorphism applied */
         .summary { display: flex; justify-content: flex-end; position: relative; z-index: 1; margin-top: 20px; }
-        .summary-box { width: 100%; max-width: 300px; background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #e9ecef;}
-        .summary-row { display: flex; justify-content: space-between; padding: 8px 0; align-items: center; font-weight: 500;}
+        .summary-box { 
+            width: 100%; 
+            max-width: 320px; 
+            background: rgba(255, 255, 255, 0.65); /* Glassy Box */
+            backdrop-filter: blur(5px);
+            padding: 10px 0; 
+            border: none;
+        }
+        .summary-row { display: flex; justify-content: space-between; padding: 10px 0; align-items: center; font-weight: 500; border-bottom: 1px dashed rgba(0,0,0,0.1);}
+        .summary-row:last-child { border-bottom: none; }
         .grand-total {
             font-size: 20px; font-weight: 800; color: var(--primary-color);
-            border-top: 2px solid var(--border-color);
-            padding-top: 15px; margin-top: 10px;
+            border-top: 2px solid var(--primary-color);
+            padding-top: 15px; margin-top: 5px;
         }
 
         /* Footer */
@@ -276,13 +300,12 @@
             .page { padding: 20px 15px; border-radius: 12px; }
             header { flex-direction: column; text-align: center; align-items: center; gap: 10px; border-bottom: 2px solid var(--primary-color); padding-bottom: 15px;}
             
-            /* ෆෝන් එකට ගැලපෙන්න ලෝගෝ එක පොඩි කිරීම */
             .logo-area img { max-height: 110px; }
             
             .company-info { text-align: center; margin-top: 10px; }
             .company-info h1 { font-size: 20px; }
             
-            .invoice-meta { flex-direction: column; gap: 15px; padding: 15px;}
+            .invoice-meta { flex-direction: column; gap: 15px;}
             .bill-to, .invoice-data { width: 100%; }
             .invoice-data { text-align: left; }
             .invoice-data input { text-align: left !important; }
@@ -305,49 +328,60 @@
             .modal-content { border-radius: 20px 20px 0 0; padding: 15px; max-height: 90vh; }
         }
 
-        /* --- PRINT STYLES (A4, Colorful with Pure Black Text K100) --- */
+        /* --- PRINT STYLES (Colorful layout, Pure Black Values) --- */
         @media print {
             @page { size: A4 portrait; margin: 0; }
             body { background: none; padding: 0; }
-            
-            /* Print කරනකොට සාමාන්‍ය අකුරු ඔක්කොම තීන්ත ඉතුරු වෙන්න Pure Black (C0 M0 Y0 K100) කරනවා */
-            body, p, span, td, input, div { color: #000000 !important; text-shadow: none !important; }
-            
-            /* ඒත් වර්ණවත් දේවල් (නිල් පාට) ඒ විදිහටම තියනවා */
-            .company-info h1, th, .label, #invNo, .grand-total { color: var(--primary-color) !important; }
             
             .nav-bar, .no-print, .btn-group, #notification, .modal { display: none !important; }
             
             .page { 
                 box-shadow: none; border-radius: 0; margin: 0; width: 210mm; height: 297mm; 
                 border: none; padding: 15mm; max-width: 100%; page-break-after: avoid;
+                background-color: transparent !important;
             }
             
-            /* Print වෙද්දිත් ලස්සනට කොටු පේන්න */
-            .invoice-meta { background: #f8f9fa !important; border: 1px solid #e9ecef !important; padding: 15px; border-radius: 8px;}
-            .summary-box { background: #f8f9fa !important; border: 1px solid #e9ecef !important; border-radius: 8px;}
+            /* Glassy effects removed for print, transparent bg */
+            td, .summary-box, input {
+                background: transparent !important;
+                backdrop-filter: none !important;
+            }
+
+            /* Only force texts, inputs, and general data to Pure Black (K100).
+               DO NOT force the headers or colorful elements to black!
+            */
+            input, td, .clean-input, .thank-you, .company-info p, #subTotal, #grandTotal { 
+                color: #000000 !important; 
+                text-shadow: none !important;
+            }
             
+            /* Table Header Colors - Keep original print colors */
             table th { 
                 background-color: var(--secondary-color) !important; 
+                color: var(--primary-color) !important;
                 border-bottom: 2px solid var(--primary-color) !important; 
                 border-radius: 0;
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important;
             }
-            table td { border-bottom: 1px solid #ccc; }
-            tr:hover td { background-color: transparent !important; }
+            
+            table td { border-bottom: 1px solid #eee; }
             
             .row-del-btn { display: none; }
             th:last-child, td:last-child { display: none; }
-            input { border: none !important; padding: 0; background: transparent !important; font-weight: bold;}
+            input { border: none !important; padding: 0; font-weight: bold;}
             
             header { flex-direction: row; text-align: left; align-items: center; border-bottom: 3px solid var(--primary-color) !important;}
             .company-info { text-align: right; }
             .invoice-meta { flex-direction: row; }
             .bill-to, .invoice-data { width: 48%; }
             
-            /* වර්ණ නිවැරදිව Print වෙන්න මේක අනිවාර්යයි */
-            -webkit-print-color-adjust: exact !important; 
-            print-color-adjust: exact !important;
-            color-adjust: exact !important;
+            /* Ensure colors are printed */
+            * {
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
         }
     </style>
 </head>
@@ -364,11 +398,12 @@
     </div>
 
     <div class="page">
+        <!-- Watermark -->
         <img src="logo.png" alt="Watermark" class="watermark" onerror="this.style.display='none'">
 
         <header>
             <div class="logo-area">
-                <img src="logo.png" alt="LOGO" onerror="this.src='https://placehold.co/200x80/e3f2fd/0d47a1?text=YOUR+LOGO'">
+                <img src="logo.png" alt="LOGO" onerror="this.src='https://placehold.co/200x80/e3f2fd/0288d1?text=LOGO'">
             </div>
             <div class="company-info">
                 <h1>World Out Fashion</h1>
@@ -380,18 +415,18 @@
 
         <div class="invoice-meta">
             <div class="bill-to">
-                <span class="label">Bill To</span>
-                <input type="text" id="custName" class="clean-input" placeholder="Customer Name" list="customerList" oninput="fillCustomerDetails()" style="font-weight: bold; font-size: 16px;" autocomplete="off">
-                <input type="text" id="custContact" class="clean-input" placeholder="Address / Phone" value="" autocomplete="off">
+                <span class="label">Bill To:</span>
+                <input type="text" id="custName" class="clean-input" placeholder="Customer Name" list="customerList" oninput="fillCustomerDetails()" style="font-weight: bold; font-size: 16px; color: #000;" autocomplete="off">
+                <input type="text" id="custContact" class="clean-input" placeholder="Address / Phone" value="" autocomplete="off" style="color: #000;">
             </div>
             <div class="invoice-data">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center;">
-                    <span style="font-weight: 700; color: #555; font-size: 14px;">Invoice No:</span>
-                    <input type="text" id="invNo" value="INVWOF-0001" style="width: 140px; text-align: right; font-weight: bold; color: var(--primary-color);" class="clean-input" readonly>
+                    <span style="font-weight: 700; color: #333; font-size: 14px;">Invoice No:</span>
+                    <input type="text" id="invNo" value="INVWOF-0001" style="width: 140px; text-align: right; font-weight: bold; color: #000;" class="clean-input" readonly>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: 700; color: #555; font-size: 14px;">Date:</span>
-                    <input type="date" id="datePicker" style="width: 140px; text-align: right;" class="clean-input">
+                    <span style="font-weight: 700; color: #333; font-size: 14px;">Date:</span>
+                    <input type="date" id="datePicker" style="width: 140px; text-align: right; color: #000;" class="clean-input">
                 </div>
             </div>
         </div>
@@ -399,10 +434,10 @@
         <table>
             <thead>
                 <tr>
-                    <th class="col-desc">Item</th>
-                    <th class="col-qty">Qty</th>
-                    <th class="col-price">Price</th>
-                    <th class="col-total">Total</th>
+                    <th class="col-desc">ITEM</th>
+                    <th class="col-qty">QTY</th>
+                    <th class="col-price">PRICE</th>
+                    <th class="col-total">TOTAL</th>
                     <th class="col-action no-print"></th>
                 </tr>
             </thead>
@@ -419,20 +454,20 @@
         <div class="summary">
             <div class="summary-box">
                 <div class="summary-row">
-                    <span style="color: #666;">Sub Total</span>
-                    <span id="subTotal" style="font-weight: 600;">0.00</span>
+                    <span style="color: #333;">Sub Total</span>
+                    <span id="subTotal" style="font-weight: 600; color: #000;">0.00</span>
                 </div>
                 <div class="summary-row">
-                    <span style="color: #666;">Delivery Charge</span>
-                    <input type="number" id="delivery" value="0" style="width: 80px; text-align: right; padding: 6px; border-radius: 4px;" inputmode="decimal" oninput="calculateTotal()" onkeydown="handleEnter(event, 'tax')">
+                    <span style="color: #333;">Delivery Charge</span>
+                    <input type="number" id="delivery" value="0" style="width: 80px; text-align: right; padding: 6px; border-radius: 4px; color: #000;" inputmode="decimal" oninput="calculateTotal()" onkeydown="handleEnter(event, 'tax')">
                 </div>
                 <div class="summary-row">
-                    <span style="color: #666;">Tax / Other</span>
-                    <input type="number" id="tax" value="0" style="width: 80px; text-align: right; padding: 6px; border-radius: 4px;" inputmode="decimal" oninput="calculateTotal()" onkeydown="handleEnter(event, 'save')">
+                    <span style="color: #333;">Tax / Other</span>
+                    <input type="number" id="tax" value="0" style="width: 80px; text-align: right; padding: 6px; border-radius: 4px; color: #000;" inputmode="decimal" oninput="calculateTotal()" onkeydown="handleEnter(event, 'save')">
                 </div>
                 <div class="summary-row grand-total">
                     <span>TOTAL</span>
-                    <span id="grandTotal">0.00</span>
+                    <span id="grandTotal" style="color: var(--primary-color);">0.00</span>
                 </div>
             </div>
         </div>
@@ -450,7 +485,7 @@
                 <div class="signature-box">
                     <img src="signature.png" id="sigImage" class="signature-img" alt="Signature" onerror="this.src='https://placehold.co/150x50/ffffff/000000?text=Signature'">
                     <div style="border-top: 1px dashed #333; width: 100%; margin-top: 5px;"></div>
-                    <div style="font-size: 12px; margin-top: 4px; font-weight: bold;">Authorized Signature</div>
+                    <div style="font-size: 12px; margin-top: 4px; font-weight: bold; color: #000;">Authorized Signature</div>
                 </div>
             </div>
 
@@ -463,7 +498,7 @@
             </div>
             
             <div class="design-credit">
-                © 2025 DesignVerse by Sandusha Avishkha. All rights reserved. Crafted with passion in Minuwangoda, Sri Lanka.
+                © 2026 DesignVerse by Sandusha Avishkha. All rights reserved. Crafted with passion in Minuwangoda, Sri Lanka.
             </div>
         </div>
 
@@ -662,10 +697,10 @@
             const tr = document.createElement('tr');
             
             tr.innerHTML = `
-                <td><input type="text" class="clean-input item-name" placeholder="Item Name" list="itemList" onkeydown="handleRowEnter(event, this, 'qty')" autocomplete="off"></td>
-                <td class="col-qty"><input type="number" class="clean-input item-qty" inputmode="numeric" style="text-align: center;" oninput="calculateRow(this)" onkeydown="handleRowEnter(event, this, 'price')" min="0"></td>
-                <td class="col-price"><input type="number" class="clean-input item-price" inputmode="decimal" style="text-align: right;" oninput="calculateRow(this)" onkeydown="handleRowEnter(event, this, 'next')" min="0"></td>
-                <td class="col-total"><span class="row-total">0.00</span></td>
+                <td><input type="text" class="clean-input item-name" placeholder="Item Name" list="itemList" onkeydown="handleRowEnter(event, this, 'qty')" autocomplete="off" style="color: #000;"></td>
+                <td class="col-qty"><input type="number" class="clean-input item-qty" inputmode="numeric" style="text-align: center; color: #000;" oninput="calculateRow(this)" onkeydown="handleRowEnter(event, this, 'price')" min="0"></td>
+                <td class="col-price"><input type="number" class="clean-input item-price" inputmode="decimal" style="text-align: right; color: #000;" oninput="calculateRow(this)" onkeydown="handleRowEnter(event, this, 'next')" min="0"></td>
+                <td class="col-total"><span class="row-total" style="color: #000;">0.00</span></td>
                 <td class="col-action no-print">
                     <button class="row-del-btn" onclick="deleteRow(this)">
                         <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
