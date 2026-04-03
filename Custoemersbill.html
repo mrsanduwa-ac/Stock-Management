@@ -96,7 +96,8 @@
             gap: 15px;
         }
 
-        .logo-area img { max-height: 110px; border-radius: 8px; }
+        /* ලෝගෝ එක විශාල කිරීම */
+        .logo-area img { max-height: 140px; border-radius: 8px; }
 
         .company-info { text-align: right; }
         .company-info h1 { margin: 0 0 5px 0; color: var(--primary-color); text-transform: uppercase; font-size: 24px; letter-spacing: 1px; font-weight: 800;}
@@ -123,7 +124,7 @@
         /* Inputs - Mobile App Feel */
         input {
             width: 100%; 
-            padding: 12px 14px; /* Larger touch target */
+            padding: 12px 14px; 
             border: 1px solid #ced4da; 
             border-radius: 8px;
             font-family: inherit; 
@@ -143,7 +144,6 @@
             table-layout: fixed; 
         }
         th {
-            /* Restored Light Blue background for headers */
             background-color: var(--secondary-color); 
             color: var(--primary-color);
             padding: 12px 8px; text-align: left; 
@@ -275,6 +275,10 @@
         @media screen and (max-width: 768px) {
             .page { padding: 20px 15px; border-radius: 12px; }
             header { flex-direction: column; text-align: center; align-items: center; gap: 10px; border-bottom: 2px solid var(--primary-color); padding-bottom: 15px;}
+            
+            /* ෆෝන් එකට ගැලපෙන්න ලෝගෝ එක පොඩි කිරීම */
+            .logo-area img { max-height: 110px; }
+            
             .company-info { text-align: center; margin-top: 10px; }
             .company-info h1 { font-size: 20px; }
             
@@ -283,7 +287,6 @@
             .invoice-data { text-align: left; }
             .invoice-data input { text-align: left !important; }
 
-            /* Adjusted column widths for mobile to prevent overflow */
             .col-desc { width: 38%; }
             .col-qty { width: 15%; }
             .col-price { width: 20%; } 
@@ -299,15 +302,20 @@
             .btn-group .btn { width: 100%; min-width: 100%; margin: 0;}
             .summary-box { max-width: 100%; }
 
-            /* Desktop modal to Mobile Bottom Sheet */
             .modal-content { border-radius: 20px 20px 0 0; padding: 15px; max-height: 90vh; }
         }
 
-        /* --- PRINT STYLES (A4, Pure Black K100) --- */
+        /* --- PRINT STYLES (A4, Colorful with Pure Black Text K100) --- */
         @media print {
             @page { size: A4 portrait; margin: 0; }
-            body { background: none; padding: 0; color: #000000 !important; }
-            * { color: #000000 !important; text-shadow: none !important; }
+            body { background: none; padding: 0; }
+            
+            /* Print කරනකොට සාමාන්‍ය අකුරු ඔක්කොම තීන්ත ඉතුරු වෙන්න Pure Black (C0 M0 Y0 K100) කරනවා */
+            body, p, span, td, input, div { color: #000000 !important; text-shadow: none !important; }
+            
+            /* ඒත් වර්ණවත් දේවල් (නිල් පාට) ඒ විදිහටම තියනවා */
+            .company-info h1, th, .label, #invNo, .grand-total { color: var(--primary-color) !important; }
+            
             .nav-bar, .no-print, .btn-group, #notification, .modal { display: none !important; }
             
             .page { 
@@ -315,10 +323,15 @@
                 border: none; padding: 15mm; max-width: 100%; page-break-after: avoid;
             }
             
-            .invoice-meta { background: transparent; border: 1px solid #000; padding: 15px; border-radius: 0;}
-            .summary-box { background: transparent; border: none; padding: 0;}
+            /* Print වෙද්දිත් ලස්සනට කොටු පේන්න */
+            .invoice-meta { background: #f8f9fa !important; border: 1px solid #e9ecef !important; padding: 15px; border-radius: 8px;}
+            .summary-box { background: #f8f9fa !important; border: 1px solid #e9ecef !important; border-radius: 8px;}
             
-            table th { background-color: transparent !important; color: #000 !important; border-bottom: 2px solid #000; border-radius: 0;}
+            table th { 
+                background-color: var(--secondary-color) !important; 
+                border-bottom: 2px solid var(--primary-color) !important; 
+                border-radius: 0;
+            }
             table td { border-bottom: 1px solid #ccc; }
             tr:hover td { background-color: transparent !important; }
             
@@ -326,12 +339,15 @@
             th:last-child, td:last-child { display: none; }
             input { border: none !important; padding: 0; background: transparent !important; font-weight: bold;}
             
-            header { flex-direction: row; text-align: left; align-items: center; border-bottom: 2px solid #000;}
+            header { flex-direction: row; text-align: left; align-items: center; border-bottom: 3px solid var(--primary-color) !important;}
             .company-info { text-align: right; }
             .invoice-meta { flex-direction: row; }
             .bill-to, .invoice-data { width: 48%; }
             
-            -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            /* වර්ණ නිවැරදිව Print වෙන්න මේක අනිවාර්යයි */
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
         }
     </style>
 </head>
@@ -352,7 +368,7 @@
 
         <header>
             <div class="logo-area">
-                <img src="logo.png" alt="LOGO" style="height: 110px;" onerror="this.src='https://placehold.co/200x80/e3f2fd/0d47a1?text=YOUR+LOGO'">
+                <img src="logo.png" alt="LOGO" onerror="this.src='https://placehold.co/200x80/e3f2fd/0d47a1?text=YOUR+LOGO'">
             </div>
             <div class="company-info">
                 <h1>World Out Fashion</h1>
