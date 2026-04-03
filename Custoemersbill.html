@@ -6,48 +6,63 @@
     <title>World Out Fashion Invoice</title>
     <style>
         :root {
-            --primary-color: #0288d1; /* Dark Blue */
-            --secondary-color: #e1f5fe; /* Light Blue Background */
-            --border-color: #b3e5fc;
-            --text-color: #333;
-            --success-color: #4caf50;
+            --primary-color: #0d47a1; /* Dark Blue */
+            --secondary-color: #e3f2fd; /* Light Blue Background */
+            --border-color: #bbdefb;
+            --text-color: #2c3e50;
+            --success-color: #27ae60;
+            --whatsapp-color: #25D366;
+            --bg-color: #f4f6f9;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
             margin: 0;
-            padding: 10px; /* Reduced padding for mobile */
+            padding: 12px; 
             color: var(--text-color);
+            -webkit-tap-highlight-color: transparent; /* Removes blue tap highlight on mobile */
         }
 
         /* Navigation Bar */
         .nav-bar {
             max-width: 210mm;
-            margin: 0 auto 10px auto;
-            text-align: right;
+            margin: 0 auto 15px auto;
+            display: flex;
+            justify-content: flex-end;
         }
         .nav-link {
             text-decoration: none;
             color: var(--primary-color);
-            font-weight: bold;
-            background: white;
-            padding: 10px 15px;
-            border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            display: inline-block; /* Better for mobile tap */
+            font-weight: 600;
+            background: #ffffff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            font-size: 15px;
         }
+        .nav-link:active { transform: scale(0.98); }
 
         /* Page Styling - Responsive for Mobile, A4 for Print */
         .page {
-            width: 100%; /* Full width on mobile */
-            max-width: 210mm; /* A4 width on desktop */
+            width: 100%; 
+            max-width: 210mm; 
             min-height: 297mm;
             margin: 0 auto;
-            background: white;
-            box-shadow: 0 0 15px rgba(0,0,0,0.15);
-            padding: 40px;
-            box-sizing: border-box;
+            background: #ffffff;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            padding: 30px 40px;
             position: relative;
             overflow: hidden;
             display: flex;
@@ -60,7 +75,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 80%;
+            width: 70%;
             height: auto;
             opacity: 0.05;
             pointer-events: none;
@@ -74,253 +89,249 @@
             align-items: center;
             border-bottom: 3px solid var(--primary-color);
             padding-bottom: 20px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             position: relative;
             z-index: 1;
-            flex-wrap: wrap; /* Allow wrapping on small screens */
+            flex-wrap: wrap; 
             gap: 15px;
         }
 
-        .logo-area img { max-height: 120px; }
+        .logo-area img { max-height: 110px; border-radius: 8px; }
 
         .company-info { text-align: right; }
-        .company-info h1 { margin: 0; color: var(--primary-color); text-transform: uppercase; font-size: 24px; }
-        .company-info p { margin: 5px 0; font-size: 14px; color: #555; }
+        .company-info h1 { margin: 0 0 5px 0; color: var(--primary-color); text-transform: uppercase; font-size: 24px; letter-spacing: 1px; font-weight: 800;}
+        .company-info p { margin: 3px 0; font-size: 14px; color: #555; font-weight: 500;}
 
         /* Invoice Meta */
         .invoice-meta {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             position: relative;
             z-index: 1;
-            flex-wrap: wrap; /* Stack on mobile */
-            gap: 20px;
+            flex-wrap: wrap; 
+            gap: 15px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
         }
 
         .bill-to, .invoice-data { width: 48%; }
-        .label { font-weight: bold; color: var(--primary-color); display: block; margin-bottom: 5px; }
+        .label { font-weight: 700; color: var(--primary-color); display: block; margin-bottom: 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;}
 
-        /* Inputs */
+        /* Inputs - Mobile App Feel */
         input {
             width: 100%; 
-            padding: 10px; /* Larger tap area */
-            border: 1px solid #ddd; 
-            border-radius: 4px;
+            padding: 12px 14px; /* Larger touch target */
+            border: 1px solid #ced4da; 
+            border-radius: 8px;
             font-family: inherit; 
-            font-size: 16px; /* Prevents zoom on iOS */
-            background: transparent; 
-            box-sizing: border-box;
+            font-size: 15px; 
+            background: #ffffff; 
+            transition: all 0.2s ease;
         }
-        input:focus { outline: none; border-color: var(--primary-color); background: #f0fbff; }
+        input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.1); }
 
-        .clean-input { border: 1px solid transparent; font-weight: 500; }
-        .clean-input:hover, .clean-input:focus { border: 1px solid #ddd; }
+        .clean-input { border: 1px solid transparent; background: transparent; padding: 10px; font-weight: 500; border-bottom: 1px solid #dee2e6; border-radius: 0; }
+        .clean-input:hover, .clean-input:focus { border-bottom: 2px solid var(--primary-color); background: #f8fbff; }
 
         /* Table */
         table {
-            width: 100%; border-collapse: collapse; margin-bottom: 10px;
+            width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 15px;
             position: relative; z-index: 1;
-            table-layout: fixed; /* Fix layout to prevent jumping */
+            table-layout: fixed; 
         }
         th {
-            background-color: var(--secondary-color); color: var(--primary-color);
-            padding: 12px 5px; text-align: left; border-bottom: 2px solid var(--primary-color);
-            font-size: 14px;
+            /* Restored Light Blue background for headers */
+            background-color: var(--secondary-color); 
+            color: var(--primary-color);
+            padding: 12px 8px; text-align: left; 
+            font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--primary-color);
         }
-        td { padding: 10px 5px; border-bottom: 1px solid #eee; vertical-align: middle; }
+        th:first-child { border-top-left-radius: 6px; }
+        th:last-child { border-top-right-radius: 6px; }
+        
+        td { padding: 10px 8px; border-bottom: 1px solid #eee; vertical-align: middle; background: #ffffff; word-wrap: break-word;}
+        tr:hover td { background-color: #f0f7ff; }
 
-        /* Column Widths - Optimized for visibility */
-        .col-desc { width: 40%; }
-        .col-qty { width: 15%; text-align: center; }
-        .col-price { width: 20%; text-align: right; }
-        .col-total { width: 20%; text-align: right; }
-        .col-action { width: 5%; text-align: center; }
+        /* Column Widths */
+        .col-desc { width: 42%; }
+        .col-qty { width: 14%; text-align: center; }
+        .col-price { width: 18%; text-align: right; }
+        .col-total { width: 18%; text-align: right; font-weight: 600; color: var(--primary-color);}
+        .col-action { width: 8%; text-align: center; }
+
+        /* SVG Icons inside buttons */
+        .icon { width: 20px; height: 20px; flex-shrink: 0; }
 
         /* Buttons */
         .btn {
-            padding: 12px 20px; border: none; border-radius: 5px;
-            cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px;
-            width: 100%; /* Full width on mobile for easier tap */
-            max-width: 200px; /* Limit width on desktop */
+            padding: 14px 20px; border: none; border-radius: 8px;
+            cursor: pointer; font-weight: 600; font-size: 15px; margin-top: 10px;
+            width: 100%; 
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+            transition: all 0.2s ease;
         }
-        .btn-add { background-color: #4caf50; color: white; display: inline-block; }
+        .btn:active { transform: scale(0.98); }
+        
+        .btn-add { background-color: #e8f5e9; color: var(--success-color); border: 1px dashed var(--success-color); display: inline-flex; width: auto; padding: 10px 20px; margin-top: 5px;}
+        .btn-add:hover { background-color: #c8e6c9; }
         
         .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            flex-direction: column; /* Stack buttons on mobile default */
+            display: flex; gap: 12px; margin-top: 35px; flex-direction: row; flex-wrap: wrap; justify-content: center;
         }
-        .btn-print { 
-            background-color: var(--primary-color); color: white; 
-            padding: 15px; font-size: 18px; width: 100%; max-width: none;
-        }
-        .btn-save {
-            background-color: #607d8b; color: white;
-            padding: 15px; font-size: 18px; width: 100%; max-width: none;
-            display: flex; justify-content: center; align-items: center; gap: 10px;
-        }
+        .btn-print { background-color: var(--primary-color); color: white; flex: 1; min-width: 140px;}
+        .btn-save { background-color: #34495e; color: white; flex: 1; min-width: 140px;}
+        .btn-whatsapp { background-color: var(--whatsapp-color); color: white; flex: 1; min-width: 180px;}
         
         .row-del-btn {
-            background: #ffcdd2; color: #c62828; border: none; border-radius: 50%;
-            width: 30px; height: 30px; cursor: pointer; font-size: 16px; /* Larger delete btn */
-            display: flex; align-items: center; justify-content: center; margin: 0 auto;
+            background: #ffebee; color: #e53935; border: none; border-radius: 6px;
+            width: 32px; height: 32px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s;
         }
+        .row-del-btn:hover { background: #e53935; color: white; }
 
         /* Toggle Switch Styling */
         .switch-container {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            margin-bottom: 10px;
-            gap: 10px;
+            display: flex; align-items: center; justify-content: flex-end; margin-bottom: 10px; gap: 10px;
         }
-        .switch-label { font-size: 12px; font-weight: bold; color: #555; }
+        .switch-label { font-size: 13px; font-weight: 700; color: #555; text-transform: uppercase; }
         
-        .switch {
-            position: relative; display: inline-block; width: 50px; height: 24px;
-        }
+        .switch { position: relative; display: inline-block; width: 48px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #dc3545; transition: .4s; border-radius: 34px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px;
-            background-color: white; transition: .4s; border-radius: 50%;
-        }
-        input:checked + .slider { background-color: #28a745; }
-        input:checked + .slider:before { transform: translateX(26px); }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 26px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: var(--success-color); }
+        input:checked + .slider:before { transform: translateX(22px); }
 
         /* Notification Popup */
         #notification {
-            visibility: hidden;
-            min-width: 250px;
-            background-color: var(--success-color);
-            color: #fff;
-            text-align: center;
-            border-radius: 5px;
-            padding: 16px;
-            position: fixed;
-            z-index: 1000;
-            left: 50%;
-            bottom: 30px;
-            transform: translateX(-50%);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            font-size: 17px;
-            opacity: 0;
-            transition: opacity 0.5s, bottom 0.5s;
+            visibility: hidden; min-width: 250px; background-color: var(--success-color); color: #fff;
+            text-align: center; border-radius: 30px; padding: 14px 24px; position: fixed; z-index: 3000;
+            left: 50%; bottom: 20px; transform: translateX(-50%) translateY(20px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2); font-size: 15px; font-weight: bold;
+            opacity: 0; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
-        #notification.show { visibility: visible; opacity: 1; bottom: 50px; }
+        #notification.show { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
+        #notification.error { background-color: #e53935; }
+
+        /* History Modal */
+        .modal {
+            display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5); align-items: flex-end; justify-content: center; backdrop-filter: blur(2px);
+        }
+        .modal-content {
+            background-color: white; padding: 20px; border-radius: 16px 16px 0 0; width: 100%; max-width: 600px;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.1); max-height: 85vh; display: flex; flex-direction: column;
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 15px; margin-bottom: 15px;
+        }
+        .modal-header h3 { margin: 0; color: var(--primary-color); font-size: 18px; display: flex; align-items: center; gap: 8px;}
+        .close-btn { font-size: 24px; font-weight: bold; cursor: pointer; color: #999; transition: 0.2s; padding: 5px; }
+        .close-btn:active { color: #333; }
+
+        /* History Table in Modal */
+        .history-container { overflow-y: auto; flex: 1; border-radius: 8px; border: 1px solid #f0f0f0;}
+        .history-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .history-table th { background: #fafafa; color: #555; position: sticky; top: 0; padding: 12px; border-bottom: 2px solid #eee;}
+        .history-table td { padding: 12px; border-bottom: 1px solid #f0f0f0; }
+        .history-action-btn { background: var(--secondary-color); color: var(--primary-color); border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; width: 100%;}
+        .history-action-btn:active { background: #d0e8f8; }
 
         /* Summary */
-        .summary {
-            display: flex; justify-content: flex-end; position: relative; z-index: 1; margin-top: 20px;
-        }
-        .summary-box { width: 100%; max-width: 300px; }
-        .summary-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; align-items: center; }
+        .summary { display: flex; justify-content: flex-end; position: relative; z-index: 1; margin-top: 20px; }
+        .summary-box { width: 100%; max-width: 300px; background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #e9ecef;}
+        .summary-row { display: flex; justify-content: space-between; padding: 8px 0; align-items: center; font-weight: 500;}
         .grand-total {
-            font-size: 20px; font-weight: bold; color: var(--primary-color);
-            border-top: 2px solid var(--primary-color); border-bottom: 2px solid var(--primary-color);
-            padding: 10px 0; margin-top: 10px;
+            font-size: 20px; font-weight: 800; color: var(--primary-color);
+            border-top: 2px solid var(--border-color);
+            padding-top: 15px; margin-top: 10px;
         }
 
         /* Footer */
-        .footer-section {
-            margin-top: auto; position: relative; z-index: 1; padding-top: 40px;
-        }
-        .signature-wrapper {
-            text-align: right; margin-bottom: 30px; display: flex; flex-direction: column; align-items: flex-end;
-        }
-        .signature-box {
-            text-align: center; width: 150px; height: 80px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-        }
-        .signature-img { max-height: 60px; display: none; }
+        .footer-section { margin-top: auto; position: relative; z-index: 1; padding-top: 30px; }
+        .signature-wrapper { text-align: right; margin-bottom: 20px; display: flex; flex-direction: column; align-items: flex-end; }
+        .signature-box { text-align: center; width: 160px; height: 80px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+        .signature-img { max-height: 60px; display: none; margin-bottom: 5px;}
         .thank-you {
-            text-align: center; font-size: 14px; color: #333; line-height: 1.6; border-top: 1px solid #eee; padding-top: 20px;
+            text-align: center; font-size: 13px; color: #666; line-height: 1.6; border-top: 1px dashed #ddd; padding-top: 20px; font-weight: 500;
         }
         
-        /* New Footer Text */
-        .design-credit {
-            text-align: center;
-            font-size: 10px;
-            color: #888;
-            margin-top: 30px;
-            padding-top: 10px;
-            border-top: 1px solid #eee;
-        }
+        .design-credit { text-align: center; font-size: 11px; color: #aaa; margin-top: 20px; padding-top: 10px; border-top: 1px solid #eee; font-weight: 600;}
         
         .spinner {
             border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid white;
-            width: 16px; height: 16px; animation: spin 1s linear infinite; display: none;
+            width: 18px; height: 18px; animation: spin 1s linear infinite; display: none;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* --- MOBILE RESPONSIVE CSS --- */
         @media screen and (max-width: 768px) {
-            .page {
-                padding: 15px; /* Reduce padding to save space */
-                width: 100%;
-                min-height: auto;
-            }
-            header {
-                flex-direction: column;
-                text-align: center;
-            }
+            .page { padding: 20px 15px; border-radius: 12px; }
+            header { flex-direction: column; text-align: center; align-items: center; gap: 10px; border-bottom: 2px solid var(--primary-color); padding-bottom: 15px;}
             .company-info { text-align: center; margin-top: 10px; }
+            .company-info h1 { font-size: 20px; }
             
-            .invoice-meta {
-                flex-direction: column;
-                gap: 15px;
-            }
+            .invoice-meta { flex-direction: column; gap: 15px; padding: 15px;}
             .bill-to, .invoice-data { width: 100%; }
             .invoice-data { text-align: left; }
             .invoice-data input { text-align: left !important; }
 
-            /* Table adjustments for Mobile */
-            .col-desc { width: 35%; }
+            /* Adjusted column widths for mobile to prevent overflow */
+            .col-desc { width: 38%; }
             .col-qty { width: 15%; }
-            .col-price { width: 25%; } /* Increased width for price */
-            .col-total { width: 25%; }
-            .col-action { width: 0; display: none; } /* Hide delete column header, move button or handle differently if needed, but for now we keep layout clean */
+            .col-price { width: 20%; } 
+            .col-total { width: 20%; }
+            .col-action { width: 7%; } 
             
-            /* Actually, let's keep action but make it small. Best is to adjust inputs */
-            input.item-price, input.item-qty {
-                padding: 5px;
-                font-size: 14px;
-            }
+            th { font-size: 12px; padding: 10px 4px; }
+            td { font-size: 13px; padding: 8px 4px; }
+            input.item-price, input.item-qty { padding: 8px 4px; font-size: 13px; }
+            .clean-input { padding: 8px 4px; }
+            
+            .btn-group { flex-direction: column; align-items: stretch; gap: 10px;}
+            .btn-group .btn { width: 100%; min-width: 100%; margin: 0;}
+            .summary-box { max-width: 100%; }
 
-            /* Better Table Layout for Mobile */
-            table th, table td { padding: 5px 2px; }
-            
-            .btn-group { flex-direction: column; }
-            
-            /* Ensure large numbers are visible */
-            input[type="number"] {
-                min-width: 50px;
-            }
+            /* Desktop modal to Mobile Bottom Sheet */
+            .modal-content { border-radius: 20px 20px 0 0; padding: 15px; max-height: 90vh; }
         }
 
-        /* Print Styles - Always A4 */
+        /* --- PRINT STYLES (A4, Pure Black K100) --- */
         @media print {
-            body { background: none; padding: 0; }
-            .nav-bar, .no-print { display: none !important; }
+            @page { size: A4 portrait; margin: 0; }
+            body { background: none; padding: 0; color: #000000 !important; }
+            * { color: #000000 !important; text-shadow: none !important; }
+            .nav-bar, .no-print, .btn-group, #notification, .modal { display: none !important; }
+            
             .page { 
-                box-shadow: none; margin: 0; width: 100%; border: none; min-height: auto; 
-                padding: 40px; /* Restore padding for print */
-                max-width: 100%;
+                box-shadow: none; border-radius: 0; margin: 0; width: 210mm; height: 297mm; 
+                border: none; padding: 15mm; max-width: 100%; page-break-after: avoid;
             }
+            
+            .invoice-meta { background: transparent; border: 1px solid #000; padding: 15px; border-radius: 0;}
+            .summary-box { background: transparent; border: none; padding: 0;}
+            
+            table th { background-color: transparent !important; color: #000 !important; border-bottom: 2px solid #000; border-radius: 0;}
+            table td { border-bottom: 1px solid #ccc; }
+            tr:hover td { background-color: transparent !important; }
+            
             .row-del-btn { display: none; }
             th:last-child, td:last-child { display: none; }
-            input { border: none !important; padding: 0; }
-            -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            input { border: none !important; padding: 0; background: transparent !important; font-weight: bold;}
             
-            /* Restore desktop layouts for print */
-            header { flex-direction: row; text-align: left; }
+            header { flex-direction: row; text-align: left; align-items: center; border-bottom: 2px solid #000;}
             .company-info { text-align: right; }
             .invoice-meta { flex-direction: row; }
             .bill-to, .invoice-data { width: 48%; }
+            
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
         }
     </style>
 </head>
@@ -330,7 +341,10 @@
     <datalist id="itemList"></datalist>
 
     <div class="nav-bar no-print">
-        <a href="BillHistory.html" class="nav-link">📜 View Bill History</a>
+        <button class="nav-link" onclick="openHistoryModal()">
+            <svg class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            History
+        </button>
     </div>
 
     <div class="page">
@@ -338,7 +352,7 @@
 
         <header>
             <div class="logo-area">
-                <img src="logo.png" alt="LOGO" style="height: 120px;" onerror="this.src='https://placehold.co/200x80/e1f5fe/0288d1?text=YOUR+LOGO'">
+                <img src="logo.png" alt="LOGO" style="height: 110px;" onerror="this.src='https://placehold.co/200x80/e3f2fd/0d47a1?text=YOUR+LOGO'">
             </div>
             <div class="company-info">
                 <h1>World Out Fashion</h1>
@@ -350,18 +364,18 @@
 
         <div class="invoice-meta">
             <div class="bill-to">
-                <span class="label">Bill To:</span>
+                <span class="label">Bill To</span>
                 <input type="text" id="custName" class="clean-input" placeholder="Customer Name" list="customerList" oninput="fillCustomerDetails()" style="font-weight: bold; font-size: 16px;" autocomplete="off">
                 <input type="text" id="custContact" class="clean-input" placeholder="Address / Phone" value="" autocomplete="off">
             </div>
             <div class="invoice-data">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span style="font-weight: bold;">Invoice No:</span>
-                    <input type="text" id="invNo" value="INV-0012" style="width: 100px; text-align: right;" class="clean-input" readonly>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center;">
+                    <span style="font-weight: 700; color: #555; font-size: 14px;">Invoice No:</span>
+                    <input type="text" id="invNo" value="INVWOF-0001" style="width: 140px; text-align: right; font-weight: bold; color: var(--primary-color);" class="clean-input" readonly>
                 </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="font-weight: bold;">Date:</span>
-                    <input type="date" id="datePicker" style="width: 130px; text-align: right;" class="clean-input">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 700; color: #555; font-size: 14px;">Date:</span>
+                    <input type="date" id="datePicker" style="width: 140px; text-align: right;" class="clean-input">
                 </div>
             </div>
         </div>
@@ -369,11 +383,11 @@
         <table>
             <thead>
                 <tr>
-                    <th class="col-desc">Description</th>
+                    <th class="col-desc">Item</th>
                     <th class="col-qty">Qty</th>
-                    <th class="col-price">Unit Price</th>
-                    <th class="col-total">Amount (Rs)</th>
-                    <th class="col-action no-print">Action</th>
+                    <th class="col-price">Price</th>
+                    <th class="col-total">Total</th>
+                    <th class="col-action no-print"></th>
                 </tr>
             </thead>
             <tbody id="invoiceItems">
@@ -381,21 +395,24 @@
             </tbody>
         </table>
 
-        <button class="btn btn-add no-print" onclick="addNewRow()">+ Add Item</button>
+        <button class="btn btn-add no-print" onclick="addNewRow()">
+            <svg class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Item
+        </button>
 
         <div class="summary">
             <div class="summary-box">
                 <div class="summary-row">
-                    <span>Sub Total</span>
-                    <span id="subTotal">0.00</span>
+                    <span style="color: #666;">Sub Total</span>
+                    <span id="subTotal" style="font-weight: 600;">0.00</span>
                 </div>
                 <div class="summary-row">
-                    <span>Delivery Charge</span>
-                    <input type="number" id="delivery" value="0" style="width: 80px; text-align: right;" inputmode="decimal" oninput="calculateTotal()" onkeydown="handleEnter(event, 'tax')">
+                    <span style="color: #666;">Delivery Charge</span>
+                    <input type="number" id="delivery" value="0" style="width: 80px; text-align: right; padding: 6px; border-radius: 4px;" inputmode="decimal" oninput="calculateTotal()" onkeydown="handleEnter(event, 'tax')">
                 </div>
                 <div class="summary-row">
-                    <span>Tax / Other</span>
-                    <input type="number" id="tax" value="0" style="width: 80px; text-align: right;" inputmode="decimal" oninput="calculateTotal()" onkeydown="handleEnter(event, 'save')">
+                    <span style="color: #666;">Tax / Other</span>
+                    <input type="number" id="tax" value="0" style="width: 80px; text-align: right; padding: 6px; border-radius: 4px;" inputmode="decimal" oninput="calculateTotal()" onkeydown="handleEnter(event, 'save')">
                 </div>
                 <div class="summary-row grand-total">
                     <span>TOTAL</span>
@@ -407,7 +424,7 @@
         <div class="footer-section">
             <div class="signature-wrapper">
                 <div class="switch-container no-print">
-                    <span class="switch-label">Signature:</span>
+                    <span class="switch-label">Signature</span>
                     <label class="switch">
                         <input type="checkbox" id="sigToggle" onchange="toggleSignature()">
                         <span class="slider"></span>
@@ -417,7 +434,7 @@
                 <div class="signature-box">
                     <img src="signature.png" id="sigImage" class="signature-img" alt="Signature" onerror="this.src='https://placehold.co/150x50/ffffff/000000?text=Signature'">
                     <div style="border-top: 1px dashed #333; width: 100%; margin-top: 5px;"></div>
-                    <div style="font-size: 12px; margin-top: 2px;">Authorized Signature</div>
+                    <div style="font-size: 12px; margin-top: 4px; font-weight: bold;">Authorized Signature</div>
                 </div>
             </div>
 
@@ -429,22 +446,60 @@
                 070 348 8218
             </div>
             
-            <!-- NEW FOOTER CREDIT -->
             <div class="design-credit">
-                © 2025 DesignVerse by Sandusha Avishkha. All rights reserved. Crafted with passion in Minuwangoda, Sri Lanka
+                © 2025 DesignVerse by Sandusha Avishkha. All rights reserved. Crafted with passion in Minuwangoda, Sri Lanka.
             </div>
         </div>
 
+        <!-- Action Buttons -->
         <div class="btn-group no-print">
-            <button class="btn btn-save no-print" id="saveBtn" onclick="saveInvoice()">
+            <button class="btn btn-save" id="saveBtn" onclick="processAction('save')">
                 <div class="spinner" id="saveSpinner"></div>
-                <span id="saveText">💾 Save to Google Sheet</span>
+                <svg class="icon" id="saveIcon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                <span id="saveText">Save</span>
             </button>
-            <button class="btn btn-print no-print" onclick="window.print()">🖨️ Print Bill</button>
+            <button class="btn btn-print" id="printBtn" onclick="processAction('print')">
+                <svg class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                Print
+            </button>
+            <button class="btn btn-whatsapp" id="waBtn" onclick="processAction('whatsapp')">
+                <svg class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"></path></svg>
+                Save & WhatsApp
+            </button>
         </div>
     </div>
 
-    <!-- REMOVED THE POPUP DIV -->
+    <!-- Notification Popup -->
+    <div id="notification">Notification Message</div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>
+                    <svg class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Invoice History
+                </h3>
+                <span class="close-btn" onclick="closeHistoryModal()">&times;</span>
+            </div>
+            <div class="history-container">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Inv No</th>
+                            <th>Name</th>
+                            <th style="text-align: right;">Total</th>
+                            <th style="text-align: center;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <!-- History rows injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
     <script>
         // -----------------------------------------------------
@@ -468,6 +523,65 @@
             calculateTotal();
         }
 
+        // --- NOTIFICATION SYSTEM ---
+        function showNotification(message, isError = false) {
+            const notif = document.getElementById("notification");
+            notif.innerText = message;
+            
+            if(isError) {
+                notif.classList.add("error");
+            } else {
+                notif.classList.remove("error");
+            }
+
+            notif.classList.add("show");
+            setTimeout(function(){ notif.classList.remove("show"); }, 3000);
+        }
+
+        // --- HISTORY MODAL ---
+        function openHistoryModal() {
+            document.getElementById('historyModal').style.display = 'flex';
+            renderHistoryTable();
+        }
+        function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
+        
+        window.onclick = function(event) {
+            const histModal = document.getElementById('historyModal');
+            if (event.target == histModal) { histModal.style.display = "none"; }
+        }
+
+        function renderHistoryTable() {
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = '';
+            let history = JSON.parse(localStorage.getItem('worldOutFashionInvoices')) || [];
+            
+            if (history.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color: #999;">No history available yet.</td></tr>`;
+                return;
+            }
+
+            history.slice().reverse().forEach(inv => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-size: 12px; color: #666;">${inv.date || '-'}</td>
+                    <td style="font-weight:bold; color: var(--primary-color); font-size: 13px;">${inv.invNo || '-'}</td>
+                    <td style="font-size: 13px;">${inv.custName || '-'}</td>
+                    <td style="text-align: right; font-weight:700; font-size: 13px;">${(inv.total || 0).toLocaleString('en-LK')}</td>
+                    <td style="text-align: center; padding: 8px;">
+                        <button class="history-action-btn" onclick="loadInvoiceFromHistory(${inv.id})">Open</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function loadInvoiceFromHistory(id) {
+            closeHistoryModal();
+            localStorage.setItem('editInvoiceId', id);
+            loadEditData(id);
+            showNotification("Invoice loaded!");
+        }
+
         // --- SMART SUGGESTIONS ---
         function loadSuggestions() {
             const history = JSON.parse(localStorage.getItem('worldOutFashionInvoices')) || [];
@@ -481,7 +595,6 @@
                 }
             });
 
-            constcustList = document.getElementById('customerList');
             const custList = document.getElementById('customerList');
             const itmList = document.getElementById('itemList');
             
@@ -514,7 +627,7 @@
         function generateInvoiceNumber() {
             const history = JSON.parse(localStorage.getItem('worldOutFashionInvoices')) || [];
             if(history.length === 0) {
-                document.getElementById('invNo').value = "INV-0012";
+                document.getElementById('invNo').value = "INVWOF-0001";
                 return;
             }
             let maxNum = 0;
@@ -523,22 +636,25 @@
                 const num = parseInt(numStr) || 0;
                 if(num > maxNum) maxNum = num;
             });
-            if(maxNum === 0) maxNum = 11;
             const nextNum = maxNum + 1;
-            document.getElementById('invNo').value = "INV-" + String(nextNum).padStart(4, '0');
+            document.getElementById('invNo').value = "INVWOF-" + String(nextNum).padStart(4, '0');
         }
 
-        // --- ROW MANAGEMENT & KEYBOARD NAV ---
+        // --- ROW MANAGEMENT ---
         function addNewRow(desc='', qty=1, price=0) {
             const tbody = document.getElementById('invoiceItems');
             const tr = document.createElement('tr');
             
             tr.innerHTML = `
                 <td><input type="text" class="clean-input item-name" placeholder="Item Name" list="itemList" onkeydown="handleRowEnter(event, this, 'qty')" autocomplete="off"></td>
-                <td class="col-qty"><input type="number" class="clean-input item-qty" inputmode="numeric" style="text-align: center;" oninput="calculateRow(this)" onkeydown="handleRowEnter(event, this, 'price')"></td>
-                <td class="col-price"><input type="number" class="clean-input item-price" inputmode="decimal" style="text-align: right;" oninput="calculateRow(this)" onkeydown="handleRowEnter(event, this, 'next')"></td>
+                <td class="col-qty"><input type="number" class="clean-input item-qty" inputmode="numeric" style="text-align: center;" oninput="calculateRow(this)" onkeydown="handleRowEnter(event, this, 'price')" min="0"></td>
+                <td class="col-price"><input type="number" class="clean-input item-price" inputmode="decimal" style="text-align: right;" oninput="calculateRow(this)" onkeydown="handleRowEnter(event, this, 'next')" min="0"></td>
                 <td class="col-total"><span class="row-total">0.00</span></td>
-                <td class="col-action no-print"><button class="row-del-btn" onclick="deleteRow(this)">×</button></td>
+                <td class="col-action no-print">
+                    <button class="row-del-btn" onclick="deleteRow(this)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+                    </button>
+                </td>
             `;
             
             tbody.appendChild(tr);
@@ -577,7 +693,7 @@
                     document.getElementById('tax').focus();
                     document.getElementById('tax').select();
                 } else if (action === 'save') {
-                    saveInvoice();
+                    processAction('save');
                 }
             }
         }
@@ -593,8 +709,12 @@
 
         function calculateRow(el) {
             const row = el.closest('tr');
-            const q = parseFloat(row.querySelector('.item-qty').value) || 0;
-            const p = parseFloat(row.querySelector('.item-price').value) || 0;
+            let q = parseFloat(row.querySelector('.item-qty').value) || 0;
+            let p = parseFloat(row.querySelector('.item-price').value) || 0;
+            
+            if (q < 0) { q = 0; row.querySelector('.item-qty').value = 0; }
+            if (p < 0) { p = 0; row.querySelector('.item-price').value = 0; }
+
             const total = q * p;
             row.querySelector('.row-total').innerText = total.toFixed(2);
             calculateTotal();
@@ -607,8 +727,12 @@
                 subTotal += parseFloat(span.innerText);
             });
 
-            const delivery = parseFloat(document.getElementById('delivery').value) || 0;
-            const tax = parseFloat(document.getElementById('tax').value) || 0;
+            let delivery = parseFloat(document.getElementById('delivery').value) || 0;
+            let tax = parseFloat(document.getElementById('tax').value) || 0;
+            
+            if (delivery < 0) { delivery = 0; document.getElementById('delivery').value = 0; }
+            if (tax < 0) { tax = 0; document.getElementById('tax').value = 0; }
+
             const grandTotal = subTotal + delivery + tax;
 
             document.getElementById('subTotal').innerText = subTotal.toLocaleString('en-LK', {minimumFractionDigits: 2});
@@ -622,7 +746,6 @@
             sigImg.style.display = isChecked ? 'block' : 'none';
         }
 
-        // --- EDIT & SAVE ---
         function loadEditData(editId) {
             const history = JSON.parse(localStorage.getItem('worldOutFashionInvoices')) || [];
             const inv = history.find(i => i.id == editId);
@@ -645,18 +768,35 @@
             }
         }
 
-        function saveInvoice() {
-            const btn = document.getElementById('saveBtn');
-            const spinner = document.getElementById('saveSpinner');
-            const saveText = document.getElementById('saveText');
-            
-            if(!document.getElementById('custName').value) {
-                alert("Please enter Customer Name");
+        // --- UNIFIED ACTION PROCESSOR ---
+        function processAction(actionType) {
+            const custName = document.getElementById('custName').value;
+            const custContact = document.getElementById('custContact').value;
+
+            if(!custName) {
+                showNotification("Please enter Customer Name first!", true);
                 return;
             }
 
+            // Disable buttons
+            const btnSave = document.getElementById('saveBtn');
+            const btnPrint = document.getElementById('printBtn');
+            const btnWa = document.getElementById('waBtn');
+            btnSave.disabled = true; btnPrint.disabled = true; btnWa.disabled = true;
+            
+            const spinner = document.getElementById('saveSpinner');
+            const saveIcon = document.getElementById('saveIcon');
+            const saveText = document.getElementById('saveText');
+            
+            saveIcon.style.display = 'none';
+            saveText.innerText = "Saving...";
+            spinner.style.display = 'inline-block';
+            
+            // Gather Data
             const items = [];
             let itemsStr = "";
+            let whatsappItemsList = "";
+
             document.querySelectorAll('#invoiceItems tr').forEach(row => {
                 const d = row.querySelector('.item-name').value;
                 const q = row.querySelector('.item-qty').value;
@@ -664,23 +804,28 @@
                 if(d) {
                     items.push({desc: d, qty: q, price: p});
                     itemsStr += `${d} (x${q}) | `;
+                    whatsappItemsList += `▪ ${d} - ${q} x Rs.${p}\n`;
                 }
             });
+
+            const grandTotal = calculateTotal();
+            const invNo = document.getElementById('invNo').value;
 
             const data = {
                 id: Date.now(),
                 date: document.getElementById('datePicker').value,
-                invNo: document.getElementById('invNo').value,
-                custName: document.getElementById('custName').value,
-                custContact: document.getElementById('custContact').value,
+                invNo: invNo,
+                custName: custName,
+                custContact: custContact,
                 delivery: document.getElementById('delivery').value,
                 tax: document.getElementById('tax').value,
-                total: calculateTotal(),
+                total: grandTotal,
                 items: items,
                 itemsStr: itemsStr,
                 itemsJson: JSON.stringify(items)
             };
 
+            // Save to LocalStorage
             let history = JSON.parse(localStorage.getItem('worldOutFashionInvoices')) || [];
             const editId = localStorage.getItem('editInvoiceId');
             if(editId) {
@@ -693,65 +838,63 @@
             }
             localStorage.setItem('worldOutFashionInvoices', JSON.stringify(history));
 
-            btn.disabled = true;
-            saveText.innerText = "Saving...";
-            spinner.style.display = 'inline-block';
-
-            if(scriptURL.includes('PASTE_YOUR')) {
-                // If local only, just print directly
-                setTimeout(() => {
-                    window.print();
-                    finishSave();
-                }, 500);
-                return;
+            // Google Sheets Save
+            if(!scriptURL.includes('PASTE_YOUR')) {
+                fetch(scriptURL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                }).catch(e => console.log("Save error:", e));
             }
 
-            fetch(scriptURL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            }).then(() => {
-                // Success - Print Immediately
+            // Post-save actions
+            setTimeout(() => {
+                showNotification("Invoice Saved!");
+
+                if(actionType === 'print') {
+                    setTimeout(() => { window.print(); }, 300);
+                } 
+                else if(actionType === 'whatsapp') {
+                    let phoneNum = custContact.replace(/\D/g, '');
+                    if (phoneNum.startsWith('0') && phoneNum.length === 10) {
+                        phoneNum = '94' + phoneNum.substring(1);
+                    }
+                    if(phoneNum.length < 9) {
+                        showNotification("Invalid Phone Number!", true);
+                    } else {
+                        const waMessage = `*World Out Fashion*\n_Invoice: ${invNo}_\n\nHi ${custName},\nThank you for your purchase!\n\n*Items:*\n${whatsappItemsList}\n*Total Amount:* Rs. ${grandTotal.toLocaleString('en-LK', {minimumFractionDigits: 2})}\n\nStay fashionable!`;
+                        const waUrl = `https://wa.me/${phoneNum}?text=${encodeURIComponent(waMessage)}`;
+                        window.open(waUrl, '_blank');
+                    }
+                }
+
+                // Reset UI
                 setTimeout(() => {
-                    window.print();
-                    finishSave();
+                    btnSave.disabled = false; btnPrint.disabled = false; btnWa.disabled = false;
+                    saveIcon.style.display = 'inline-block';
+                    saveText.innerText = "Save";
+                    spinner.style.display = 'none';
+                    resetForm();
                 }, 1000);
-            }).catch(e => {
-                // Error - Print Anyway
-                setTimeout(() => {
-                    window.print();
-                    finishSave();
-                }, 1000);
-            });
+
+            }, 400); 
         }
 
-        function finishSave() {
-            const btn = document.getElementById('saveBtn');
-            const spinner = document.getElementById('saveSpinner');
-            const saveText = document.getElementById('saveText');
-            
-            btn.disabled = false;
-            saveText.innerText = "💾 Save to Google Sheet";
-            spinner.style.display = 'none';
-            
-            setTimeout(() => {
-                if(!localStorage.getItem('editInvoiceId')) {
-                    document.getElementById('custName').value = '';
-                    document.getElementById('custContact').value = '';
-                    document.getElementById('delivery').value = '0';
-                    document.getElementById('tax').value = '0';
-                    document.getElementById('invoiceItems').innerHTML = '';
-                    
-                    generateInvoiceNumber();
-                    addNewRow();
-                    calculateTotal();
-                    loadSuggestions();
-                }
-            }, 1000);
+        function resetForm() {
+            if(!localStorage.getItem('editInvoiceId')) {
+                document.getElementById('custName').value = '';
+                document.getElementById('custContact').value = '';
+                document.getElementById('delivery').value = '0';
+                document.getElementById('tax').value = '0';
+                document.getElementById('invoiceItems').innerHTML = '';
+                
+                generateInvoiceNumber();
+                addNewRow();
+                calculateTotal();
+                loadSuggestions();
+            }
         }
     </script>
 </body>
-
 </html>
-
