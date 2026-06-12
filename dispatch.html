@@ -42,13 +42,13 @@
         }
         
         .main-content-wrapper {
-            display: flex; 
+            display: none; /* JS වලින් ක්ෂණිකව On කරනවා */
             justify-content: center;
             align-items: flex-start;
             flex-grow: 1;
             width: 100%;
             padding: 1rem; 
-            padding-bottom: 140px; /* Extra space for the floating sticky footer */
+            padding-bottom: 140px; /* Floating bar space */
             max-width: 1200px; 
             pointer-events: auto;
             background: linear-gradient(-45deg, #e7f5ff, #f8f9fa, #e9ecef, #dee2e6);
@@ -67,7 +67,7 @@
             position: fixed;
             inset: 0;
             background: rgba(255,255,255,0.95);
-            display: none; 
+            display: flex; 
             align-items: center;
             justify-content: center;
             flex-direction: column;
@@ -219,9 +219,10 @@
         .icon-online { color: var(--success); }
         .icon-offline { color: var(--danger); }
 
-        /* Flip Counter Styles */
+        /* Flip Counter Styles - Ensure Height */
         .flip-counter { 
             height: 100%; 
+            min-height: 50px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
@@ -265,33 +266,33 @@
         @keyframes confetti-fall { 0% { transform: translate3d(var(--x-start), var(--y-start), 0) rotate(0deg); opacity: 1; } 100% { transform: translate3d(var(--x-end), var(--y-end), 0) rotate(720deg); opacity: 0.2; } }
         
         /* ----------------------------------------------------------------------
-           NEW: FLOATING GLASSY NEON FOOTER
+           FLOATING GLASSY NEON FOOTER (Seamless Bar)
         ---------------------------------------------------------------------- */
         #sticky-progress-footer {
             position: fixed;
-            bottom: 24px; /* Floats above the bottom */
+            bottom: 24px; 
             left: 50%;
             transform: translateX(-50%);
             width: 90%;
             max-width: 1000px;
-            background: rgba(255, 255, 255, 0.55);
+            background: rgba(255, 255, 255, 0.6);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.8);
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255,255,255,0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(255,255,255,0.3);
             padding: 12px 20px;
             z-index: 50;
         }
 
-        /* Seamless glowing segment container */
         #segmentedProgressBar {
-            height: 10px;
+            height: 12px;
             background: rgba(0, 0, 0, 0.1);
             border-radius: 20px;
             overflow: hidden;
             display: flex;
             box-shadow: inset 0 1px 4px rgba(0,0,0,0.15);
+            filter: drop-shadow(0 0 2px rgba(255,255,255,0.4)); /* Outer soft glow */
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -301,7 +302,7 @@
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="no-print">
         <div class="spinner mb-4"></div>
-        <p id="loadingText" class="text-xl font-semibold text-primary">Loading...</p>
+        <p id="loadingText" class="text-xl font-semibold text-primary">System Ready!</p>
     </div>
     
     <!-- Touch Lock Overlay -->
@@ -322,40 +323,35 @@
     <!-- Confetti Container -->
     <div id="confetti-container"></div>
     
-    <!-- Main App Wrapper (Directly opens to advanced) -->
+    <!-- Main App Wrapper -->
     <div class="main-content-wrapper">
         <div id="app-container" class="card p-6 lg:p-8 rounded-2xl w-full no-print">
             
-            <!-- HEADER (Balanced Layout) -->
+            <!-- HEADER -->
             <header class="flex justify-between items-center mb-4 flex-wrap gap-4 border-b border-theme pb-4">
-                <!-- Left: Logo & Title -->
                 <div class="flex items-center gap-4">
                     <img src="logo.png" alt="Company Logo" class="h-12" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0iaC0xMiB3LTEyIHRleHQtYmx1ZS02MDAiPjxwYXRoIGQ9Ik0xMiAyTDQgNWw4IDMgOC0zLTgtM3oiLz48cGF0aCBkPSJNMTIgMjJWMTEiLz48cGF0aCBkPSJNMjIgNXYxMkwxMiAyMiIgLz48cGF0aCBkPSJNMCA1djEybDEyIDUiLz48L3N2Zz4='">
                     <h1 id="appTitle" class="text-2xl lg:text-3xl font-bold"></h1>
                 </div>
 
-                <!-- Right: Audio Controls & Clock -->
-                <div class="flex items-center gap-6 ml-auto order-2">
+                <div class="flex flex-col sm:flex-row items-center gap-4 ml-auto order-2 w-full lg:w-auto justify-end">
                      <!-- AUDIO CONTROL PANEL -->
                      <div id="audio-control-panel" class="flex items-center gap-3 p-1">
                         <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Sound</span>
-                        
-                        <!-- Toggle Switch -->
                         <div class="relative inline-block w-12 align-middle select-none transition duration-200 ease-in">
                             <input type="checkbox" name="toggle" id="audioToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"/>
                             <label for="audioToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
                         </div>
-                        
                         <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Voice</span>
 
-                        <!-- Language Selector (Hidden by default) -->
                         <div id="voiceLangSelector" class="flex bg-gray-200 rounded-full p-1 ml-1 hidden transition-all duration-300">
                             <button id="langEnBtn" class="lang-btn active" onclick="setVoiceLang('en')">En</button>
                             <button id="langSiBtn" class="lang-btn inactive" onclick="setVoiceLang('si')">සිං</button>
                         </div>
                     </div>
-
-                    <div id="live-clock" class="text-lg lg:text-xl font-semibold text-secondary w-full lg:w-auto text-center hidden sm:block"></div>
+                    
+                    <!-- Live Clock - Now always visible properly -->
+                    <div id="live-clock" class="text-lg lg:text-xl font-semibold text-secondary w-full lg:w-auto text-center mt-2 sm:mt-0"></div>
                 </div>
             </header>
             
@@ -368,7 +364,6 @@
                          <div class="flex flex-col sm:flex-row gap-2">
                             <input type="text" id="orderScanInput" class="flex-grow p-3 shadow-sm font-bold text-lg text-primary" autocomplete="off" />
                             <button id="addOrderBarcodeBtn" class="px-5 py-3 rounded-lg font-semibold shadow-md btn btn-primary"></button>
-                            <!-- Updated Camera Button (Opens New Window) -->
                             <button id="openCameraBtn" class="p-3 rounded-lg font-semibold shadow-md btn btn-success text-white">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -407,7 +402,7 @@
 
                             <div class="p-3 bg-blue-50 rounded-lg border border-blue-200 text-center shadow-inner mt-4">
                                 <p class="text-lg font-semibold text-primary mb-2" id="uniqueOrderCountLabel"></p>
-                                <div id="animatedCounter" class="flex justify-center items-center h-20 py-2"></div>
+                                <div id="animatedCounter" class="flex justify-center items-center h-20 py-2 w-full"></div>
                             </div>
                         </div>
                     </div>
@@ -479,9 +474,15 @@
                                     <button id="resetDateFilterBtn" class="px-4 py-2 rounded-lg font-semibold shadow-md btn btn-secondary text-xs"></button>
                                  </div>
                              </div>
-                             <div class="flex flex-col sm:flex-row gap-4">
-                                <select id="savedSessionsSelect" class="flex-grow p-3"><option value=""></option></select>
-                                <button id="loadSelectedSessionBtn" class="px-6 py-3 rounded-lg font-semibold shadow-md btn btn-primary"></button>
+                             
+                             <!-- Manual Session Load List -->
+                             <div class="flex flex-col sm:flex-row gap-2 mt-2">
+                                <button id="fetchSessionsBtn" class="px-4 py-2 rounded-lg font-semibold shadow-md btn btn-secondary flex items-center justify-center gap-1 text-sm whitespace-nowrap">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                    Load List
+                                </button>
+                                <select id="savedSessionsSelect" class="flex-grow p-3 text-sm border-gray-300"><option value="">Click "Load List" to fetch...</option></select>
+                                <button id="loadSelectedSessionBtn" class="px-6 py-3 rounded-lg font-semibold shadow-md btn btn-primary">View</button>
                              </div>
                         </div>
                     </div>
@@ -495,10 +496,15 @@
     ---------------------------------------------------------------------- -->
     <div id="sticky-progress-footer" class="no-print">
         <div class="flex justify-between items-center text-xs lg:text-sm font-bold mb-2 px-1">
-            <span id="targetText" class="text-blue-800 drop-shadow-sm">🎯 Target: 0</span>
+            <span id="targetText" class="text-blue-800 drop-shadow-sm flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 inline-block -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                Target: 0
+            </span>
             <span id="progressText" class="text-gray-800 font-black text-xl drop-shadow-sm">0%</span>
-            <!-- Pending is now clickable -->
-            <span id="pendingText" class="text-red-600 drop-shadow-sm cursor-pointer hover:underline hover:scale-110 transition-transform" onclick="showPendingModal()" title="Click to view pending items">⏳ Pending: 0</span>
+            <span id="pendingText" class="text-red-600 drop-shadow-sm cursor-pointer hover:underline hover:scale-110 transition-transform flex items-center" onclick="showPendingModal()" title="Click to view pending items">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 inline-block -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Pending: 0
+            </span>
         </div>
         <!-- Seamless Neon Segmented Progress Bar -->
         <div id="segmentedProgressBar">
@@ -506,7 +512,7 @@
         </div>
     </div>
 
-    <!-- NEW: PENDING ITEMS MODAL -->
+    <!-- PENDING ITEMS MODAL -->
     <div id="pending-items-modal" class="fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-[70] hidden p-4">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col border-t-4 border-red-500">
             <h3 class="text-xl font-bold mb-4 text-red-600 flex items-center gap-2 border-b pb-2">
@@ -526,7 +532,7 @@
     <div id="csv-preview-modal" class="fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-[60] hidden p-4">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col border-t-4 border-blue-500">
             <h3 class="text-xl font-bold mb-2 text-primary flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 CSV Upload Preview
             </h3>
             <p class="text-sm text-secondary mb-4">කරුණාකර දත්ත නිවැරදි දැයි තහවුරු කරන්න. මෙහි පෙන්වා ඇත්තේ 'WAYBILL ID' තීරුවෙන් ලබාගත් දත්ත වේ.</p>
@@ -575,10 +581,13 @@
     <!-- PRINT AREA -->
     <div id="print-area" class="hidden"></div>
 
-    <!-- Audio Files -->
+    <!-- ========================================================================================= -->
+    <!-- 🎵 CHANGE AUDIO FILES HERE | සවුන්ඩ් ෆයිල්ස් මෙතැනින් පහසුවෙන් වෙනස් කරගන්න 🎵 -->
+    <!-- ========================================================================================= -->
     <audio id="successSound" src="play.mp3" preload="auto"></audio>
     <audio id="errorSound" src="error.mp3" preload="auto"></audio>
     <audio id="milestoneSound" src="goal.mp3" preload="auto"></audio>
+    <!-- ========================================================================================= -->
 
     <script>
         // PUT YOUR NEW DEPLOYMENT URL HERE
@@ -597,6 +606,65 @@
         let isTouchLocked = false;
         let isVoiceMode = localStorage.getItem('oms_voiceMode') === 'true';
         let voiceLanguage = localStorage.getItem('oms_voiceLanguage') || 'en';
+
+        // -----------------------------------------------------------------
+        // FLIP COUNTER COMPONENT
+        // -----------------------------------------------------------------
+        const FlipCounter = {
+            element: null, value: 0, digitContainers: [],
+            initialize: function(initialValue = 0) {
+                this.element = document.getElementById('animatedCounter');
+                if(!this.element) return;
+                this.element.classList.add('flip-counter');
+                this.update(initialValue, true);
+            },
+            update: function(newValue, noAnimation = false) {
+                if(!this.element) return;
+                if (newValue < 0) newValue = 0;
+                const oldValueStr = String(this.value).padStart(4, '0');
+                this.value = newValue;
+                const newValueStr = String(newValue > 9999 ? 9999 : newValue).padStart(4, '0'); 
+                while (this.digitContainers.length < 4) {
+                    const container = document.createElement('div');
+                    container.className = 'flip-digit-container';
+                    container.innerHTML = `<div class="flip-digit current">0</div><div class="flip-digit next">0</div>`;
+                    this.element.appendChild(container);
+                    this.digitContainers.push(container);
+                }
+                for (let i = 0; i < 4; i++) {
+                    const newDigit = newValueStr[i];
+                    const oldDigit = oldValueStr[i];
+                    const container = this.digitContainers[i];
+                    if (newDigit !== oldDigit || noAnimation) this.animateDigit(container, oldDigit, newDigit, noAnimation);
+                }
+            },
+            blinkSuccess: function() {
+                if(!this.element) return;
+                this.element.classList.add('success-blink');
+                setTimeout(() => { this.element.classList.remove('success-blink'); }, 1000); 
+            },
+            animateDigit: function(container, oldDigit, newDigit, noAnimation) {
+                const currentElement = container.querySelector('.current');
+                const nextElement = container.querySelector('.next');
+                if (noAnimation) {
+                    currentElement.textContent = newDigit; nextElement.textContent = newDigit; currentElement.style.transform = 'translateY(0%)'; return;
+                }
+                nextElement.textContent = newDigit;
+                currentElement.style.transition = 'none'; nextElement.style.transition = 'none';
+                currentElement.style.transform = 'translateY(0%)'; nextElement.style.transform = 'translateY(100%)';
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        currentElement.style.transition = 'transform 0.5s ease-out'; nextElement.style.transition = 'transform 0.5s ease-out';
+                        currentElement.style.transform = 'translateY(-100%)'; nextElement.style.transform = 'translateY(0%)';      
+                        setTimeout(() => {
+                            currentElement.textContent = newDigit;
+                            currentElement.style.transition = 'none'; currentElement.style.transform = 'translateY(0%)';
+                            nextElement.style.transition = 'none'; nextElement.style.transform = 'translateY(100%)';
+                        }, 500); 
+                    });
+                });
+            }
+        };
 
         const el = {
             loadingOverlay: document.getElementById('loadingOverlay'),               
@@ -621,6 +689,7 @@
             searchByDateLabel: document.getElementById("searchByDateLabel"), 
             searchByDate: document.getElementById("searchByDate"), 
             resetDateFilterBtn: document.getElementById("resetDateFilterBtn"), 
+            fetchSessionsBtn: document.getElementById("fetchSessionsBtn"), // NEW BUTTON
             savedSessionsSelect: document.getElementById("savedSessionsSelect"), 
             loadSelectedSessionBtn: document.getElementById("loadSelectedSessionBtn"), 
             liveClock: document.getElementById("live-clock"), 
@@ -685,7 +754,7 @@
             el.resetDateFilterBtn.textContent = "Reset"; 
             el.loadSelectedSessionBtn.textContent = "View"; 
             el.orderScanInput.placeholder = "Barcode number..."; 
-            el.savedSessionsSelect.innerHTML = `<option value="">Loading...</option>`; 
+            el.savedSessionsSelect.innerHTML = `<option value="">Click "Load List" to fetch...</option>`; 
             el.manualSaveBtnText.textContent = "Save Current Session"; 
         }
         
@@ -709,6 +778,15 @@
                 container.appendChild(confetti);
             }
             setTimeout(() => { container.innerHTML = ''; container.style.display = 'none'; }, 3500); 
+        }
+
+        // --- Speak English Function ---
+        function speakEnglishText(text) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 1.0;
+            window.speechSynthesis.speak(utterance);
         }
 
         // --- ROBUST CSV PARSER ---
@@ -812,20 +890,19 @@
 
         el.confirmCsvBtn.addEventListener('click', async () => {
             el.csvPreviewModal.style.display = 'none';
-            showLoading("Cloud එකට Save කරමින් පවතී...");
             
-            try {
-                await apiCall('setDailyTarget', { sessionId: currentSessionId, targetBarcodes: pendingExtractedWaybills });
-                targetBarcodes = pendingExtractedWaybills;
-                updateUiFromState();
-                hideLoading();
-                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `Orders ${pendingExtractedWaybills.length} ක් සාර්ථකව යාවත්කාලීන විය.`, showConfirmButton: false, timer: 3000 });
-                pendingExtractedWaybills = []; 
-                el.orderScanInput.focus();
-            } catch (err) {
-                hideLoading();
-                Swal.fire('Error', 'Cloud එකට Save කිරීම අසාර්ථක විය.', 'error');
-            }
+            // INSTANT LOCAL SAVE for zero lag
+            targetBarcodes = pendingExtractedWaybills;
+            localStorage.setItem('oms_targetBarcodes_' + currentSessionId, JSON.stringify(targetBarcodes));
+            updateUiFromState();
+            
+            speakEnglishText("Target uploaded successfully"); 
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `Orders ${pendingExtractedWaybills.length} ක් සාර්ථකව යාවත්කාලීන විය.`, showConfirmButton: false, timer: 3000 });
+            pendingExtractedWaybills = []; 
+            el.orderScanInput.focus();
+
+            // Send to backend silently
+            apiCall('setDailyTarget', { sessionId: currentSessionId, targetBarcodes: targetBarcodes }).catch(e => console.error("Cloud target save failed"));
         });
 
 
@@ -839,10 +916,13 @@
             let segmentsHtml = '';
             const totalSlots = Math.max(targetCount, chronologicalScans.length);
 
+            const targetIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 inline-block -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>`;
+            const pendingIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 inline-block -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+
             if (totalSlots === 0) {
                 el.segmentedProgressBar.innerHTML = '';
-                el.targetText.textContent = `🎯 Target: 0`;
-                el.pendingText.textContent = `⏳ Pending: 0`;
+                el.targetText.innerHTML = `${targetIcon} Target: 0`;
+                el.pendingText.innerHTML = `${pendingIcon} Pending: 0`;
                 el.progressText.textContent = `0%`;
                 return;
             }
@@ -853,24 +933,23 @@
                 let isTarget = targetCount === 0 ? false : targetBarcodes.includes(barcode);
                 if (isTarget) validCount++; else invalidCount++;
                 
-                // Neon glow effect classes
+                // Neon glow effect classes (Seamless)
                 let colorClass = isTarget ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.9)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.9)]';
-                // Removed border-r so it's a seamless strip
-                segmentsHtml += `<div style="width: ${segmentWidth}%" class="h-full ${colorClass} transition-all duration-300 z-10" title="${barcode}"></div>`;
+                segmentsHtml += `<div style="width: ${segmentWidth}%" class="h-full ${colorClass} opacity-90 transition-all duration-300 z-10" title="${barcode}"></div>`;
             });
 
             el.segmentedProgressBar.innerHTML = segmentsHtml;
-            el.targetText.textContent = `🎯 Target: ${targetCount}`;
+            el.targetText.innerHTML = `${targetIcon} Target: ${targetCount}`;
             let pending = targetCount - validCount;
             if(pending < 0) pending = 0;
-            el.pendingText.textContent = `⏳ Pending: ${pending}`;
+            el.pendingText.innerHTML = `${pendingIcon} Pending: ${pending}`;
 
             let percentage = targetCount > 0 ? Math.round((validCount / targetCount) * 100) : 0;
             if(percentage > 100) percentage = 100;
             el.progressText.textContent = `${percentage}%`;
         }
 
-        // --- NEW: PENDING ITEMS MODAL LOGIC ---
+        // --- PENDING ITEMS MODAL LOGIC ---
         window.showPendingModal = function() {
             if (!targetBarcodes || targetBarcodes.length === 0) {
                 Swal.fire('Info', 'අද දවසට ටාගට් එකක් සෙට් කර නැත.', 'info');
@@ -943,7 +1022,6 @@
 
         // --- KEEP SCANNER FOCUSED ---
         document.addEventListener('click', (e) => {
-            // Focus on input when clicking empty space (helps scanner speed)
             if (isTouchLocked || document.getElementById('pending-items-modal').style.display === 'flex' || el.csvPreviewModal.style.display === 'flex') return;
             if (e.target.closest('button, input, select, textarea, a, .cursor-pointer, .toggle-label')) return;
             el.orderScanInput.focus();
@@ -1028,12 +1106,16 @@
         }
 
         function updateUiFromState() {
+            // Local Storage එකට ඩේටා දානවා (ක්ෂණිකව සේව් වෙන්න)
             if (currentlyViewingSessionId === currentSessionId) {
                 localStorage.setItem('oms_scannedBarcodes', JSON.stringify(scannedBarcodes));
+                localStorage.setItem('oms_targetBarcodes_' + currentSessionId, JSON.stringify(targetBarcodes));
             }
 
             const currentCount = currentlyViewingBarcodes.length;
+            
             if (FlipCounter.element) FlipCounter.update(currentCount); 
+            
             updateRecycleBinUi();
             updateProgressDashboard();
             
@@ -1081,61 +1163,90 @@
             if (isViewingToday && !isTouchLocked) el.orderScanInput.focus();
         }
 
+        // =========================================================================
+        // ZERO-WAIT INITIALIZATION (INSTANT LOAD SYSTEM)
+        // =========================================================================
         async function initializeApp() {
-            setInitialTexts(); 
-            currentSessionId = getTodaySessionId(); 
-            currentlyViewingSessionId = currentSessionId;
-            document.title = "World Out Fashion - OMS";
-            
-            FlipCounter.initialize(0); 
-            updateClock(); setInterval(updateClock, 1000); 
-            loadRecycleBin(); 
-            
-            el.audioToggle.checked = isVoiceMode;
-            if(isVoiceMode) { el.voiceLangSelector.classList.remove('hidden'); updateLangButtons(); }
+            try {
+                setInitialTexts(); 
+                currentSessionId = getTodaySessionId(); 
+                currentlyViewingSessionId = currentSessionId;
+                document.title = "World Out Fashion - OMS";
+                
+                // 1. Initialize Visuals (FLIP COUNTER RESTORED!)
+                FlipCounter.initialize(0); 
+                updateClock(); setInterval(updateClock, 1000); 
+                loadRecycleBin(); 
+                
+                el.audioToggle.checked = isVoiceMode;
+                if(isVoiceMode) { el.voiceLangSelector.classList.remove('hidden'); updateLangButtons(); }
 
-            el.mainContentWrapper.style.display = 'flex';
-            updateUiFromState();
-
-            el.addOrderBarcodeBtn.addEventListener("click", () => handleOrderScanAddBarcode());
-            el.returnToTodayBtn.addEventListener("click", returnToTodayView);
-            el.manualSaveBtn.addEventListener("click", handleManualSave);
-            el.loadSelectedSessionBtn.addEventListener("click", loadSelectedSession);
-            el.searchByDate.addEventListener("input", filterSessionsByDate);
-            el.resetDateFilterBtn.addEventListener("click", () => { el.searchByDate.value = ""; filterSessionsByDate(); });
-            el.barcodeSearchBtn.addEventListener("click", handleBarcodeSearch);
-            el.barcodeSearchInput.addEventListener("keypress", (e) => { if (e.key === 'Enter') handleBarcodeSearch(); }); 
-            el.saveToSheetBtn.addEventListener("click", saveDataToGoogleSheet);
-            el.printScannedOrderBtn.addEventListener("click", printScannedOrder);
-            el.downloadCsvBtn.addEventListener("click", downloadCsv);
-            el.openRecycleBinBtn.addEventListener("click", openRecycleBin);
-            el.closeRecycleBinBtn.addEventListener("click", closeRecycleBin);
-            el.restoreSelectedBtn.addEventListener("click", handleRestoreSelected);
-            el.touchLockBtn.addEventListener("click", handleTouchLockToggle);
-            el.audioToggle.addEventListener('change', toggleAudioMode);
-
-            el.openCameraBtn.addEventListener("click", () => {
-                localStorage.setItem('oms_scannedBarcodes', JSON.stringify(scannedBarcodes));
-                window.open('camera.html', 'cameraWindow', 'width=450,height=800,scrollbars=no,resizable=no');
-            });
-
-            window.addEventListener('storage', (e) => {
-                if (e.key === 'oms_scannedBarcodes' && e.newValue) {
-                    const newBarcodes = JSON.parse(e.newValue);
-                    if (JSON.stringify(newBarcodes) !== JSON.stringify(scannedBarcodes)) {
-                        scannedBarcodes = newBarcodes;
-                        currentlyViewingBarcodes = scannedBarcodes;
-                        updateUiFromState();
-                    }
+                // 2. LOAD FROM LOCAL STORAGE IMMEDIATELY (ZERO LAG)
+                try {
+                    const storedScans = localStorage.getItem('oms_scannedBarcodes');
+                    if (storedScans) scannedBarcodes = JSON.parse(storedScans);
+                    
+                    const storedTargets = localStorage.getItem('oms_targetBarcodes_' + currentSessionId);
+                    if (storedTargets) targetBarcodes = JSON.parse(storedTargets);
+                } catch(e) {
+                    scannedBarcodes = []; targetBarcodes = [];
                 }
-            });
+                currentlyViewingBarcodes = [...scannedBarcodes];
 
-            window.addEventListener('online', updateNetworkStatus);
-            window.addEventListener('offline', updateNetworkStatus);
-            updateNetworkStatus(); 
-            
-            reloadTodaysData();
-            loadAllSessions();
+                // 3. SHOW UI INSTANTLY
+                el.mainContentWrapper.style.display = 'flex'; 
+                updateUiFromState();
+                hideLoading();
+                el.orderScanInput.focus();
+
+                // 4. BACKGROUND SYNC (සද්ද නැතුව පස්සෙන් අප්ඩේට් වෙනවා)
+                setTimeout(() => {
+                    reloadTodaysDataBackground();
+                }, 1500); 
+
+                // BIND EVENTS
+                el.addOrderBarcodeBtn.addEventListener("click", () => handleOrderScanAddBarcode());
+                el.returnToTodayBtn.addEventListener("click", returnToTodayView);
+                el.manualSaveBtn.addEventListener("click", handleManualSave);
+                el.fetchSessionsBtn.addEventListener("click", fetchSessionsList); 
+                el.loadSelectedSessionBtn.addEventListener("click", loadSelectedSession);
+                el.searchByDate.addEventListener("input", filterSessionsByDate);
+                el.resetDateFilterBtn.addEventListener("click", () => { el.searchByDate.value = ""; filterSessionsByDate(); });
+                el.barcodeSearchBtn.addEventListener("click", handleBarcodeSearch);
+                el.barcodeSearchInput.addEventListener("keypress", (e) => { if (e.key === 'Enter') handleBarcodeSearch(); }); 
+                el.saveToSheetBtn.addEventListener("click", saveDataToGoogleSheet);
+                el.printScannedOrderBtn.addEventListener("click", printScannedOrder);
+                el.downloadCsvBtn.addEventListener("click", downloadCsv);
+                el.openRecycleBinBtn.addEventListener("click", openRecycleBin);
+                el.closeRecycleBinBtn.addEventListener("click", closeRecycleBin);
+                el.restoreSelectedBtn.addEventListener("click", handleRestoreSelected);
+                el.touchLockBtn.addEventListener("click", handleTouchLockToggle);
+                el.audioToggle.addEventListener('change', toggleAudioMode);
+
+                el.openCameraBtn.addEventListener("click", () => {
+                    localStorage.setItem('oms_scannedBarcodes', JSON.stringify(scannedBarcodes));
+                    window.open('camera.html', 'cameraWindow', 'width=450,height=800,scrollbars=no,resizable=no');
+                });
+
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'oms_scannedBarcodes' && e.newValue) {
+                        const newBarcodes = JSON.parse(e.newValue);
+                        if (JSON.stringify(newBarcodes) !== JSON.stringify(scannedBarcodes)) {
+                            scannedBarcodes = newBarcodes;
+                            currentlyViewingBarcodes = scannedBarcodes;
+                            updateUiFromState();
+                        }
+                    }
+                });
+
+                window.addEventListener('online', updateNetworkStatus);
+                window.addEventListener('offline', updateNetworkStatus);
+                updateNetworkStatus(); 
+            } catch (err) {
+                console.error("Initialization Error:", err);
+                hideLoading();
+                Swal.fire('Error', 'සිස්ටම් එක ලෝඩ් වීමේදී දෝෂයක් ඇති විය.', 'error');
+            }
         }
 
         function updateClock() { el.liveClock.textContent = new Date().toLocaleString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: !0 }); }
@@ -1149,7 +1260,7 @@
                     method: 'POST', mode: 'cors', cache: 'no-cache', headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({ action, ...payload }) 
                 });
-                if (!response.ok) throw new Error(`Network response error: ${response.status}`);
+                if (!response.ok) throw new Error(`Network error`);
                 const data = await response.json();
                 if (data.status !== 'success') throw new Error(data.message || 'Error');
                 return data;
@@ -1226,6 +1337,26 @@
         
         function returnToTodayView() { currentlyViewingSessionId = currentSessionId; currentlyViewingBarcodes = [...scannedBarcodes]; updateUiFromState(); }
         
+        // --- MANUAL SESSION FETCH (Zero Lag Fix) ---
+        async function fetchSessionsList() {
+            if (!navigator.onLine) {
+                 Swal.fire("Offline", "Please check your internet connection.", "warning");
+                 return;
+            }
+            const btn = el.fetchSessionsBtn;
+            btn.disabled = true; btn.innerHTML = '<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>';
+            el.savedSessionsSelect.innerHTML = `<option value="">Loading from Cloud...</option>`;
+            try { 
+                const data = await apiCall("getAllSessions"); 
+                allSessions = data.sessions; 
+                filterSessionsByDate(); 
+            } catch (error) { 
+                el.savedSessionsSelect.innerHTML = `<option value="">Failed to load.</option>`; 
+            } finally {
+                btn.disabled = false; btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Load List';
+            }
+        }
+
         async function loadSelectedSession() {
             const sessionId = el.savedSessionsSelect.value;
             if (!sessionId) { return Swal.fire({ title: "Please select a session.", icon: 'info' }); }
@@ -1267,13 +1398,16 @@
                 return;
             }
             try { 
-                await apiCall("saveSession", { sessionId: currentSessionId, barcodes: scannedBarcodes });
+                // Background cloud update
+                apiCall("saveSession", { sessionId: currentSessionId, barcodes: scannedBarcodes }).then(()=>{
+                    if (isManual) Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Saved!', showConfirmButton: false, timer: 1500 }); 
+                    else { 
+                        el.autoSaveStatus.classList.remove("show"); el.autoSaveStatus.textContent = '✓ Saved'; el.autoSaveStatus.style.color = 'var(--success)'; el.autoSaveStatus.classList.add("show"); 
+                        setTimeout(() => { el.autoSaveStatus.classList.remove("show") }, 2000); 
+                    }
+                }).catch(e=>{});
+                
                 FlipCounter.blinkSuccess();
-                if (isManual) Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Saved!', showConfirmButton: false, timer: 1500 }); 
-                else { 
-                    el.autoSaveStatus.classList.remove("show"); el.autoSaveStatus.textContent = '✓ Saved'; el.autoSaveStatus.style.color = 'var(--success)'; el.autoSaveStatus.classList.add("show"); 
-                    setTimeout(() => { el.autoSaveStatus.classList.remove("show") }, 2000); 
-                }
             } catch (error) { 
                 el.autoSaveStatus.textContent = '✗ Failed'; el.autoSaveStatus.style.color = 'var(--danger)'; el.autoSaveStatus.classList.add("show"); 
                 setTimeout(() => { el.autoSaveStatus.classList.remove("show"); el.autoSaveStatus.textContent = '✓ Saved'; el.autoSaveStatus.style.color = 'var(--success)'; }, 3000); 
@@ -1352,25 +1486,28 @@
             }); 
         }
 
-        async function reloadTodaysData() {
+        // --- BACKGROUND FETCH FUNCTIONS (SILENT) ---
+        async function reloadTodaysDataBackground() {
+             if (!navigator.onLine) return;
              try { 
                  const data = await apiCall("getSessionData", { sessionId: currentSessionId }); 
-                 scannedBarcodes = data.session.data.barcodes || []; 
-                 targetBarcodes = data.session.data.targetBarcodes || []; 
+                 const cloudBarcodes = data.session.data.barcodes || []; 
+                 const cloudTargets = data.session.data.targetBarcodes || []; 
+                 
+                 const mergedScans = [...new Set([...scannedBarcodes, ...cloudBarcodes])];
+                 scannedBarcodes = mergedScans;
+                 if(cloudTargets.length > 0) targetBarcodes = cloudTargets;
+                 
+                 localStorage.setItem('oms_scannedBarcodes', JSON.stringify(scannedBarcodes));
+                 localStorage.setItem('oms_targetBarcodes_' + currentSessionId, JSON.stringify(targetBarcodes));
+
+                 if (currentlyViewingSessionId === currentSessionId) {
+                     currentlyViewingBarcodes = [...scannedBarcodes];
+                     updateUiFromState(); 
+                 }
              } catch (error) { 
-                 scannedBarcodes = []; 
-                 targetBarcodes = [];
+                 console.log("Background sync failed");
              }
-            returnToTodayView();
-        }
-        
-        async function loadAllSessions() {
-             try { 
-                el.savedSessionsSelect.innerHTML = `<option value="">Loading previous sessions...</option>`;
-                const data = await apiCall("getAllSessions"); 
-                allSessions = data.sessions; 
-                filterSessionsByDate(); 
-            } catch (error) { el.savedSessionsSelect.innerHTML = `<option value="">Failed to load sessions (API Error)</option>`; }
         }
         
         document.addEventListener("DOMContentLoaded", initializeApp);
