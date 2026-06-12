@@ -156,27 +156,43 @@
             #print-area { display: block !important; position: relative; left: 0; top: 0; width: 100%; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; color: #000; }
             .no-print { display: none !important; }
             
-            /* PRINT STYLES - NEW TABLE LAYOUT */
+            /* PRINT STYLES */
             .print-page { 
                 position: relative; 
-                width: 100%; 
-                padding: 15px;
+                width: 210mm; 
+                height: 297mm; /* A4 Height */
+                page-break-after: always; 
+                padding: 10mm;
+                overflow: hidden;
             }
-            .print-header { display: block; text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
-            .print-title-group { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 5px; }
-            .print-header .company-logo { height: 40px; }
-            .print-header .company-name-print { font-family: 'Impact', 'Arial Narrow Bold', sans-serif; font-size: 20pt; letter-spacing: 1px; margin:0; }
-            .print-header .print-date { font-size: 12pt; font-weight: bold; display: block; text-align: center; margin-top:5px; }
-            
-            table.print-table { width: 100%; border-collapse: collapse; font-size: 11pt; margin-bottom: 20px; }
-            table.print-table th, table.print-table td { border: 1px solid #000; padding: 6px; text-align: left; }
-            table.print-table th { background-color: #f0f0f0; }
+            .print-page:last-child { page-break-after: auto; }
 
+            .print-header { display: block; text-align: center; border-bottom: 2px solid #333; padding-bottom: 5px; margin-bottom: 10px; }
+            .print-title-group { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 5px; }
+            .print-header .company-logo { height: 35px; }
+            .print-header .company-name-print { font-family: 'Impact', 'Arial Narrow Bold', sans-serif; font-size: 16pt; letter-spacing: 1px; }
+            .print-header .print-date { font-size: 12pt; font-weight: bold; display: block; text-align: center; }
+            
+            .print-list-container { 
+                display: grid; 
+                grid-template-columns: repeat(5, 1fr); 
+                column-gap: 12px; 
+                font-size: 10pt; 
+                max-width: 100%; 
+                margin-top: 10px; 
+                align-content: start;
+            }
+            .print-column div { margin-bottom: 1px; white-space: nowrap; }
+
+            /* Signature & Total Box Styles */
             .footer-container {
+                position: absolute;
+                bottom: 20mm;
+                left: 10mm;
+                right: 10mm;
                 display: flex;
                 justify-content: space-between;
                 align-items: flex-end;
-                margin-top: 30px;
             }
 
             .total-box {
@@ -189,14 +205,18 @@
 
             .signature-area { 
                 width: 30%; 
-                font-size: 12pt; 
+                font-size: 10pt; 
                 text-align: center;
             }
             .signature-line {
                 border-top: 1px solid #000;
                 padding-top: 5px;
-                margin-top: 40px;
+                margin-top: 30px;
             }
+            
+            .print-watermark-overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.15; pointer-events: none; z-index: -1; }
+            .print-watermark-overlay img { width: 400px; height: auto; }
+            .print-footer-watermark { position: absolute; bottom: 5mm; left: 0; width: 100%; text-align: center; font-size: 8pt; color: #888; }
         }
         
         @keyframes slideInFromLeft{ from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
@@ -1000,18 +1020,19 @@
                     }
                 }
 
-                if (isVoiceMode) {
-                    speakCount(scannedBarcodes.length);
-                } 
-                
-                // Play target.mp3 if target reached, otherwise success.mp3
                 if (isTargetReachedNow) {
                     const targetAudio = document.getElementById('targetSound');
                     if (targetAudio) { targetAudio.pause(); targetAudio.currentTime = 0; targetAudio.volume = 1.0; targetAudio.play().catch(console.error); }
                     Swal.fire({ toast: true, position: 'top', icon: 'success', title: 'Target Reached! 🎉', showConfirmButton: false, timer: 3000 });
+                    if (isVoiceMode) speakCount(scannedBarcodes.length);
                 } else {
-                    const successAudio = document.getElementById('successSound');
-                    if (successAudio) { successAudio.pause(); successAudio.currentTime = 0; successAudio.volume = 1.0; successAudio.play().catch(console.error); }
+                    if (isVoiceMode) {
+                        speakCount(scannedBarcodes.length);
+                    } else {
+                        // Voice mode off - play normal success beep
+                        const successAudio = document.getElementById('successSound');
+                        if (successAudio) { successAudio.pause(); successAudio.currentTime = 0; successAudio.volume = 1.0; successAudio.play().catch(console.error); }
+                    }
                 }
                 
                 if (scannedBarcodes.length > 0 && scannedBarcodes.length % MILESTONE_COUNT === 0) {
@@ -1431,42 +1452,40 @@
             }
         }
         
-        // --- PRINT FUNCTION FIXED ---
         function printScannedOrder() {
             if (currentlyViewingBarcodes.length === 0) return Swal.fire({ title: "No items.", icon: "info" });
             const barcodes = currentlyViewingBarcodes;
             const itemsToPrint = [...barcodes].reverse(); 
             const totalItems = itemsToPrint.length;
-            
-            // Generate a simpler, extremely robust Table layout for printing
-            let printContentHtml = '<div style="font-family: Arial, sans-serif; padding: 20px;">';
-            printContentHtml += '<div style="text-align: center; border-bottom: 2px solid #333; margin-bottom: 20px; padding-bottom: 10px;">';
-            printContentHtml += '<h1 style="margin: 0; font-size: 24pt;">World Out Fashion</h1>';
-            printContentHtml += '<p style="margin: 5px 0 0 0; font-size: 14pt; font-weight: bold;">Date: ' + new Date().toLocaleString() + '</p>';
-            printContentHtml += '<p style="margin: 5px 0 0 0; font-size: 12pt;">Total Items: ' + totalItems + '</p>';
-            printContentHtml += '</div>';
+            const ITEMS_PER_PAGE = 200; 
+            const ITEMS_PER_COLUMN = 40; 
+            const COLUMNS_PER_PAGE = 5;
 
-            printContentHtml += '<table style="width: 100%; border-collapse: collapse; font-size: 12pt;">';
-            
-            const cols = 3; // Fixed 3 columns for safe printing across pages
-            for (let i = 0; i < totalItems; i += cols) {
-                printContentHtml += '<tr>';
-                for (let j = 0; j < cols; j++) {
-                    if (i + j < totalItems) {
-                        printContentHtml += '<td style="border: 1px solid #000; padding: 8px;"><b>' + (i + j + 1) + '.</b> ' + itemsToPrint[i + j] + '</td>';
-                    } else {
-                        printContentHtml += '<td style="border: 1px solid #000; padding: 8px;"></td>'; // Empty cell for grid align
-                    }
+            el.printArea.innerHTML = "";
+            let printContentHtml = "";
+
+            for (let i = 0; i < totalItems; i += ITEMS_PER_PAGE) {
+                const pageItems = itemsToPrint.slice(i, i + ITEMS_PER_PAGE);
+                const isLastPage = (i + ITEMS_PER_PAGE) >= totalItems;
+                printContentHtml += `<div class="print-page"><div class="print-watermark-overlay"><img src="logo.png" alt="Watermark Logo" onerror="this.style.display='none'"></div><div class="print-header"><div class="print-title-group"><img src="logo.png" class="company-logo" onerror="this.style.display='none'"><h1 class="company-name-print">World Out Fashion</h1></div><p class="print-date">Date: ${new Date().toLocaleString('en-US')}</p></div><div class="print-list-container">`;
+                for (let col = 0; col < COLUMNS_PER_PAGE; col++) {
+                     const startIdx = col * ITEMS_PER_COLUMN;
+                     if(startIdx < pageItems.length) {
+                         printContentHtml += '<div class="print-column">';
+                         const endIdx = Math.min(startIdx + ITEMS_PER_COLUMN, pageItems.length);
+                         for(let j = startIdx; j < endIdx; j++) {
+                             const globalIndex = i + j + 1;
+                             printContentHtml += `<div>${globalIndex}. ${pageItems[j]}</div>`;
+                         }
+                         printContentHtml += '</div>';
+                     }
                 }
-                printContentHtml += '</tr>';
+                printContentHtml += `</div>`;
+                if (isLastPage) {
+                    printContentHtml += `<div class="footer-container"><div class="total-box">Total Qty: ${totalItems}</div><div class="signature-area"><div class="signature-line">Prepared By</div></div></div>`;
+                }
+                printContentHtml += `<div class="print-footer-watermark">© 2026 DesignVerse. All rights reserved. Crafted with passion in Minuwangoda, Sri Lanka.</div></div>`;
             }
-            printContentHtml += '</table>';
-            
-            printContentHtml += '<div style="margin-top: 50px; display: flex; justify-content: space-between;">';
-            printContentHtml += '<div><hr style="width: 150px; border-top: 1px solid #000;"/><p style="text-align:center;">Prepared By</p></div>';
-            printContentHtml += '<div><hr style="width: 150px; border-top: 1px solid #000;"/><p style="text-align:center;">Authorized Signature</p></div>';
-            printContentHtml += '</div></div>';
-
             el.printArea.innerHTML = printContentHtml;
             window.print();
             el.orderScanInput.focus();
