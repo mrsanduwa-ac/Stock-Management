@@ -1219,15 +1219,38 @@
                 el.audioToggle.checked = isVoiceMode;
                 if(isVoiceMode) { el.voiceLangSelector.classList.remove('hidden'); updateLangButtons(); }
 
-                // 2. LOAD FROM LOCAL STORAGE IMMEDIATELY (ZERO LAG)
-                try {
-                    const storedScans = localStorage.getItem('oms_scannedBarcodes');
-                    if (storedScans) scannedBarcodes = JSON.parse(storedScans);
+                // 2. LOAD FROM LOCAL STORAGE IMMEDIATELY (ZERO LAG) & AUTO-DELETE OLD DAYS
+                const lastActiveSession = localStorage.getItem('oms_lastActiveSession');
+                
+                if (lastActiveSession !== currentSessionId) {
+                    // අලුත් දවසක් (New Day): පරණ ලෝකල් ඩේටා ඔක්කොම මකා දමන්න
+                    localStorage.removeItem('oms_scannedBarcodes');
                     
-                    const storedTargets = localStorage.getItem('oms_targetBarcodes_' + currentSessionId);
-                    if (storedTargets) targetBarcodes = JSON.parse(storedTargets);
-                } catch(e) {
-                    scannedBarcodes = []; targetBarcodes = [];
+                    // පරණ Target ඩේටා තියෙනවා නම් ඒවාත් මකා දමන්න (Clean up old targets)
+                    const keysToRemove = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && key.startsWith('oms_targetBarcodes_') && key !== ('oms_targetBarcodes_' + currentSessionId)) {
+                            keysToRemove.push(key);
+                        }
+                    }
+                    keysToRemove.forEach(k => localStorage.removeItem(k));
+
+                    // අලුත් දවස සෙට් කරන්න
+                    localStorage.setItem('oms_lastActiveSession', currentSessionId);
+                    scannedBarcodes = []; 
+                    targetBarcodes = [];
+                } else {
+                    // එකම දවස නම් පරණ ඩේටා ගන්න (Refresh කළොත් නැති නොවෙන්න)
+                    try {
+                        const storedScans = localStorage.getItem('oms_scannedBarcodes');
+                        if (storedScans) scannedBarcodes = JSON.parse(storedScans);
+                        
+                        const storedTargets = localStorage.getItem('oms_targetBarcodes_' + currentSessionId);
+                        if (storedTargets) targetBarcodes = JSON.parse(storedTargets);
+                    } catch(e) {
+                        scannedBarcodes = []; targetBarcodes = [];
+                    }
                 }
                 currentlyViewingBarcodes = [...scannedBarcodes];
 
