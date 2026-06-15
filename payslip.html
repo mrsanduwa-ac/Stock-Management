@@ -1,135 +1,179 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="si">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payslip System Pro</title>
-    <!-- SweetAlert2 for beautiful popups -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WOF Payslip System</title>
+    <!-- SweetAlert2 for Toast Messages -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts for Modern Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
-        .app-container { max-width: 900px; margin: auto; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
-        .tabs { display: flex; background: #007bff; padding: 0; }
-        .tab-btn { flex: 1; padding: 15px; border: none; background: none; color: white; font-size: 16px; cursor: pointer; transition: 0.3s; font-weight: bold; }
-        .tab-btn:hover { background: rgba(255,255,255,0.2); }
-        .tab-btn.active { background: #0056b3; border-bottom: 4px solid #ffcc00; }
-        .section { display: none; padding: 30px; animation: fadeIn 0.4s; }
+        /* ================= UI / UX STYLES (NON-PRINT) ================= */
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; margin: 0; padding: 20px; color: #334155; -webkit-tap-highlight-color: transparent; }
+        .app-container { max-width: 1000px; margin: auto; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); overflow: hidden; border: 1px solid #e2e8f0; position: relative; min-height: 80vh; }
+        
+        /* Modern Tabs */
+        .tabs { display: flex; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 0; overflow-x: auto; scrollbar-width: none; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab-btn { flex: 1; min-width: max-content; padding: 18px 20px; border: none; background: transparent; color: #64748b; font-size: 15px; cursor: pointer; transition: all 0.3s ease; font-weight: 600; border-bottom: 3px solid transparent; display: flex; align-items: center; justify-content: center; gap: 8px; outline: none; }
+        .tab-btn:hover { color: #0f172a; background: #f1f5f9; }
+        .tab-btn.active { color: #2563eb; border-bottom: 3px solid #2563eb; background: #ffffff; }
+        
+        .section { display: none; padding: 35px; animation: fadeIn 0.4s ease-out; }
         .section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 14px; }
         
-        /* Improved Input Styles for Mobile */
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; transition: 0.3s; }
-        input:focus { border-color: #007bff; outline: none; box-shadow: 0 0 5px rgba(0,123,255,0.2); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .form-group { margin-bottom: 18px; }
         
-        /* CSS for Warning Animation */
-        .input-warning {
-            border: 2px solid #dc3545 !important;
-            box-shadow: 0 0 8px rgba(220, 53, 69, 0.6);
-            animation: shake 0.5s; /* Apply shake animation */
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
-        }
+        /* Modern Labels & Inputs (PERFECT BALANCE) */
+        label { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; color: #475569; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+        label i { color: #94a3b8; font-size: 14px; }
         
-        .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; width: 100%; }
-        .btn-primary { background: #007bff; color: white; }
-        .btn-success { background: #28a745; color: white; margin-top: 20px; }
-        .btn-danger { background: #dc3545; color: white; }
-        .btn:hover { filter: brightness(90%); transform: translateY(-1px); }
-        .history-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .history-table th, .history-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        .history-table th { background: #f8f9fa; color: #333; }
-        .action-btns { display: flex; gap: 5px; }
-        .icon-btn { padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer; color: white; transition: 0.2s; }
-        .icon-btn:hover { transform: scale(1.1); }
-        .swal2-icon.swal2-custom-icon { border: none !important; }
-        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
+        /* Standardizing heights for a balanced look */
+        input, select { height: 52px; width: 100%; padding: 0 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; font-family: 'Inter', sans-serif; box-sizing: border-box; transition: all 0.2s ease; background-color: #f8fafc; color: #0f172a; }
+        input:focus, select:focus { border-color: #3b82f6; background-color: #ffffff; outline: none; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); }
+        input[readonly] { background-color: #f1f5f9; cursor: not-allowed; color: #64748b; border-color: #e2e8f0; font-weight: 500; }
         
-        /* New Document Filling Liquid Loader CSS */
-        .loader-document {
-            width: 60px;
-            height: 70px;
-            border: 4px solid #007bff;
-            border-radius: 5px;
-            position: relative;
-            overflow: hidden;
-        }
+        /* Custom Employee Select Button - Matched with Inputs */
+        .emp-select-btn { height: 52px; width: 100%; box-sizing: border-box; background: #ffffff; border: 1px solid #cbd5e1; padding: 0 16px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 15px; color: #0f172a; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .emp-select-btn:hover { border-color: #3b82f6; }
+        .emp-select-btn .placeholder { color: #94a3b8; display: flex; align-items: center; gap: 8px; }
+        .emp-select-btn .selected-emp-view { display: flex; align-items: center; gap: 10px; }
+        .emp-select-btn .selected-avatar { width: 32px; height: 32px; background: #2563eb; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; }
+        
+        .input-warning { border: 2px solid #ef4444 !important; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15) !important; animation: shake 0.5s; background-color: #fef2f2; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+        
+        /* Calculation Cards */
+        .calc-section { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 30px; }
+        .calc-card { background: #ffffff; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+        .calc-card h4 { margin-top: 0; margin-bottom: 20px; padding-bottom: 12px; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .earnings-header { color: #059669; border-bottom: 2px solid #34d399; }
+        .deductions-header { color: #dc2626; border-bottom: 2px solid #f87171; }
+        .tot-row { text-align: right; font-weight: 700; margin-top: 15px; font-size: 16px; padding-top: 10px; border-top: 1px dashed #cbd5e1; }
+        
+        /* Net Salary Box */
+        .net-salary-box { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 20px; border-radius: 12px; margin-top: 25px; text-align: center; font-size: 24px; font-weight: 700; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.25); border: 1px solid #047857; letter-spacing: 0.5px; }
+        
+        /* Buttons */
+        .btn { height: 52px; padding: 0 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; font-family: 'Inter', sans-serif; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; box-sizing: border-box; }
+        .btn-success { background: #10b981; color: white; margin-top: 30px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+        .btn-success:hover { background: #059669; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3); }
+        .btn-primary { background: #2563eb; color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+        .btn-primary:hover { background: #1d4ed8; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3); }
+        .btn-danger { background: #ef4444; color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2); margin-top: 10px; }
+        .btn-danger:hover { background: #dc2626; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3); }
+        .btn-outline { background: #ffffff; border: 1px solid #cbd5e1; color: #475569; width: auto; font-size: 14px; padding: 0 16px; height: 42px; }
+        .btn-outline:hover { background: #f8fafc; border-color: #94a3b8; color: #1e293b; }
+        
+        /* Tables & Filter */
+        .table-header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .filter-wrapper { display: flex; align-items: center; gap: 10px; background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 15px; flex: 1; max-width: 300px; height: 42px; }
+        .filter-wrapper i { color: #64748b; }
+        .filter-wrapper select { border: none; padding: 0; background: transparent; min-width: 150px; font-size: 14px; margin: 0; height: 100%; outline: none; box-shadow: none; }
 
-        .loader-document::before {
-            content: "";
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 0;
-            background-color: #007bff; /* Blue "liquid" */
-            animation: fill-document 2s infinite ease-in-out;
-        }
+        .table-container { background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow-x: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+        .history-table { width: 100%; border-collapse: collapse; min-width: 650px; }
+        .history-table th { background: #f8fafc; color: #475569; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0; padding: 16px; text-align: left; }
+        .history-table td { padding: 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; color: #334155; font-size: 14px; }
+        .history-table tbody tr:last-child td { border-bottom: none; }
+        .history-table tbody tr:hover { background: #f8fafc; }
         
-        .loader-document::after {
-            /* Icon of the document */
-            content: "\f15c"; 
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            font-size: 30px;
-            color: #ccc;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 2;
-        }
+        .action-btns { display: flex; gap: 8px; }
+        .icon-btn { width: 36px; height: 36px; border-radius: 8px; border: none; cursor: pointer; color: white; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .icon-btn.edit-btn { background: #f59e0b; box-shadow: 0 2px 5px rgba(245, 158, 11, 0.3); }
+        .icon-btn.edit-btn:hover { background: #d97706; transform: translateY(-2px); }
+        .icon-btn.del-btn { background: #ef4444; box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3); }
+        .icon-btn.del-btn:hover { background: #dc2626; transform: translateY(-2px); }
+        
+        /* Custom Modals (Employee Select) */
+        .custom-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.5); z-index: 1000; backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+        .custom-modal-overlay.active { display: flex; }
+        .custom-modal { background: white; width: 100%; max-width: 550px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden; animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; max-height: 85vh; }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+        .modal-header h3 { margin: 0; font-size: 18px; color: #0f172a; display: flex; align-items: center; gap: 10px; }
+        .close-modal { background: none; border: none; font-size: 20px; color: #64748b; cursor: pointer; transition: 0.2s; padding: 0; }
+        .close-modal:hover { color: #ef4444; }
+        
+        .modal-search { padding: 15px 24px; border-bottom: 1px solid #e2e8f0; }
+        .search-input-wrapper { position: relative; }
+        .search-input-wrapper i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+        .search-input-wrapper input { width: 100%; height: 48px; padding: 0 15px 0 45px; background: #f1f5f9; border: 1px solid transparent; border-radius: 8px; font-size: 15px; box-sizing: border-box; outline: none; transition: 0.2s; }
+        .search-input-wrapper input:focus { background: white; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        
+        .emp-list-container { padding: 20px; overflow-y: auto; flex: 1; max-height: 400px; background: #f8fafc; }
+        
+        /* EMPLOYEE CARD STYLES (PILL SHAPE & ICONS) */
+        .emp-card { display: flex; align-items: center; gap: 18px; padding: 12px 20px; border-radius: 50px; cursor: pointer; transition: 0.2s; border: 2px solid #e2e8f0; margin-bottom: 12px; background: white; position: relative; overflow: hidden; }
+        .emp-card:hover { border-color: #93c5fd; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08); }
+        
+        .emp-avatar { width: 50px; height: 50px; min-width: 50px; border-radius: 50%; background: #1e293b; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 22px; border: 2px solid #334155; }
+        
+        .emp-info { flex: 1; z-index: 2; }
+        .emp-info h4 { margin: 0 0 2px 0; color: #0f172a; font-size: 18px; font-weight: 800; letter-spacing: 0.2px; }
+        .emp-info p { margin: 0; color: #64748b; font-size: 14px; display: flex; align-items: center; gap: 8px; font-weight: 500; }
+        
+        /* Decorative Chevrons for Employee Card */
+        .card-decoration { position: absolute; right: 20px; color: #bae6fd; font-size: 30px; opacity: 0.6; z-index: 1; transition: 0.3s; }
+        .emp-card:hover .card-decoration { transform: translateX(5px); color: #7dd3fc; opacity: 1; }
+        
+        /* Skeleton Loader (Shimmer) */
+        .skeleton { background: #e2e8f0; border-radius: 4px; position: relative; overflow: hidden; }
+        .skeleton::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0; transform: translateX(-100%); background-image: linear-gradient(90deg, rgba(255, 255, 255, 0) 0, rgba(255, 255, 255, 0.4) 20%, rgba(255, 255, 255, 0.6) 60%, rgba(255, 255, 255, 0)); animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 100% { transform: translateX(100%); } }
+        .skeleton-text { height: 16px; margin-bottom: 8px; border-radius: 4px; }
+        
+        /* iOS Style Passcode Lock Screen */
+        .ios-lock-screen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); z-index: 1050; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); flex-direction: column; align-items: center; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .ios-lock-screen.active { display: flex; animation: fadeIn 0.3s ease; }
+        .lock-logo { width: 70px; height: 70px; object-fit: contain; margin-bottom: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); background: white; padding: 5px; }
+        .lock-title { font-size: 22px; font-weight: 500; color: #000; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .lock-subtitle { font-size: 14px; color: #666; margin-bottom: 40px; }
+        
+        .passcode-container { position: relative; margin-bottom: 40px; display: flex; justify-content: center; width: 100%; }
+        /* Hidden input that captures physical keyboard and triggers native AutoFill / FaceID */
+        .hidden-pin-input { position: absolute; width: 100%; max-width: 250px; height: 100%; opacity: 0; cursor: text; z-index: 10; left: 50%; transform: translateX(-50%); font-size: 16px; }
+        
+        .passcode-dots { display: flex; gap: 15px; margin-bottom: 0; position: relative; pointer-events: none; }
+        .dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid #000; transition: all 0.1s; background: transparent; }
+        .dot.filled { background: #000; border-color: #000; }
+        .dots-shake { animation: passcodeShake 0.4s; }
+        @keyframes passcodeShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+        
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 30px; max-width: 280px; width: 100%; transition: opacity 0.3s; }
+        .num-btn { width: 75px; height: 75px; border-radius: 50%; border: none; background: rgba(0,0,0,0.05); font-size: 28px; font-weight: 400; color: #000; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; outline: none; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        .num-btn:active { background: rgba(0,0,0,0.15); }
+        .num-btn.empty { background: transparent; cursor: default; }
+        .num-btn.icon { font-size: 24px; color: #333; }
+        
+        /* Main System Loader */
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 2000; justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(4px); }
+        .loader-document { width: 60px; height: 70px; border: 4px solid #2563eb; border-radius: 8px; position: relative; overflow: hidden; }
+        .loader-document::before { content: ""; position: absolute; bottom: 0; left: 0; width: 100%; height: 0; background-color: #2563eb; animation: fill-document 2s infinite ease-in-out; }
+        .loader-document::after { content: "\f15c"; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 30px; color: #e2e8f0; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2; }
+        @keyframes fill-document { 0% { height: 0; } 50% { height: 100%; } 100% { height: 0; } }
 
-        @keyframes fill-document {
-            0% { height: 0; }
-            50% { height: 100%; }
-            100% { height: 0; }
-        }
-
-        /* PRINT LAYOUT FIXES FOR MOBILE */
+        /* ================= PRINT LAYOUT FIXES ================= */
         .print-area { display: none; }
-        
-        /* Force A4 Size and Settings for single page print */
         @page { size: A4; margin: 0; }
-        
         @media print {
             body * { visibility: hidden; }
-            .app-container, .no-print { display: none !important; }
-            
-            /* Ensure A4 size and prevent overflow */
-            html, body {
-                width: 210mm;
-                height: 297mm;
-                margin: 0;
-                padding: 0;
-                overflow: hidden; /* This is the key to preventing extra pages */
-            }
-
+            .app-container, .no-print, .ios-lock-screen, .custom-modal-overlay { display: none !important; }
+            html, body { width: 210mm; height: 297mm; margin: 0; padding: 0; overflow: hidden; background: white; }
             .print-area, .print-area * { visibility: visible; }
-            .print-area { 
-                display: block !important; 
-                position: absolute; 
-                left: 0; 
-                top: 0; 
-                width: 210mm; 
-                height: 297mm; 
-                padding: 10mm; 
-                box-sizing: border-box; 
-                font-size: 12pt;
-            }
+            .print-area { display: block !important; position: absolute; left: 0; top: 0; width: 210mm; height: 297mm; padding: 10mm; box-sizing: border-box; font-size: 12pt; color: #000; font-family: Arial, sans-serif; }
             
+            /* FIXED: Professional Print Header instead of thick bold font */
             .p-header-box { border: 2px solid #000; text-align: center; padding: 10px; margin-bottom: 20px; }
             .p-header-box h3 { margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase; }
-            /* Updated font family to include Arial Black/Impact for wider support */
-            .p-header-box h1 { margin: 0px 0; font-size: 28px; font-weight: 900; text-transform: uppercase; font-family: 'Impact', 'Arial Black', sans-serif; }
+            .p-header-box h1 { margin: 5px 0; font-size: 26px; font-weight: bold; text-transform: uppercase; font-family: Arial, Helvetica, sans-serif; letter-spacing: 1px; }
             .p-header-box p { margin: 2px 0; font-size: 14px; }
             
             .p-details { display: flex; justify-content: space-between; margin-bottom: 15px; font-family: Arial, sans-serif; font-size: 14px; }
@@ -137,162 +181,225 @@
             .p-row { display: flex; margin-bottom: 5px; }
             .p-label { width: 130px; font-weight: normal; }
             .p-val { font-weight: normal; }
-            
             .p-table { width: 100%; border-collapse: collapse; border: 2px solid #000; font-family: Arial, sans-serif; font-size: 14px; }
-            /* REMOVED inner border lines from table */
             .p-table th { background-color: #d9d9d9 !important; -webkit-print-color-adjust: exact; border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; }
-            /* The only inner lines should be the column dividers for Amount and the bottom line */
             .p-table td { border: none; padding: 5px 8px; }
-            /* Re-add specific vertical borders */
             .p-table td:nth-child(2), .p-table th:nth-child(2) { border-left: 1px solid #000; border-right: 1px solid #000; }
             .p-table td:nth-child(4), .p-table th:nth-child(4) { border-left: 1px solid #000; border-right: 1px solid #000; }
-            
-            /* Re-add the bottom border for the final total row */
             .p-table tbody tr:last-child td { border-top: 2px solid #000; }
             .p-table tbody tr:last-child { border-top: 2px solid #000; }
             .text-right { text-align: right; }
-            
             .p-footer { margin-top: 50px; display: flex; justify-content: space-between; align-items: flex-end; }
             .p-sign-box { text-align: center; width: 200px; }
             .p-line { border-top: 1px dotted #000; display: block; margin-top: 5px; }
         }
         
-        @media (max-width: 600px) {
-            .form-grid { grid-template-columns: 1fr; }
-            .tabs { flex-direction: column; }
-            .history-table { display: block; overflow-x: auto; }
+        @media (max-width: 768px) {
+            .form-grid, .calc-section { grid-template-columns: 1fr; gap: 15px; }
+            .tabs { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; }
+            .tab-btn { flex: 0 0 auto; padding: 15px; }
+            .section { padding: 20px; }
+            .numpad { gap: 15px 20px; }
+            .num-btn { width: 65px; height: 65px; font-size: 24px; }
+            .table-header-actions { flex-direction: column; align-items: stretch; }
+            .filter-wrapper { max-width: 100%; }
         }
     </style>
 </head>
 <body>
 
+    <!-- Main Loader -->
     <div id="loading" class="loading-overlay">
-        <!-- New Document Filling Liquid Loader -->
         <div class="loader-document"></div> 
-        <h3 style="color: #333; margin-top: 15px;">Processing...</h3>
+        <h3 style="color: #0f172a; margin-top: 15px; font-family: 'Inter', sans-serif;">Processing...</h3>
+    </div>
+
+    <!-- Apple iOS Lock Screen Overlay with Native Autofill & Keyboard Support -->
+    <div id="iosLockScreen" class="ios-lock-screen">
+        <img src="logo.png" alt="Logo" class="lock-logo" onerror="this.style.display='none';">
+        <div class="lock-title">Enter Passcode</div>
+        <div class="lock-subtitle" id="lockMessage">Enter your 6-digit admin pin</div>
+        
+        <form id="pinForm" onsubmit="return false;" class="passcode-container">
+            <!-- Hidden input to trigger native AutoFill (Face ID/Touch ID) & capture physical keyboard strokes -->
+            <input type="password" id="hiddenPinInput" class="hidden-pin-input" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="current-password" autofocus>
+            
+            <div class="passcode-dots" id="passcodeDots">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+        </form>
+        
+        <div class="numpad" id="numPadContainer">
+            <button class="num-btn" onclick="pressKey('1')">1</button>
+            <button class="num-btn" onclick="pressKey('2')">2</button>
+            <button class="num-btn" onclick="pressKey('3')">3</button>
+            <button class="num-btn" onclick="pressKey('4')">4</button>
+            <button class="num-btn" onclick="pressKey('5')">5</button>
+            <button class="num-btn" onclick="pressKey('6')">6</button>
+            <button class="num-btn" onclick="pressKey('7')">7</button>
+            <button class="num-btn" onclick="pressKey('8')">8</button>
+            <button class="num-btn" onclick="pressKey('9')">9</button>
+            <button class="num-btn empty"></button>
+            <button class="num-btn" onclick="pressKey('0')">0</button>
+            <button class="num-btn icon" onclick="pressKey('back')"><i class="fas fa-backspace"></i></button>
+        </div>
+        
+        <button class="btn btn-outline" style="margin-top: 30px; border: none; background: transparent; color: #007aff; font-size: 16px; height: auto;" onclick="closeLockScreen()">Cancel</button>
+    </div>
+
+    <!-- Employee Selection Modal -->
+    <div id="empModal" class="custom-modal-overlay">
+        <div class="custom-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-users" style="color: #2563eb;"></i> Select Employee</h3>
+                <button class="close-modal" onclick="closeEmpModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-search">
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="modalSearchInput" placeholder="Search by name or ID..." onkeyup="filterModalEmployees()" autocomplete="off">
+                </div>
+            </div>
+            <div class="emp-list-container" id="modalEmpList">
+                <!-- Employee cards will be populated here -->
+            </div>
+        </div>
     </div>
 
     <div class="app-container no-print">
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('generate')"><i class="fas fa-file-invoice"></i> Generate Payslip</button>
-            <button class="tab-btn" onclick="switchTab('history')"><i class="fas fa-history"></i> History & Edit</button>
-            <!-- Updated tab for employee management -->
-            <button class="tab-btn" onclick="switchTab('employee-mgmt')"><i class="fas fa-users"></i> Employee Management</button>
+            <button class="tab-btn active" id="tabBtn-generate" onclick="switchTab('generate')"><i class="fas fa-file-invoice"></i> Generate Payslip</button>
+            <button class="tab-btn" id="tabBtn-history" onclick="switchTab('history')"><i class="fas fa-history"></i> History & Edit</button>
+            <button class="tab-btn" id="tabBtn-employee-mgmt" onclick="switchTab('employee-mgmt')"><i class="fas fa-user-cog"></i> Employees</button>
         </div>
 
         <!-- GENERATE TAB -->
         <div id="generate" class="section active">
-            <h2 style="text-align: center; color: #007bff; margin-bottom: 25px;">Generate Payslip</h2>
             <input type="hidden" id="editRowIndex" value="">
 
             <div class="form-grid">
-                <div>
-                    <!-- Updated label to select Employee ID and input type to select -->
-                    <label>Select Employee (by Name)</label>
-                    <input list="empList" id="empSearch" placeholder="Type name..." onchange="fillEmpDetails()" autocomplete="off">
-                    <datalist id="empList"></datalist>
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Employee</label>
+                    <!-- New Custom Select Button -->
+                    <div id="selectedEmpDisplay" class="emp-select-btn" onclick="openEmpModal()">
+                        <span id="selectedEmpContent" class="placeholder"><i class="fas fa-search"></i> Click to select employee</span>
+                        <i class="fas fa-chevron-down" style="color:#94a3b8;"></i>
+                    </div>
+                    <!-- Hidden inputs to store selected data for logic -->
+                    <input type="hidden" id="empSearch">
                 </div>
-                <div>
-                    <label>Month & Year</label>
+                <div class="form-group">
+                    <label><i class="fas fa-calendar-alt"></i> Month & Year</label>
                     <input type="month" id="monthYear">
                 </div>
             </div>
 
-            <div class="form-grid" style="margin-top: 10px;">
-                <div>
-                    <label>Employee ID</label>
-                    <!-- Display selected Employee ID here -->
-                    <input type="text" id="empId" readonly style="background: #f9f9f9;">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label><i class="fas fa-id-badge"></i> Employee ID</label>
+                    <input type="text" id="empId" readonly tabindex="-1" placeholder="-">
                 </div>
-                <div>
-                    <label>Designation</label>
-                    <input type="text" id="designation" readonly style="background: #f9f9f9;">
+                <div class="form-group">
+                    <label><i class="fas fa-briefcase"></i> Designation</label>
+                    <input type="text" id="designation" readonly tabindex="-1" placeholder="-">
                 </div>
             </div>
 
-            <div class="form-grid" style="margin-top: 10px;">
+            <div class="form-grid">
                 <div class="form-group">
-                    <label>Worked Days</label>
-                    <input type="number" id="workedDays" inputmode="decimal" enterkeyhint="next">
+                    <label><i class="fas fa-calendar-check"></i> Worked Days</label>
+                    <input type="number" id="workedDays" class="draft-field calc" inputmode="decimal" enterkeyhint="next" placeholder="0">
                 </div>
                 <div></div> 
             </div>
 
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px; border: 1px solid #e9ecef;">
-                <div class="form-grid">
-                    <div>
-                        <h4 style="color: #28a745; border-bottom: 2px solid #28a745; padding-bottom: 5px;">Earnings (Rs.)</h4>
-                        <div class="form-group"><label>Basic Salary</label><input type="number" id="basic" class="calc" inputmode="decimal" enterkeyhint="next"></div>
-                        <div class="form-group"><label>Arrival Allowance</label><input type="number" id="allowance" class="calc" inputmode="decimal" enterkeyhint="next"></div>
-                        <div class="form-group"><label>Overtime</label><input type="number" id="ot" class="calc" inputmode="decimal" enterkeyhint="next"></div>
-                        <div class="form-group"><label>Bonus</label><input type="number" id="bonus" class="calc" inputmode="decimal" enterkeyhint="next"></div>
-                        <div style="text-align: right; font-weight: bold; margin-top: 10px;">Total: <span id="totalEarn">0.00</span></div>
-                    </div>
-                    <div>
-                        <h4 style="color: #dc3545; border-bottom: 2px solid #dc3545; padding-bottom: 5px;">Deductions (Rs.)</h4>
-                        <div class="form-group"><label>Loan</label><input type="number" id="loan" class="calc" inputmode="decimal" enterkeyhint="next"></div>
-                        <div class="form-group"><label>Advance</label><input type="number" id="advance" class="calc" inputmode="decimal" enterkeyhint="next"></div>
-                        <div class="form-group"><label>Late</label><input type="number" id="late" class="calc" inputmode="decimal" enterkeyhint="next"></div>
-                        <div class="form-group"><label>Leave</label><input type="number" id="leave" class="calc" inputmode="decimal" enterkeyhint="done"></div>
-                        <div style="text-align: right; font-weight: bold; margin-top: 10px; color: #dc3545;">Total: <span id="totalDeduct">0.00</span></div>
-                    </div>
+            <div class="calc-section">
+                <div class="calc-card">
+                    <h4 class="earnings-header"><i class="fas fa-arrow-up"></i> Earnings (Rs.)</h4>
+                    <div class="form-group"><label>Basic Salary</label><input type="number" id="basic" class="draft-field calc" inputmode="decimal" enterkeyhint="next"></div>
+                    <div class="form-group"><label>Arrival Allowance</label><input type="number" id="allowance" class="draft-field calc" inputmode="decimal" enterkeyhint="next"></div>
+                    <div class="form-group"><label>Overtime</label><input type="number" id="ot" class="draft-field calc" inputmode="decimal" enterkeyhint="next"></div>
+                    <div class="form-group"><label>Bonus</label><input type="number" id="bonus" class="draft-field calc" inputmode="decimal" enterkeyhint="next"></div>
+                    <div class="tot-row" style="color: #059669;">Total: <span id="totalEarn">0.00</span></div>
+                </div>
+                
+                <div class="calc-card">
+                    <h4 class="deductions-header"><i class="fas fa-arrow-down"></i> Deductions (Rs.)</h4>
+                    <div class="form-group"><label>Loan</label><input type="number" id="loan" class="draft-field calc" inputmode="decimal" enterkeyhint="next"></div>
+                    <div class="form-group"><label>Advance</label><input type="number" id="advance" class="draft-field calc" inputmode="decimal" enterkeyhint="next"></div>
+                    <div class="form-group"><label>Late</label><input type="number" id="late" class="draft-field calc" inputmode="decimal" enterkeyhint="next"></div>
+                    <div class="form-group"><label>Leave</label><input type="number" id="leave" class="draft-field calc" inputmode="decimal" enterkeyhint="done"></div>
+                    <div class="tot-row" style="color: #dc2626;">Total: <span id="totalDeduct">0.00</span></div>
                 </div>
             </div>
 
-            <div style="background: #28a745; color: white; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center; font-size: 20px; font-weight: bold;">
+            <div class="net-salary-box">
                 Net Salary: Rs. <span id="netPay">0.00</span>
             </div>
 
             <button class="btn btn-success" id="saveBtn" onclick="submitPayslip('save')"><i class="fas fa-print"></i> Generate & Print</button>
-            <button class="btn btn-primary" id="updateBtn" onclick="askPasswordForUpdate()" style="display: none; margin-top: 20px;"><i class="fas fa-lock"></i> Unlock & Update</button>
-            <button class="btn btn-danger" id="cancelBtn" onclick="resetForm()" style="display: none; margin-top: 10px;">Cancel Edit</button>
+            <button class="btn btn-primary" id="updateBtn" onclick="initiateUpdate()" style="display: none; margin-top: 30px;"><i class="fas fa-save"></i> Save Changes</button>
+            <button class="btn btn-danger" id="cancelBtn" onclick="resetForm()" style="display: none;"><i class="fas fa-times"></i> Cancel Edit</button>
         </div>
 
         <!-- HISTORY TAB -->
         <div id="history" class="section">
-            <h2 style="text-align: center; margin-bottom: 20px;">Payslip History</h2>
-            <!-- Fixed: Changed onclick to loadHistory() to match the function name -->
-            <button class="btn btn-primary" onclick="loadHistory()" style="width: auto; margin-bottom: 10px;"><i class="fas fa-sync"></i> Refresh List</button> 
-            <div style="overflow-x: auto;">
+            <div class="table-header-actions">
+                <button class="btn btn-outline" onclick="loadHistory()"><i class="fas fa-sync-alt"></i> Refresh</button> 
+                <div class="filter-wrapper">
+                    <i class="fas fa-filter"></i>
+                    <select id="historyFilter" onchange="filterHistoryTable()">
+                        <option value="all">All Employees</option>
+                        <!-- Options filled via JS -->
+                    </select>
+                </div>
+            </div>
+            
+            <div class="table-container">
                 <table class="history-table">
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th>Name (Click to Print)</th>
+                            <th>Employee Details</th>
                             <th>Net Pay</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="historyBody">
-                        <tr><td colspan="4" style="text-align:center;">Loading...</td></tr>
+                        <!-- Skeleton or Data goes here -->
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- EMPLOYEE MANAGEMENT TAB (Replaced Create Tab) -->
+        <!-- EMPLOYEE MANAGEMENT TAB -->
         <div id="employee-mgmt" class="section">
-            <h2 style="text-align: center; margin-bottom: 20px;">Employee Management</h2>
-            
-            <div style="background: #f0f8ff; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #cceeff;">
-                <h3>Add New Employee</h3>
-                <div class="form-group">
+            <div class="calc-card" style="margin-bottom: 30px; margin-top: 0;">
+                <h4 style="color: #2563eb; border-bottom: 2px solid #93c5fd; padding-bottom: 10px;"><i class="fas fa-user-plus"></i> Add New Employee</h4>
+                <div class="form-group" style="margin-top: 15px;">
                     <label>Employee Name</label>
                     <input type="text" id="new_name" autocomplete="off" placeholder="Enter Full Name">
                 </div>
-                <div class="form-group">
-                    <label>Employee ID</label>
-                    <input type="text" id="new_id" placeholder="Enter Unique ID (e.g., EA001)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Employee ID</label>
+                        <input type="text" id="new_id" placeholder="e.g., EA001">
+                    </div>
+                    <div class="form-group">
+                        <label>Designation</label>
+                        <input type="text" id="new_designation" placeholder="e.g., Call Coordinator">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Designation</label>
-                    <input type="text" id="new_designation" placeholder="Enter Designation">
-                </div>
-                <button class="btn btn-success" onclick="saveEmployee()"><i class="fas fa-user-plus"></i> Save Employee</button>
+                <button class="btn btn-primary" onclick="saveEmployee()" style="margin-top: 10px;"><i class="fas fa-save"></i> Save Employee</button>
             </div>
             
-            <h3>Current Employees</h3>
-            <div style="overflow-x: auto;">
+            <div class="table-header-actions">
+                <h3 style="color: #334155; font-size: 16px; margin: 0;"><i class="fas fa-users"></i> Current Employees</h3>
+                <button class="btn btn-outline" onclick="loadEmployeeList()"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+            
+            <div class="table-container">
                 <table class="history-table">
                     <thead>
                         <tr>
@@ -303,7 +410,7 @@
                         </tr>
                     </thead>
                     <tbody id="employeeListBody">
-                        <tr><td colspan="4" style="text-align:center;">Loading employee list...</td></tr>
+                        <!-- Skeleton or Data goes here -->
                     </tbody>
                 </table>
             </div>
@@ -380,58 +487,249 @@
         // ==========================================
 
         let employees = [];
+        let fullHistoryData = []; 
 
-        window.onload = function() {
-            loadEmployees();
-            setupEnterKey();
-            loadHistory();
-            loadEmployeeList(); 
-            setupInputClearWarning(); // Added to remove warnings on input
+        const showToast = (icon, title) => {
+            Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true })
+            .fire({ icon: icon, title: title });
         };
 
+        window.onload = function() {
+            loadDraft(); 
+            loadEmployees();
+            setupEnterKey();
+            setupAutoSave();
+            setupInputClearWarning(); 
+            setupNativePinInput();
+        };
+
+        // --- DYNAMIC ICONS BASED ON DESIGNATION ---
+        function getRoleIcon(designation) {
+            let desc = (designation || "").toLowerCase();
+            if(desc.includes('call') || desc.includes('coordinator') || desc.includes('support')) return '<i class="fas fa-headset"></i>';
+            if(desc.includes('admin') || desc.includes('system') || desc.includes('it')) return '<i class="fas fa-user-shield"></i>';
+            if(desc.includes('manager') || desc.includes('director')) return '<i class="fas fa-user-tie"></i>';
+            if(desc.includes('sale') || desc.includes('exec')) return '<i class="fas fa-chart-line"></i>';
+            return '<i class="fas fa-user"></i>';
+        }
+
+        // --- iOS LOCK SCREEN & NATIVE AUTOFILL LOGIC ---
+        let passcodeCallback = null;
+
+        function setupNativePinInput() {
+            const hiddenInput = document.getElementById('hiddenPinInput');
+            
+            // Listen for typed or auto-filled characters
+            hiddenInput.addEventListener('input', function(e) {
+                // Keep only numbers
+                this.value = this.value.replace(/[^0-9]/g, '');
+                
+                updateDots();
+                
+                // If 6 digits are reached, auto-trigger the callback
+                if(this.value.length === 6) {
+                    let pinToVerify = this.value;
+                    setTimeout(() => {
+                        if(passcodeCallback) passcodeCallback(pinToVerify);
+                    }, 200); 
+                }
+            });
+        }
+
+        function openLockScreen(callback, message = "Enter your 6-digit admin pin") {
+            passcodeCallback = callback;
+            document.getElementById('lockMessage').innerText = message;
+            
+            let pinInput = document.getElementById('hiddenPinInput');
+            pinInput.value = "";
+            updateDots();
+            
+            document.getElementById('iosLockScreen').classList.add('active');
+            
+            // Automatically focus the hidden input so PC users can just type
+            // and mobile users will get the keyboard / autofill prompt
+            setTimeout(() => {
+                pinInput.focus();
+            }, 100);
+        }
+
+        function closeLockScreen() {
+            document.getElementById('iosLockScreen').classList.remove('active');
+            passcodeCallback = null;
+            document.getElementById('hiddenPinInput').value = "";
+            document.getElementById('hiddenPinInput').blur();
+        }
+
+        // For users clicking the on-screen buttons
+        function pressKey(key) {
+            let hiddenInput = document.getElementById('hiddenPinInput');
+            
+            if(hiddenInput.value.length >= 6 && key !== 'back') return;
+
+            if(key === 'back') {
+                hiddenInput.value = hiddenInput.value.slice(0, -1);
+            } else {
+                if(hiddenInput.value.length < 6) hiddenInput.value += key;
+            }
+            
+            // Dispatch input event to trigger the main listener
+            hiddenInput.dispatchEvent(new Event('input'));
+            hiddenInput.focus(); // keep focus
+        }
+
+        function updateDots() {
+            let currentVal = document.getElementById('hiddenPinInput').value;
+            const dots = document.querySelectorAll('#passcodeDots .dot');
+            dots.forEach((dot, index) => {
+                if(index < currentVal.length) dot.classList.add('filled');
+                else dot.classList.remove('filled');
+            });
+        }
+
+        function shakeLockScreen() {
+            const dotsContainer = document.getElementById('passcodeDots');
+            let hiddenInput = document.getElementById('hiddenPinInput');
+            
+            dotsContainer.classList.remove('dots-shake');
+            void dotsContainer.offsetWidth; // trigger reflow
+            dotsContainer.classList.add('dots-shake');
+            
+            hiddenInput.value = ""; 
+            setTimeout(() => {
+                updateDots();
+                hiddenInput.focus();
+            }, 300);
+        }
+
+        // --- TAB SWITCHING & LOCK LOGIC ---
         function switchTab(tabId) {
+            if (tabId === 'history' && !document.getElementById('history').classList.contains('active')) {
+                openLockScreen((pin) => {
+                    closeLockScreen();
+                    executeSwitchTab('history');
+                }, "Enter PIN to access History");
+                return;
+            }
+            executeSwitchTab(tabId);
+        }
+
+        function executeSwitchTab(tabId) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelector(`button[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(`tabBtn-${tabId}`).classList.add('active');
             document.getElementById(tabId).classList.add('active');
             
             if(tabId === 'history') loadHistory();
             if(tabId === 'employee-mgmt') loadEmployeeList();
         }
 
-        function toggleLoading(show) {
-            document.getElementById('loading').style.display = show ? 'flex' : 'none';
-        }
-
-        function loadEmployees() {
-            // Loads employee names into the datalist for searching/selection
-            fetch(SCRIPT_URL + "?action=getEmployees").then(res => res.json()).then(data => {
-                // The data array contains [Name, ID, Designation, RowIndex]
-                employees = data;
-                let list = document.getElementById('empList');
-                list.innerHTML = "";
-                // Now filling the list with Name, but when selected, we use the name to find the details
-                data.forEach(emp => { let opt = document.createElement('option'); opt.value = emp[0]; list.appendChild(opt); });
+        // --- DRAFT / AUTO-SAVE LOGIC ---
+        function setupAutoSave() {
+            const draftInputs = document.querySelectorAll('.draft-field, #monthYear');
+            draftInputs.forEach(input => {
+                input.addEventListener('input', () => { saveDraft(); if(input.classList.contains('calc')) calculate(); });
             });
         }
 
-        function fillEmpDetails() {
-            let name = document.getElementById('empSearch').value;
-            // Find the employee using the name selected from the datalist
-            let emp = employees.find(e => e[0] === name); 
-            if(emp) {
-                // emp[0]=Name, emp[1]=ID, emp[2]=Designation
-                document.getElementById('empId').value = emp[1];
-                document.getElementById('designation').value = emp[2];
-            } else {
-                // Clear fields if the name doesn't match a valid employee
-                document.getElementById('empId').value = '';
-                document.getElementById('designation').value = '';
+        function saveDraft() {
+            const keys = ['workedDays', 'basic', 'allowance', 'ot', 'bonus', 'loan', 'advance', 'late', 'leave', 'monthYear'];
+            let draft = {};
+            keys.forEach(k => { if(document.getElementById(k)) draft[k] = document.getElementById(k).value; });
+            localStorage.setItem('payslipDraft', JSON.stringify(draft));
+        }
+
+        function loadDraft() {
+            let saved = localStorage.getItem('payslipDraft');
+            if(saved) {
+                let draft = JSON.parse(saved);
+                Object.keys(draft).forEach(k => { if(document.getElementById(k)) document.getElementById(k).value = draft[k]; });
+                calculate();
             }
         }
 
-        document.querySelectorAll('.calc').forEach(el => el.addEventListener('input', calculate));
-        
+        function clearDraft() {
+            localStorage.removeItem('payslipDraft');
+            const keys = ['workedDays', 'basic', 'allowance', 'ot', 'bonus', 'loan', 'advance', 'late', 'leave'];
+            keys.forEach(k => { if(document.getElementById(k)) document.getElementById(k).value = ''; });
+            calculate();
+        }
+
+        // --- SKELETON LOADERS ---
+        function showSkeleton(tbodyId, columns) {
+            let tbody = document.getElementById(tbodyId);
+            tbody.innerHTML = '';
+            for(let i=0; i<4; i++) {
+                let tr = document.createElement('tr');
+                let tdHtml = '';
+                for(let c=0; c<columns; c++) tdHtml += `<td><div class="skeleton skeleton-text" style="width: ${Math.random() * 40 + 50}%;"></div></td>`;
+                tr.innerHTML = tdHtml;
+                tbody.appendChild(tr);
+            }
+        }
+
+        function toggleLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
+
+        // --- CUSTOM EMPLOYEE MODAL (PILL CARDS) LOGIC ---
+        function loadEmployees() {
+            fetch(SCRIPT_URL + "?action=getEmployees").then(res => res.json()).then(data => {
+                employees = data; renderModalEmployees(employees);
+            });
+        }
+
+        function openEmpModal() {
+            document.getElementById('empModal').classList.add('active');
+            document.getElementById('modalSearchInput').value = '';
+            document.getElementById('modalSearchInput').focus();
+            renderModalEmployees(employees);
+        }
+        function closeEmpModal() { document.getElementById('empModal').classList.remove('active'); }
+
+        function renderModalEmployees(list) {
+            const container = document.getElementById('modalEmpList');
+            container.innerHTML = '';
+            if(list.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">No employees found.</p>';
+                return;
+            }
+
+            list.forEach(emp => {
+                let card = document.createElement('div');
+                card.className = 'emp-card';
+                card.onclick = () => selectEmployee(emp);
+                card.innerHTML = `
+                    <div class="emp-avatar">${getRoleIcon(emp[2])}</div>
+                    <div class="emp-info">
+                        <h4>${emp[0]}</h4>
+                        <p><span><i class="fas fa-id-badge" style="color:#cbd5e1;"></i> ${emp[1]}</span> &nbsp;&bull;&nbsp; <span style="color:#2563eb;">${emp[2]}</span></p>
+                    </div>
+                    <div class="card-decoration"><i class="fas fa-angle-double-right"></i></div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterModalEmployees() {
+            let q = document.getElementById('modalSearchInput').value.toLowerCase();
+            let filtered = employees.filter(e => e[0].toLowerCase().includes(q) || e[1].toLowerCase().includes(q) || e[2].toLowerCase().includes(q));
+            renderModalEmployees(filtered);
+        }
+
+        function selectEmployee(emp) {
+            document.getElementById('empSearch').value = emp[0];
+            document.getElementById('empId').value = emp[1];
+            document.getElementById('designation').value = emp[2];
+            
+            document.getElementById('selectedEmpContent').innerHTML = `
+                <div class="selected-emp-view">
+                    <div class="selected-avatar" style="background:#1e293b;">${getRoleIcon(emp[2])}</div>
+                    <div><span style="font-weight:700; display:block; line-height:1.2;">${emp[0]}</span><span style="font-size:12px; color:#64748b;">${emp[1]} - ${emp[2]}</span></div>
+                </div>
+            `;
+            
+            closeEmpModal(); clearDraft(); 
+            document.getElementById('selectedEmpDisplay').classList.remove('input-warning');
+        }
+
         function calculate() {
             let getVal = id => parseFloat(document.getElementById(id).value) || 0;
             let totEarn = getVal('basic') + getVal('allowance') + getVal('ot') + getVal('bonus');
@@ -441,47 +739,27 @@
             document.getElementById('netPay').innerText = (totEarn - totDed).toFixed(2);
         }
 
-        // --- Validation Function ---
         function validatePayslipForm() {
             let isValid = true;
-            const requiredInputs = [
-                { id: 'empSearch', name: 'Employee Name' },
-                { id: 'monthYear', name: 'Month & Year' },
-                { id: 'workedDays', name: 'Worked Days' }
-            ];
-
-            requiredInputs.forEach(item => {
-                const input = document.getElementById(item.id);
+            ['empSearch', 'monthYear', 'workedDays'].forEach(id => {
+                const input = document.getElementById(id);
                 const value = input.value.trim();
-                
-                // Always remove previous warning class
-                input.classList.remove('input-warning');
-
-                if (value === '') {
-                    input.classList.add('input-warning');
-                    isValid = false;
+                if(id === 'empSearch') {
+                    const btn = document.getElementById('selectedEmpDisplay');
+                    btn.classList.remove('input-warning');
+                    if(value === '') { btn.classList.add('input-warning'); isValid = false; }
+                } else {
+                    input.classList.remove('input-warning');
+                    if(value === '') { input.classList.add('input-warning'); isValid = false; }
                 }
             });
-
-            if (!isValid) {
-                // Removed Sinhala text as requested
-                Swal.fire('Warning', 'Please fill the red required fields.', 'warning');
-            }
-            
+            if (!isValid) showToast('warning', 'Please fill required fields.');
             return isValid;
         }
 
         function submitPayslip(mode) {
             let formData = getFormData();
-            
-            // Check required fields using new validation function
-            if (!validatePayslipForm()) {
-                return;
-            }
-
-            // Additional check for employee ID presence after validation passes (should be redundant if validation passes but good for safety)
-            if(!formData.empName || !formData.empId) return Swal.fire('Error', 'Please select a valid employee (by Name)', 'error');
-
+            if (!validatePayslipForm()) return;
 
             if(mode === 'save') {
                 toggleLoading(true);
@@ -489,465 +767,276 @@
                 fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(formData) }).then(res => res.json()).then(data => {
                     toggleLoading(false);
                     if(data.result === 'Success') {
-                        populatePrint(formData);
-                        window.print();
-                        Swal.fire('Success', 'Payslip Saved!', 'success');
-                        resetForm(); // Reset after successful save
-                    } else {
-                         Swal.fire('Error', 'Failed to save payslip. Check Google Sheet setup.', 'error');
-                    }
-                }).catch(e => {
-                    toggleLoading(false);
-                    Swal.fire('Error', 'Network or Script Error: ' + e.message, 'error');
-                });
+                        populatePrint(formData); window.print();
+                        showToast('success', 'Payslip Saved & Printed!');
+                        clearDraft(); resetForm(); 
+                    } else { Swal.fire('Error', 'Failed to save payslip.', 'error'); }
+                }).catch(e => { toggleLoading(false); Swal.fire('Error', 'Network Error: ' + e.message, 'error'); });
             }
         }
 
         function getFormData() {
-            // Logic to Calculate Print Date (10th of Next Month)
             let monthVal = document.getElementById('monthYear').value;
             let generatedDate = "";
-            let workedDays = document.getElementById('workedDays').value;
-
             if(monthVal) {
                 let d = new Date(monthVal + "-01");
                 if(!isNaN(d.getTime())){
-                    d.setMonth(d.getMonth() + 1);
-                    d.setDate(10);
+                    d.setMonth(d.getMonth() + 1); d.setDate(10);
                     generatedDate = d.getFullYear() + " / " + (d.getMonth()+1).toString().padStart(2,'0') + " / " + d.getDate().toString().padStart(2,'0');
                 }
             }
-
             return {
-                monthYear: document.getElementById('monthYear').value,
-                empName: document.getElementById('empSearch').value, // This is the Name
-                empId: document.getElementById('empId').value,
-                designation: document.getElementById('designation').value,
-                workedDays: workedDays, // Include worked days
-                basic: document.getElementById('basic').value,
-                allowance: document.getElementById('allowance').value,
-                ot: document.getElementById('ot').value,
-                bonus: document.getElementById('bonus').value,
-                totalEarn: document.getElementById('totalEarn').innerText,
-                loan: document.getElementById('loan').value,
-                advance: document.getElementById('advance').value,
-                late: document.getElementById('late').value,
-                leave: document.getElementById('leave').value,
-                totalDeduct: document.getElementById('totalDeduct').innerText,
-                netPay: document.getElementById('netPay').innerText,
+                monthYear: document.getElementById('monthYear').value, empName: document.getElementById('empSearch').value,
+                empId: document.getElementById('empId').value, designation: document.getElementById('designation').value,
+                workedDays: document.getElementById('workedDays').value, basic: document.getElementById('basic').value,
+                allowance: document.getElementById('allowance').value, ot: document.getElementById('ot').value,
+                bonus: document.getElementById('bonus').value, totalEarn: document.getElementById('totalEarn').innerText,
+                loan: document.getElementById('loan').value, advance: document.getElementById('advance').value,
+                late: document.getElementById('late').value, leave: document.getElementById('leave').value,
+                totalDeduct: document.getElementById('totalDeduct').innerText, netPay: document.getElementById('netPay').innerText,
                 printDate: generatedDate
             };
         }
 
         function populatePrint(data) {
-            document.getElementById('p_empId').innerText = data.empId;
-            document.getElementById('p_name').innerText = data.empName;
+            document.getElementById('p_empId').innerText = data.empId; document.getElementById('p_name').innerText = data.empName;
             document.getElementById('p_designation').innerText = data.designation;
-            
-            let cleanMonth = data.monthYear;
-            if(cleanMonth && typeof cleanMonth === 'string' && cleanMonth.includes('T')) {
-                cleanMonth = cleanMonth.split('T')[0];
-            }
-            document.getElementById('p_month').innerText = cleanMonth;
-
-            // Updated: Use the workedDays property from the data object
-            document.getElementById('p_worked').innerText = data.workedDays || "-"; 
-
+            let cleanMonth = data.monthYear; if(cleanMonth && typeof cleanMonth === 'string' && cleanMonth.includes('T')) cleanMonth = cleanMonth.split('T')[0];
+            document.getElementById('p_month').innerText = cleanMonth; document.getElementById('p_worked').innerText = data.workedDays || "-"; 
             const fmt = val => "Rs." + parseFloat(val || 0).toFixed(2);
-            document.getElementById('p_basic').innerText = fmt(data.basic);
-            document.getElementById('p_allowance').innerText = fmt(data.allowance);
-            document.getElementById('p_ot').innerText = fmt(data.ot);
-            document.getElementById('p_bonus').innerText = fmt(data.bonus);
-            document.getElementById('p_totEarn').innerText = fmt(data.totalEarn);
-            document.getElementById('p_loan').innerText = fmt(data.loan);
-            document.getElementById('p_advance').innerText = fmt(data.advance);
-            document.getElementById('p_late').innerText = fmt(data.late);
-            document.getElementById('p_leave').innerText = fmt(data.leave);
-            document.getElementById('p_totDed').innerText = fmt(data.totalDeduct);
+            document.getElementById('p_basic').innerText = fmt(data.basic); document.getElementById('p_allowance').innerText = fmt(data.allowance);
+            document.getElementById('p_ot').innerText = fmt(data.ot); document.getElementById('p_bonus').innerText = fmt(data.bonus);
+            document.getElementById('p_totEarn').innerText = fmt(data.totalEarn); document.getElementById('p_loan').innerText = fmt(data.loan);
+            document.getElementById('p_advance').innerText = fmt(data.advance); document.getElementById('p_late').innerText = fmt(data.late);
+            document.getElementById('p_leave').innerText = fmt(data.leave); document.getElementById('p_totDed').innerText = fmt(data.totalDeduct);
             document.getElementById('p_net').innerText = fmt(data.netPay);
-
-            if (data.printDate && data.printDate.trim() !== "") {
-                document.getElementById('p_date').innerText = data.printDate;
-            } else {
+            if (data.printDate && data.printDate.trim() !== "") { document.getElementById('p_date').innerText = data.printDate; } 
+            else {
                 let dateText = ".... / .. / .."; 
                 if(data.monthYear && data.monthYear.trim() !== "") {
-                    try {
-                        let d = new Date(data.monthYear + "-01");
-                        if (!isNaN(d.getTime())) {
-                            d.setMonth(d.getMonth() + 1);
-                            d.setDate(10);
-                            dateText = d.getFullYear() + " / " + (d.getMonth()+1).toString().padStart(2,'0') + " / " + d.getDate().toString().padStart(2,'0');
-                        }
-                    } catch(e) { console.error("Date error", e); }
+                    try { let d = new Date(data.monthYear + "-01"); if (!isNaN(d.getTime())) { d.setMonth(d.getMonth() + 1); d.setDate(10); dateText = d.getFullYear() + " / " + (d.getMonth()+1).toString().padStart(2,'0') + " / " + d.getDate().toString().padStart(2,'0'); } } catch(e) {}
                 }
                 document.getElementById('p_date').innerText = dateText;
             }
         }
 
+        // --- HISTORY & FORMATTED DATES LOGIC ---
+        function formatPrimaryDate(myString) {
+            if(!myString) return "Unknown";
+            try {
+                let parts = myString.split('-');
+                let d = new Date(parts[0], parseInt(parts[1])-1, 1);
+                return d.getFullYear() + " - " + d.toLocaleString('en-US', {month: 'long'}); // Ex: 2026 - June
+            } catch(e) { return myString; }
+        }
+
+        function formatSubDate(isoString) {
+            let d = new Date(isoString);
+            if(isNaN(d)) return isoString;
+            return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0') + "-" + String(d.getDate()).padStart(2,'0') + " " + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+
         function loadHistory() {
-            let tbody = document.getElementById('historyBody');
+            showSkeleton('historyBody', 4);
             fetch(SCRIPT_URL + "?action=getHistory").then(res => res.json()).then(data => {
-                tbody.innerHTML = "";
-                if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No records found</td></tr>'; return; }
-                data.forEach(item => {
-                    // Check if the record is fully populated (e.g., if it has workedDays at index 17)
-                    // The row data: [Timestamp(0), monthYear(1), empName(2), empId(3), designation(4), basic(5), allowance(6), ot(7), bonus(8), totalEarn(9), loan(10), advance(11), late(12), leave(13), totalDeduct(14), netPay(15), printDate(16), workedDays(17), row]
-                    let date = new Date(item.data[0]).toLocaleDateString();
-                    // FIX: Net Pay is consistently at index 15
-                    const netPay = item.data[15];
-                    let tr = document.createElement('tr');
-                    
-                    tr.innerHTML = `
-                        <td>${date}</td>
-                        <td>
-                            <div style="cursor: pointer; color: #007bff; display: flex; align-items: center;" onclick='printHistoryRecord(${JSON.stringify(item)})' title="Click to Print">
-                                <i class="fas fa-print" style="margin-right: 8px;"></i>
-                                <span style="font-weight: 500;">${item.data[2]}</span>
-                                <small style="color: #666; margin-left: 5px;">(${item.data[3]})</small>
+                fullHistoryData = data; updateHistoryFilter(); renderHistoryTable(fullHistoryData);
+            });
+        }
+
+        function updateHistoryFilter() {
+            const filter = document.getElementById('historyFilter');
+            filter.innerHTML = '<option value="all">All Employees</option>';
+            const names = [...new Set(fullHistoryData.map(item => item.data[2]))];
+            names.sort().forEach(name => { if(name) { let opt = document.createElement('option'); opt.value = name; opt.innerText = name; filter.appendChild(opt); } });
+        }
+
+        function filterHistoryTable() {
+            const selectedName = document.getElementById('historyFilter').value;
+            if(selectedName === 'all') renderHistoryTable(fullHistoryData);
+            else renderHistoryTable(fullHistoryData.filter(item => item.data[2] === selectedName));
+        }
+
+        function renderHistoryTable(data) {
+            let tbody = document.getElementById('historyBody');
+            tbody.innerHTML = "";
+            if(data.length === 0) { 
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 40px; color: #94a3b8;"><i class="fas fa-folder-open" style="font-size:40px; margin-bottom:10px; opacity:0.5;"></i><br>No records found</td></tr>'; 
+                return; 
+            }
+            data.forEach(item => {
+                let mainDate = formatPrimaryDate(item.data[1]);
+                let subDate = formatSubDate(item.data[0]);
+                const netPay = item.data[15];
+                let tr = document.createElement('tr');
+                
+                tr.innerHTML = `
+                    <td>
+                        <span style="font-weight:700; color:#0f172a; font-size:15px; display:block; margin-bottom:2px;">${mainDate}</span>
+                        <span style="color:#94a3b8; font-size:12px; font-weight:500;"><i class="far fa-clock"></i> ${subDate}</span>
+                    </td>
+                    <td>
+                        <div style="cursor: pointer; color: #0f172a; display: flex; align-items: center; gap: 12px;" onclick='printHistoryRecord(${JSON.stringify(item)})' title="Click to Print">
+                            <div class="emp-avatar" style="width:36px; height:36px; min-width:36px; font-size:15px; border-width:1px; background:#eff6ff; color:#2563eb; border-color:#bfdbfe;">${getRoleIcon(item.data[4])}</div>
+                            <div>
+                                <span style="font-weight: 700; display:block; line-height:1.2;">${item.data[2]}</span>
+                                <small style="color: #64748b; font-weight: 600; font-size: 12px;">${item.data[3]}</small>
                             </div>
-                        </td>
-                        <td style="font-weight:bold;">Rs.${netPay}</td>
-                        <td><div class="action-btns">
-                            <button class="icon-btn" style="background:#ffc107;" onclick='editRecord(${JSON.stringify(item)})'><i class="fas fa-edit"></i></button>
-                            <button class="icon-btn" style="background:#dc3545;" onclick="deleteRecordPayslip(${item.row})"><i class="fas fa-trash"></i></button>
-                        </div></td>`;
-                    tbody.appendChild(tr);
-                });
+                        </div>
+                    </td>
+                    <td style="font-weight:800; color: #059669; font-size:15px;">Rs.${netPay}</td>
+                    <td><div class="action-btns">
+                        <button class="icon-btn edit-btn" onclick='editRecord(${JSON.stringify(item)})' title="Edit"><i class="fas fa-edit"></i></button>
+                        <button class="icon-btn del-btn" onclick="deleteRecordPayslip(${item.row})" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div></td>`;
+                tbody.appendChild(tr);
             });
         }
 
         function printHistoryRecord(item) {
             let data = item.data;
-            // Map the history array data to the printData object
-            // The data array now includes workedDays as the 18th column (index 17)
-            let workedDaysIndex = 17; 
-            let printData = {
-                monthYear: data[1],
-                empName: data[2],
-                empId: data[3],
-                designation: data[4],
-                basic: data[5],
-                allowance: data[6],
-                ot: data[7],
-                bonus: data[8],
-                totalEarn: data[9],
-                loan: data[10],
-                advance: data[11],
-                late: data[12],
-                leave: data[13],
-                totalDeduct: data[14],
-                netPay: data[15],
-                printDate: data[16],
-                workedDays: data[workedDaysIndex] || "-" // Use index 17 for workedDays
-            };
-
-            populatePrint(printData);
+            populatePrint({ monthYear: data[1], empName: data[2], empId: data[3], designation: data[4], basic: data[5], allowance: data[6], ot: data[7], bonus: data[8], totalEarn: data[9], loan: data[10], advance: data[11], late: data[12], leave: data[13], totalDeduct: data[14], netPay: data[15], printDate: data[16], workedDays: data[17] || "-" });
             window.print();
         }
 
-        // Renamed function to avoid confusion with employee delete
+        // --- PIN LOCKED ACTIONS ---
         function deleteRecordPayslip(rowIndex) { 
-            Swal.fire({
-                title: 'Security Access',
-                html: 'Enter Admin PIN to <b style="color:red">DELETE</b> this payslip record',
-                input: 'password',
-                inputAttributes: { autocapitalize: 'off', placeholder: 'Enter 4-digit PIN' },
-                iconHtml: '<i class="fas fa-lock" style="font-size: 3rem; color: #dc3545;"></i>',
-                customClass: { icon: 'swal2-custom-icon' },
-                showCancelButton: true,
-                confirmButtonText: 'Unlock & Delete',
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    toggleLoading(true);
-                    fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'deletePayslip', rowIndex: rowIndex, password: result.value })
-                    }).then(res => res.json()).then(data => {
-                        toggleLoading(false);
-                        if(data.result === 'Success') {
-                            Swal.fire('Deleted!', 'Payslip record deleted successfully.', 'success');
-                            loadHistory();
-                        } else {
-                            Swal.fire('Access Denied', 'Incorrect PIN Number!', 'error');
-                        }
-                    }).catch(e => {
-                        toggleLoading(false);
-                        Swal.fire('Error', 'Network or Script Error: ' + e.message, 'error');
-                    });
-                }
-            });
+            openLockScreen((pin) => {
+                toggleLoading(true);
+                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'deletePayslip', rowIndex: rowIndex, password: pin }) })
+                .then(res => res.json()).then(data => {
+                    toggleLoading(false);
+                    if(data.result === 'Success') {
+                        closeLockScreen();
+                        showToast('success', 'Payslip deleted successfully.'); loadHistory();
+                    } else { shakeLockScreen(); showToast('error', 'Incorrect PIN Number!'); }
+                }).catch(e => { toggleLoading(false); closeLockScreen(); Swal.fire('Error', 'Network Error: ' + e.message, 'error'); });
+            }, "Enter PIN to Delete Payslip");
         }
 
-        function askPasswordForUpdate() {
-            Swal.fire({
-                title: 'Update Locked',
-                html: 'Enter Admin PIN to <b style="color:#007bff">UPDATE</b> this record',
-                input: 'password',
-                inputAttributes: { autocapitalize: 'off', placeholder: 'Enter 4-digit PIN' },
-                iconHtml: '<i class="fas fa-lock" style="font-size: 3rem; color: #007bff;"></i>',
-                customClass: { icon: 'swal2-custom-icon' },
-                showCancelButton: true,
-                confirmButtonText: 'Unlock & Update',
-                confirmButtonColor: '#007bff'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    performUpdate(result.value);
-                }
-            });
-        }
+        function initiateUpdate() { openLockScreen((pin) => { performUpdate(pin); }, "Enter PIN to Save Changes"); }
 
         function editRecord(item) {
             let data = item.data;
-            // Assuming the structure is: [Timestamp(0), monthYear(1), empName(2), empId(3), designation(4), basic(5), allowance(6), ot(7), bonus(8), totalEarn(9), loan(10), advance(11), late(12), leave(13), totalDeduct(14), netPay(15), printDate(16), workedDays(17), row]
-            let workedDaysIndex = 17; // Index 17 for workedDays
+            document.getElementById('editRowIndex').value = item.row; document.getElementById('monthYear').value = data[1];
+            document.getElementById('empSearch').value = data[2]; document.getElementById('empId').value = data[3]; document.getElementById('designation').value = data[4];
+            
+            document.getElementById('selectedEmpContent').innerHTML = `
+                <div class="selected-emp-view">
+                    <div class="selected-avatar" style="background:#1e293b;">${getRoleIcon(data[4])}</div>
+                    <div><span style="font-weight:700; display:block; line-height:1.2;">${data[2]}</span><span style="font-size:12px; color:#64748b;">${data[3]} - ${data[4]}</span></div>
+                </div>
+            `;
 
-            document.getElementById('editRowIndex').value = item.row;
-            document.getElementById('monthYear').value = data[1];
-            document.getElementById('empSearch').value = data[2]; // Name
-            document.getElementById('empId').value = data[3]; // ID
-            document.getElementById('designation').value = data[4];
-            document.getElementById('basic').value = data[5];
-            document.getElementById('allowance').value = data[6];
-            document.getElementById('ot').value = data[7];
-            document.getElementById('bonus').value = data[8];
-            document.getElementById('loan').value = data[10];
-            document.getElementById('advance').value = data[11];
-            document.getElementById('late').value = data[12];
-            document.getElementById('leave').value = data[13];
-            document.getElementById('workedDays').value = data[workedDaysIndex] || ''; // Worked Days
+            document.getElementById('basic').value = data[5]; document.getElementById('allowance').value = data[6]; document.getElementById('ot').value = data[7];
+            document.getElementById('bonus').value = data[8]; document.getElementById('loan').value = data[10]; document.getElementById('advance').value = data[11];
+            document.getElementById('late').value = data[12]; document.getElementById('leave').value = data[13]; document.getElementById('workedDays').value = data[17] || ''; 
 
-            calculate();
-            switchTab('generate');
-            document.getElementById('saveBtn').style.display = 'none';
-            document.getElementById('updateBtn').style.display = 'block';
-            document.getElementById('cancelBtn').style.display = 'block';
-            Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Editing Mode Enabled', timer: 3000, showConfirmButton: false });
+            calculate(); executeSwitchTab('generate');
+            document.getElementById('saveBtn').style.display = 'none'; document.getElementById('updateBtn').style.display = 'flex'; document.getElementById('cancelBtn').style.display = 'flex';
+            showToast('info', 'Editing Mode Enabled');
         }
 
         function performUpdate(password) {
             toggleLoading(true);
-            let formData = getFormData();
-            formData.action = 'updatePayslip';
-            formData.rowIndex = document.getElementById('editRowIndex').value;
-            formData.password = password;
-
+            let formData = getFormData(); formData.action = 'updatePayslip'; formData.rowIndex = document.getElementById('editRowIndex').value; formData.password = password;
             fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(formData) }).then(res => res.json()).then(data => {
                 toggleLoading(false);
                 if(data.result === 'Success') {
-                    Swal.fire('Updated!', 'Record updated successfully.', 'success');
-                    resetForm();
-                    loadHistory();
-                } else {
-                    Swal.fire('Access Denied', 'Incorrect PIN Number!', 'error');
-                }
-            }).catch(e => {
-                toggleLoading(false);
-                Swal.fire('Error', 'Network or Script Error: ' + e.message, 'error');
-            });
+                    closeLockScreen();
+                    showToast('success', 'Record updated successfully!'); clearDraft(); resetForm(); loadHistory(); 
+                } else { shakeLockScreen(); showToast('error', 'Incorrect PIN Number!'); }
+            }).catch(e => { toggleLoading(false); closeLockScreen(); Swal.fire('Error', 'Network Error: ' + e.message, 'error'); });
         }
 
         function resetForm() {
-            document.querySelectorAll('input').forEach(i => {
-                if(i.id !== 'empSearch' && i.id !== 'monthYear') { 
-                    i.value = ''; // Keep search and month input to easily start new payslip
-                }
-                // Also clear any warning classes
-                i.classList.remove('input-warning');
-            });
-            document.getElementById('saveBtn').style.display = 'block';
-            document.getElementById('updateBtn').style.display = 'none';
-            document.getElementById('cancelBtn').style.display = 'none';
-            calculate();
+            document.querySelectorAll('input').forEach(i => { if(i.id !== 'monthYear') i.value = ''; i.classList.remove('input-warning'); });
+            document.getElementById('selectedEmpContent').innerHTML = '<i class="fas fa-search"></i> Click to select employee';
+            document.getElementById('selectedEmpDisplay').classList.remove('input-warning');
+            document.getElementById('saveBtn').style.display = 'flex'; document.getElementById('updateBtn').style.display = 'none'; document.getElementById('cancelBtn').style.display = 'none';
+            calculate(); clearDraft();
         }
 
-        // --- New function to remove warning class when user interacts ---
-        function setupInputClearWarning() {
-            const requiredInputs = document.querySelectorAll('#empSearch, #monthYear, #workedDays');
-            requiredInputs.forEach(input => {
-                input.addEventListener('input', () => {
-                    if (input.value.trim() !== '') {
-                        input.classList.remove('input-warning');
-                    }
-                });
-                input.addEventListener('focus', () => {
-                    input.classList.remove('input-warning');
-                });
-            });
-        }
+        function setupInputClearWarning() { document.querySelectorAll('#monthYear, #workedDays').forEach(input => { input.addEventListener('input', () => input.classList.remove('input-warning')); }); }
+
         // --- EMPLOYEE MANAGEMENT FUNCTIONS ---
-
         function saveEmployee() {
-             let name = document.getElementById('new_name').value;
-             let id = document.getElementById('new_id').value;
-             let desig = document.getElementById('new_designation').value;
-             if(!name || !id) return Swal.fire('Error', 'Fill Employee Name and ID', 'warning');
-             
-             // Check for duplicate ID
-             if (employees.some(e => e[1] === id)) {
-                return Swal.fire('Error', `Employee ID ${id} already exists.`, 'error');
-            }
+             let name = document.getElementById('new_name').value; let id = document.getElementById('new_id').value; let desig = document.getElementById('new_designation').value;
+             if(!name || !id) return showToast('warning', 'Fill Employee Name and ID');
+             if (employees.some(e => e[1] === id)) return Swal.fire('Error', `Employee ID ${id} already exists.`, 'error');
 
              toggleLoading(true);
              fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "addEmployee", name: name, id: id, designation: desig }) })
              .then(res => res.json()).then(data => {
                  toggleLoading(false);
-                 if(data.result === 'Success') {
-                    Swal.fire('Success', 'Employee Added', 'success');
-                    document.getElementById('new_name').value = "";
-                    document.getElementById('new_id').value = "";
-                    document.getElementById('new_designation').value = "";
-                    loadEmployees(); // Reload datalist
-                    loadEmployeeList(); // Reload table list
-                 } else {
-                    Swal.fire('Error', 'Failed to add employee.', 'error');
-                 }
-             }).catch(e => {
-                toggleLoading(false);
-                Swal.fire('Error', 'Network or Script Error: ' + e.message, 'error');
+                 if(data.result === 'Success') { showToast('success', 'Employee Added Successfully'); document.getElementById('new_name').value = ""; document.getElementById('new_id').value = ""; document.getElementById('new_designation').value = ""; loadEmployees(); loadEmployeeList(); } 
+                 else { Swal.fire('Error', 'Failed to add employee.', 'error'); }
              });
         }
 
         function loadEmployeeList() {
-            let tbody = document.getElementById('employeeListBody');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading employee list...</td></tr>';
-
+            showSkeleton('employeeListBody', 4);
             fetch(SCRIPT_URL + "?action=getEmployees").then(res => res.json()).then(data => {
-                // data format: [Name, ID, Designation, RowIndex]
-                employees = data; // Update global list as well
-                tbody.innerHTML = "";
-                if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No employees found</td></tr>'; return; }
-                
+                employees = data; let tbody = document.getElementById('employeeListBody'); tbody.innerHTML = "";
+                if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 30px; color: #64748b;">No employees found</td></tr>'; return; }
                 data.forEach(emp => {
                     let tr = document.createElement('tr');
-                    // Data is structured as [Name, ID, Designation, RowIndex]
-                    const name = emp[0];
-                    const id = emp[1];
-                    const designation = emp[2];
-                    const rowIndex = emp[3]; 
-
                     tr.innerHTML = `
-                        <td>${id}</td>
-                        <td>${name}</td>
-                        <td>${designation}</td>
+                        <td style="font-weight: 700; color: #0f172a;">${emp[1]}</td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <div class="emp-avatar" style="width:36px; height:36px; min-width:36px; font-size:15px; border-width:1px; background:#eff6ff; color:#2563eb; border-color:#bfdbfe;">${getRoleIcon(emp[2])}</div>
+                                <span style="font-weight: 600; color: #0f172a;">${emp[0]}</span>
+                            </div>
+                        </td>
+                        <td style="font-weight: 500; color: #475569;">${emp[2]}</td>
                         <td><div class="action-btns">
-                            <button class="icon-btn" style="background:#ffc107;" onclick='editEmployee(${JSON.stringify(emp)})'><i class="fas fa-edit"></i></button>
-                            <button class="icon-btn" style="background:#dc3545;" onclick="deleteEmployee(${rowIndex})"><i class="fas fa-trash"></i></button>
+                            <button class="icon-btn edit-btn" onclick='editEmployee(${JSON.stringify(emp)})' title="Edit"><i class="fas fa-edit"></i></button>
+                            <button class="icon-btn del-btn" onclick="deleteEmployee(${emp[3]})" title="Delete"><i class="fas fa-trash"></i></button>
                         </div></td>`;
                     tbody.appendChild(tr);
                 });
-            }).catch(e => {
-                tbody.innerHTML = '<tr><td colspan="4" style="color:red; text-align:center;">Error loading list. Check script URL.</td></tr>';
             });
         }
 
         function editEmployee(empData) {
             Swal.fire({
-                title: `Edit Employee: ${empData[0]}`,
+                title: `Edit Employee`,
                 html: `
                     <div style="text-align:left;">
-                        <label for="swal-name" style="display:block; margin-top:10px;">Name</label>
-                        <input id="swal-name" class="swal2-input" value="${empData[0]}">
-                        <label for="swal-id" style="display:block; margin-top:10px;">Employee ID</label>
-                        <input id="swal-id" class="swal2-input" value="${empData[1]}" readonly style="background:#eee;">
-                        <label for="swal-designation" style="display:block; margin-top:10px;">Designation</label>
-                        <input id="swal-designation" class="swal2-input" value="${empData[2]}">
+                        <label for="swal-name" style="display:block; margin-top:10px; font-size: 13px;">Name</label>
+                        <input id="swal-name" class="swal2-input" value="${empData[0]}" style="margin:0; width:100%; box-sizing:border-box; height:45px;">
+                        <label for="swal-id" style="display:block; margin-top:15px; font-size: 13px;">Employee ID</label>
+                        <input id="swal-id" class="swal2-input" value="${empData[1]}" readonly style="margin:0; width:100%; box-sizing:border-box; background:#f1f5f9; height:45px;">
+                        <label for="swal-designation" style="display:block; margin-top:15px; font-size: 13px;">Designation</label>
+                        <input id="swal-designation" class="swal2-input" value="${empData[2]}" style="margin:0; width:100%; box-sizing:border-box; height:45px;">
                     </div>
                 `,
-                focusConfirm: false,
-                showCancelButton: true,
-                confirmButtonText: 'Save Changes',
-                preConfirm: () => {
-                    return {
-                        name: document.getElementById('swal-name').value,
-                        id: document.getElementById('swal-id').value,
-                        designation: document.getElementById('swal-designation').value,
-                        rowIndex: empData[3]
-                    };
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    performEmployeeUpdate(result.value);
-                }
-            });
+                focusConfirm: false, showCancelButton: true, confirmButtonText: 'Save Changes', confirmButtonColor: '#2563eb',
+                preConfirm: () => ({ name: document.getElementById('swal-name').value, id: document.getElementById('swal-id').value, designation: document.getElementById('swal-designation').value, rowIndex: empData[3] })
+            }).then((result) => { if (result.isConfirmed) performEmployeeUpdate(result.value); });
         }
 
         function performEmployeeUpdate(data) {
-            toggleLoading(true);
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({ 
-                    action: 'updateEmployee', 
-                    name: data.name, 
-                    id: data.id, // ID is used for lookup, but it is readonly
-                    designation: data.designation,
-                    rowIndex: data.rowIndex
-                })
-            }).then(res => res.json()).then(data => {
-                toggleLoading(false);
-                if(data.result === 'Success') {
-                    Swal.fire('Updated!', 'Employee details updated successfully.', 'success');
-                    loadEmployees(); 
-                    loadEmployeeList(); 
-                } else {
-                    Swal.fire('Error', 'Failed to update employee details.', 'error');
-                }
-            }).catch(e => {
-                toggleLoading(false);
-                Swal.fire('Error', 'Network or Script Error: ' + e.message, 'error');
-            });
+            toggleLoading(true); fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateEmployee', name: data.name, id: data.id, designation: data.designation, rowIndex: data.rowIndex }) })
+            .then(res => res.json()).then(data => { toggleLoading(false); if(data.result === 'Success') { showToast('success', 'Employee updated!'); loadEmployees(); loadEmployeeList(); } });
         }
-
 
         function deleteEmployee(rowIndex) {
-            Swal.fire({
-                title: 'Security Access',
-                html: 'Enter Admin PIN to <b style="color:red">DELETE</b> this employee',
-                input: 'password',
-                inputAttributes: { autocapitalize: 'off', placeholder: 'Enter 4-digit PIN' },
-                iconHtml: '<i class="fas fa-user-times" style="font-size: 3rem; color: #dc3545;"></i>',
-                customClass: { icon: 'swal2-custom-icon' },
-                showCancelButton: true,
-                confirmButtonText: 'Unlock & Delete',
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    toggleLoading(true);
-                    fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'deleteEmployee', rowIndex: rowIndex, password: result.value })
-                    }).then(res => res.json()).then(data => {
-                        toggleLoading(false);
-                        if(data.result === 'Success') {
-                            Swal.fire('Deleted!', 'Employee deleted successfully.', 'success');
-                            loadEmployees(); // Reload datalist
-                            loadEmployeeList(); // Reload table list
-                        } else {
-                            Swal.fire('Access Denied', 'Incorrect PIN Number!', 'error');
-                        }
-                    }).catch(e => {
-                        toggleLoading(false);
-                        Swal.fire('Error', 'Network or Script Error: ' + e.message, 'error');
-                    });
-                }
-            });
+            openLockScreen((pin) => {
+                toggleLoading(true); fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteEmployee', rowIndex: rowIndex, password: pin }) })
+                .then(res => res.json()).then(data => {
+                    toggleLoading(false);
+                    if(data.result === 'Success') { closeLockScreen(); showToast('success', 'Employee deleted successfully.'); loadEmployees(); loadEmployeeList(); } 
+                    else { shakeLockScreen(); showToast('error', 'Incorrect PIN!'); }
+                });
+            }, "Enter PIN to Delete Employee");
         }
 
-
         function setupEnterKey() {
-            let inputs = document.querySelectorAll("input, select");
+            let inputs = document.querySelectorAll("input.calc");
             inputs.forEach((input, index) => {
                 input.addEventListener("keydown", function(e) {
-                    if (e.key === "Enter") {
-                        e.preventDefault();
-                        if (input.id === 'leave') {
-                            submitPayslip('save');
-                            return;
-                        }
-                        if (inputs[index + 1]) inputs[index + 1].focus();
-                    }
+                    if (e.key === "Enter") { e.preventDefault(); if (input.id === 'leave') submitPayslip('save'); else if (inputs[index + 1]) inputs[index + 1].focus(); }
                 });
             });
         }
