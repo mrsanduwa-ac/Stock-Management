@@ -254,6 +254,12 @@
         };
         window.requestAnimationFrame(step);
     }
+        // --- AUTOMATIC LIVE SYNC ---
+// හැම විනාඩි 5කට සැරයක්ම ඔටෝම ඩේටා අප්ඩේට් වෙන්න
+setInterval(() => {
+    console.log("Auto-syncing inventory data...");
+    fetchInventoryData(false);
+}, 1000 * 60 * 5);
 </script>
 </body>
 </html>
