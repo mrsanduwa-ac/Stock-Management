@@ -112,137 +112,148 @@
     </div>
 
     <script>
-        // 🔴🔴🔴 ඔයාගේ අලුත් Web App URL එක මෙතන දාන්න 🔴🔴🔴
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby4UFEbtss5DhF7xHjoo9Khz7S8x7GV-FkWYh_X1pzPqi2quGEi2iwk_dKUiwQ1Hngz/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby4UFEbtss5DhF7xHjoo9Khz7S8x7GV-FkWYh_X1pzPqi2quGEi2iwk_dKUiwQ1Hngz/exec";
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const cachedData = localStorage.getItem('oms_inventoryCache');
-            if(cachedData) updateUI(JSON.parse(cachedData));
-            fetchInventoryData(false);
-        });
+    document.addEventListener('DOMContentLoaded', () => {
+        const cachedData = localStorage.getItem('oms_inventoryCache');
+        if(cachedData) updateUI(JSON.parse(cachedData));
+        fetchInventoryData(false);
+    });
 
-        async function fetchInventoryData(isManual = false) {
-            const syncText = document.getElementById('syncText');
-            const statusIndicator = document.getElementById('statusIndicator');
+    async function fetchInventoryData(isManual = false) {
+        const syncText = document.getElementById('syncText');
+        const statusIndicator = document.getElementById('statusIndicator');
+        
+        if(isManual) syncText.textContent = "Syncing...";
+        statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span> Fetching Live Data...`;
+        statusIndicator.className = "text-xs font-bold px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full flex items-center gap-2";
+
+        try {
+            // 🔴 වෙනස: headers: { 'Content-Type': 'text/plain' } එකතු කර ඇත
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST', 
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ action: 'getInventoryData' })
+            });
+            const data = await response.json();
             
-            if(isManual) syncText.textContent = "Syncing...";
-            statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span> Fetching Live Data...`;
-            statusIndicator.className = "text-xs font-bold px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full flex items-center gap-2";
-
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST', body: JSON.stringify({ action: 'getInventoryData' })
-                });
-                const data = await response.json();
-                
-                if(data.status === 'success') {
-                    localStorage.setItem('oms_inventoryCache', JSON.stringify(data));
-                    updateUI(data);
-                    statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-500"></span> Live Synced`;
-                    statusIndicator.className = "text-xs font-bold px-3 py-1 bg-green-100 text-green-700 rounded-full flex items-center gap-2";
-                }
-            } catch(e) {
-                statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> Offline Mode`;
-                statusIndicator.className = "text-xs font-bold px-3 py-1 bg-red-100 text-red-700 rounded-full flex items-center gap-2";
-            }
-            if(isManual) syncText.textContent = "Sync";
-        }
-
-        function updateUI(data) {
-            animateValue("totalVal", document.getElementById("totalVal").innerText, data.total, 800);
-            animateValue("usedVal", document.getElementById("usedVal").innerText, data.used, 800);
-
-            const remainCard = document.getElementById('remainingCard');
-            const remainVal = document.getElementById('remainVal');
-            const emptyLabel = document.getElementById('emptyLabel');
-            const progressBar = document.getElementById('progressBar');
-            const alertMsg = document.getElementById('alertMessage');
-            const pctText = document.getElementById('percentageText');
-
-            if (data.remaining <= 0) {
-                remainVal.classList.add('hidden'); emptyLabel.classList.remove('hidden');
-                progressBar.style.width = '100%'; progressBar.className = "progress-fill bg-red-500";
-                remainCard.className = "stat-card bg-glass-dark";
-                pctText.innerText = '100% Depleted'; pctText.classList.add('text-red-500');
-                alertMsg.innerHTML = '🚨 SYSTEM HALTED: Out of stock. Update inventory immediately.';
-                alertMsg.className = "text-sm font-black text-red-600 mt-4 text-center";
+            if(data.status === 'success') {
+                localStorage.setItem('oms_inventoryCache', JSON.stringify(data));
+                updateUI(data);
+                statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-500"></span> Live Synced`;
+                statusIndicator.className = "text-xs font-bold px-3 py-1 bg-green-100 text-green-700 rounded-full flex items-center gap-2";
             } else {
-                remainVal.classList.remove('hidden'); emptyLabel.classList.add('hidden');
-                pctText.classList.remove('text-red-500');
-                animateValue("remainVal", document.getElementById("remainVal").innerText, data.remaining, 800);
+                console.error("Server Error:", data.message);
+            }
+        } catch(e) {
+            statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> Offline Mode`;
+            statusIndicator.className = "text-xs font-bold px-3 py-1 bg-red-100 text-red-700 rounded-full flex items-center gap-2";
+        }
+        if(isManual) syncText.textContent = "Sync";
+    }
 
-                const usedPercentage = data.total > 0 ? (data.used / data.total) * 100 : 0;
-                progressBar.style.width = usedPercentage + '%';
-                pctText.innerText = usedPercentage.toFixed(1) + '% Used';
+    function updateUI(data) {
+        animateValue("totalVal", document.getElementById("totalVal").innerText, data.total, 800);
+        animateValue("usedVal", document.getElementById("usedVal").innerText, data.used, 800);
 
-                if (data.remaining <= 100) {
-                    progressBar.className = "progress-fill bg-red-500";
-                    remainCard.className = "stat-card bg-glass-red animate-pulse";
-                    alertMsg.innerHTML = '⚠️ CRITICAL: Stock extremely low. Order now.';
-                    alertMsg.className = "text-sm font-black text-red-600 mt-4 text-center";
-                } else if (data.remaining <= 200) {
-                    progressBar.className = "progress-fill bg-yellow-500";
-                    remainCard.className = "stat-card bg-glass-red";
-                    alertMsg.innerHTML = '⚠️ WARNING: Stock is running low.';
-                    alertMsg.className = "text-sm font-bold text-yellow-600 mt-4 text-center";
-                } else {
-                    progressBar.className = "progress-fill bg-green-500";
-                    remainCard.className = "stat-card bg-glass-green";
-                    alertMsg.innerHTML = '✅ Stock levels are healthy.';
-                    alertMsg.className = "text-sm font-bold text-green-600 mt-4 text-center";
-                }
+        const remainCard = document.getElementById('remainingCard');
+        const remainVal = document.getElementById('remainVal');
+        const emptyLabel = document.getElementById('emptyLabel');
+        const progressBar = document.getElementById('progressBar');
+        const alertMsg = document.getElementById('alertMessage');
+        const pctText = document.getElementById('percentageText');
+
+        if (data.remaining <= 0) {
+            remainVal.classList.add('hidden'); emptyLabel.classList.remove('hidden');
+            progressBar.style.width = '100%'; progressBar.className = "progress-fill bg-red-500";
+            remainCard.className = "stat-card bg-glass-dark";
+            pctText.innerText = '100% Depleted'; pctText.classList.add('text-red-500');
+            alertMsg.innerHTML = '🚨 SYSTEM HALTED: Out of stock. Update inventory immediately.';
+            alertMsg.className = "text-sm font-black text-red-600 mt-4 text-center";
+        } else {
+            remainVal.classList.remove('hidden'); emptyLabel.classList.add('hidden');
+            pctText.classList.remove('text-red-500');
+            animateValue("remainVal", document.getElementById("remainVal").innerText, data.remaining, 800);
+
+            const usedPercentage = data.total > 0 ? (data.used / data.total) * 100 : 0;
+            progressBar.style.width = usedPercentage + '%';
+            pctText.innerText = usedPercentage.toFixed(1) + '% Used';
+
+            if (data.remaining <= 100) {
+                progressBar.className = "progress-fill bg-red-500";
+                remainCard.className = "stat-card bg-glass-red animate-pulse";
+                alertMsg.innerHTML = '⚠️ CRITICAL: Stock extremely low. Order now.';
+                alertMsg.className = "text-sm font-black text-red-600 mt-4 text-center";
+            } else if (data.remaining <= 200) {
+                progressBar.className = "progress-fill bg-yellow-500";
+                remainCard.className = "stat-card bg-glass-red";
+                alertMsg.innerHTML = '⚠️ WARNING: Stock is running low.';
+                alertMsg.className = "text-sm font-bold text-yellow-600 mt-4 text-center";
+            } else {
+                progressBar.className = "progress-fill bg-green-500";
+                remainCard.className = "stat-card bg-glass-green";
+                alertMsg.innerHTML = '✅ Stock levels are healthy.';
+                alertMsg.className = "text-sm font-bold text-green-600 mt-4 text-center";
             }
         }
+    }
 
-        const modal = document.getElementById('stockModal');
-        const modalContent = modal.querySelector('div');
-        function openModal() {
-            document.getElementById('newQty').value = "";
-            modal.classList.remove('hidden');
-            setTimeout(() => { modal.classList.remove('opacity-0'); modalContent.classList.remove('scale-95'); }, 10);
-            document.getElementById('newQty').focus();
-        }
-        function closeModal() {
-            modal.classList.add('opacity-0'); modalContent.classList.add('scale-95');
-            setTimeout(() => { modal.classList.add('hidden'); }, 300);
-        }
+    const modal = document.getElementById('stockModal');
+    const modalContent = modal.querySelector('div');
+    function openModal() {
+        document.getElementById('newQty').value = "";
+        modal.classList.remove('hidden');
+        setTimeout(() => { modal.classList.remove('opacity-0'); modalContent.classList.remove('scale-95'); }, 10);
+        document.getElementById('newQty').focus();
+    }
+    function closeModal() {
+        modal.classList.add('opacity-0'); modalContent.classList.add('scale-95');
+        setTimeout(() => { modal.classList.add('hidden'); }, 300);
+    }
 
-        async function submitStock() {
-            const qty = parseInt(document.getElementById('newQty').value);
-            if (!qty || qty <= 0) return Swal.fire('Error', 'Enter a valid amount.', 'error');
+    async function submitStock() {
+        const qty = parseInt(document.getElementById('newQty').value);
+        if (!qty || qty <= 0) return Swal.fire('Error', 'Enter a valid amount.', 'error');
 
-            const btn = document.getElementById('saveBtn');
-            btn.innerHTML = '<div class="spinner"></div>'; btn.disabled = true;
+        const btn = document.getElementById('saveBtn');
+        btn.innerHTML = '<div class="spinner"></div>'; btn.disabled = true;
 
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST', body: JSON.stringify({ action: 'addStockData', addedQty: qty })
-                });
-                const data = await response.json();
-                if(data.status === 'success') {
-                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Inventory Updated', showConfirmButton: false, timer: 2000 });
-                    closeModal();
-                    fetchInventoryData(true); 
-                }
-            } catch(e) {
-                Swal.fire('Network Error', 'Check your connection.', 'error');
+        try {
+            // 🔴 වෙනස: headers: { 'Content-Type': 'text/plain' } එකතු කර ඇත
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST', 
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ action: 'addStockData', addedQty: qty })
+            });
+            const data = await response.json();
+            
+            // 🔴 වෙනස: Error එකක් ආවොත් ඒක පෙන්නන්න හදලා තියෙනවා
+            if(data.status === 'success') {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Stock Updated Successfully!', showConfirmButton: false, timer: 3000 });
+                closeModal();
+                fetchInventoryData(true); 
+            } else {
+                Swal.fire('Update Failed', data.message || 'Unknown error from server.', 'error');
             }
-            btn.innerHTML = 'Update'; btn.disabled = false;
+        } catch(e) {
+            Swal.fire('Network Error', 'Check your connection. Error: ' + e.message, 'error');
         }
+        btn.innerHTML = 'Update'; btn.disabled = false;
+    }
 
-        function animateValue(id, startStr, end, duration) {
-            let start = parseInt(startStr) || 0;
-            let obj = document.getElementById(id);
-            if(start === end) { obj.innerHTML = end; return; }
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                obj.innerHTML = Math.floor(progress * (end - start) + start);
-                if (progress < 1) window.requestAnimationFrame(step);
-            };
-            window.requestAnimationFrame(step);
-        }
-    </script>
+    function animateValue(id, startStr, end, duration) {
+        let start = parseInt(startStr) || 0;
+        let obj = document.getElementById(id);
+        if(start === end) { obj.innerHTML = end; return; }
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            obj.innerHTML = Math.floor(progress * (end - start) + start);
+            if (progress < 1) window.requestAnimationFrame(step);
+        };
+        window.requestAnimationFrame(step);
+    }
+</script>
 </body>
 </html>
