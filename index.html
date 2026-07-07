@@ -59,9 +59,6 @@
         .dashboard-item h2 { color: var(--secondary-color); margin-bottom: 10px; font-weight: 700; }
         .dashboard-item p { color: #555; }
 
-        /* Highlight Inventory Box */
-        .inventory-box { border: 2px solid #0ea5e9; background: linear-gradient(135deg, #f0f9ff, #ffffff); }
-
         #energy-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; display: none; justify-content: center; align-items: center; background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(15px); overflow: hidden; }
         .energy-core { width: 10px; height: 10px; background: var(--primary-color); border-radius: 50%; position: absolute; box-shadow: 0 0 30px var(--primary-color); animation: pulseCore 0.5s infinite alternate; }
         .particle { position: absolute; width: 100px; height: 3px; background: linear-gradient(90deg, transparent, var(--primary-dark), var(--secondary-color)); transform-origin: right center; opacity: 0; }
@@ -146,13 +143,6 @@
                 <h2>Return</h2>
                 <p>Process product returns</p>
             </a>
-            
-            <a href="inventory.html" class="dashboard-item inventory-box">
-                <div class="icon" style="color: #0ea5e9;"><i class="fas fa-box-open"></i></div>
-                <h2 style="color: #0284c7;">Bag Inventory</h2>
-                <p>Smart stock management</p>
-            </a>
-
             <a href="stock.html" class="dashboard-item">
                 <div class="icon"><i class="fas fa-boxes"></i></div>
                 <h2>Stock</h2>
@@ -178,19 +168,29 @@
                 <h2>PaySlip Generator</h2>
                 <p>Generate employee payslips</p>
             </a>
+            
+            <!-- NEW INVENTORY LINK (Moved to the end, styled normally, bag icon) -->
+            <a href="inventory.html" class="dashboard-item">
+                <div class="icon"><i class="fas fa-shopping-bag"></i></div>
+                <h2>Bag Inventory</h2>
+                <p>Smart stock management</p>
+            </a>
         </div>
     </div>
 
+    <!-- ENERGY OVERLAY (For Loading) -->
     <div id="energy-overlay">
         <div class="energy-core"></div>
     </div>
     <div id="flash-overlay"></div>
 
+    <!-- Branding -->
     <a href="https://www.facebook.com/share/17cb414CrE/?mibextid=wwXIfr" id="branding-link-trigger" class="branding-link">
         <span class="powered-by">Powered By</span>
         <img src="smartx.png" alt="DesignVerse" class="branding-logo" onerror="this.src='https://placehold.co/100x30?text=DesignVerse'">
     </a>
 
+    <!-- Gear Overlay -->
     <div id="gear-overlay">
         <div class="gears-container">
             <div class="gear gear-1"><i class="fas fa-cog"></i></div>
@@ -200,6 +200,7 @@
         <div class="loading-text">REDIRECTING...</div>
     </div>
 
+    <!-- Error Alert Overlay -->
     <div id="custom-alert-overlay">
         <div class="alert-box">
             <h3 id="alert-title"></h3>
@@ -208,6 +209,9 @@
         </div>
     </div>
 
+    <!-- ============================================== -->
+    <!-- STOCK WARNING POPUP MODAL                      -->
+    <!-- ============================================== -->
     <div id="stock-warning-modal">
         <div class="warning-box">
             <i class="fas fa-exclamation-triangle warn-icon"></i>
@@ -226,15 +230,18 @@
         </div>
     </div>
 
+    <!-- FLOATING SIDE WIDGET -->
     <div id="floating-warning" onclick="reopenStockWarning()">
         <i class="fas fa-exclamation-circle"></i>
         <div style="font-weight:700; font-size:14px; text-transform:uppercase;">
             Low Stock: <span id="float-qty" style="font-size:18px; font-weight:900; margin-left:3px;">0</span>
         </div>
     </div>
+    <!-- ============================================== -->
+
     <script>
         // 🔴🔴🔴 ඔයාගේ අලුත් Inventory Web App URL එක මෙතන දාන්න 🔴🔴🔴
-        const INVENTORY_API_URL = "https://script.google.com/macros/s/AKfycby4UFEbtss5DhF7xHjoo9Khz7S8x7GV-FkWYh_X1pzPqi2quGEi2iwk_dKUiwQ1Hngz/exec"; 
+        const INVENTORY_API_URL = "https://script.google.com/macros/s/AKfycbzawEyGxVZzkAgmR6Sa1Wrsiosoeu8hHoKcrOfzJZx4beKYj1H0srpJB6g4MH7TRhqh/exec"; 
 
         const firebaseConfig = {
             apiKey: "AIzaSyCtRXYy0TZvYdOKP-0dV4ntNjiA4Q1jQs8",
@@ -355,19 +362,19 @@
         function logout() { firebase.auth().signOut().then(() => location.reload()); }
 
         // ==============================================================
-        // STOCK WARNING LOGIC (NEW)
+        // STOCK WARNING LOGIC
         // ==============================================================
         function checkStockOnLogin() {
-            if(!INVENTORY_API_URL || INVENTORY_API_URL === "YOUR_NEW_WEB_APP_URL_HERE") return;
+            if(!INVENTORY_API_URL) return;
 
             fetch(INVENTORY_API_URL, {
                 method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify({ action: 'getInventoryData' })
             })
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success' && data.remaining <= 200) {
-                    // Dashboard Animation එක ඉවර වෙනකම් තත්පර 1.5ක් ඉඳලා Popup එක පෙන්නනවා
                     setTimeout(() => {
                         document.getElementById('warn-qty').innerText = data.remaining;
                         document.getElementById('float-qty').innerText = data.remaining;
@@ -378,19 +385,16 @@
         }
 
         function closeStockWarning() {
-            // ලොකු Popup එක වහලා, සයිඩ් එකේ පුංචි Widget එක පෙන්වනවා
             document.getElementById('stock-warning-modal').style.display = 'none';
             const floater = document.getElementById('floating-warning');
             floater.style.display = 'flex';
             
-            // Animation slide-in
             setTimeout(() => {
                 floater.style.right = '0px'; 
             }, 100);
         }
 
         function reopenStockWarning() {
-            // සයිඩ් එකේ Widget එක එබුවම ආයේ ලොකු Popup එක එනවා
             document.getElementById('floating-warning').style.right = '-250px';
             setTimeout(() => {
                 document.getElementById('floating-warning').style.display = 'none';
