@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WOF Enterprise OS</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #0f172a; overflow: hidden; margin: 0; }
+        
+        .view-section { display: none; opacity: 0; transition: opacity 0.4s ease; }
+        .view-section.active { display: flex; opacity: 1; }
+        
+        #auth-view { 
+            background: url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat fixed; 
+            position: relative; 
+            min-height: calc(100vh - 40px);
+        }
+        #auth-view::before { 
+            content: ''; position: absolute; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px); z-index: 1;
+        }
+        .auth-content { position: relative; z-index: 10; display: flex; width: 100%; height: calc(100vh - 40px); flex-direction: column; }
+        @media (min-width: 768px) { .auth-content { flex-direction: row; } }
+
+        .custom-input {
+            background-color: rgba(255, 255, 255, 0.95); border: 2px solid transparent; border-radius: 16px;
+            padding: 14px 20px; font-weight: 700; color: #1e293b; transition: all 0.3s ease; width: 100%; box-sizing: border-box;
+            font-size: 16px; font-family: 'Inter', sans-serif; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .custom-input:focus { background-color: #ffffff; border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); outline: none; }
+        .custom-input::placeholder { color: #94a3b8; font-weight: 600; }
+
+        .flip-container { perspective: 1500px; width: 100%; max-width: 420px; margin: 0 auto; }
+        .flipper { position: relative; width: 100%; height: 480px; transition: transform 0.8s cubic-bezier(0.4, 0.2, 0.2, 1); transform-style: preserve-3d; }
+        .flip-container.flipped .flipper { transform: rotateY(180deg); }
+        .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 32px; }
+        .back { transform: rotateY(180deg); }
+        
+        .spinner { border: 3px solid rgba(255,255,255,0.3); border-top-color: #ffffff; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .app-card { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid #f1f5f9; text-decoration: none; display: flex; flex-direction: column; }
+        .app-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01); border-color: #cbd5e1; }
+        .icon-wrapper { transition: all 0.4s ease; }
+        .app-card:hover .icon-wrapper { transform: scale(1.15) translateY(-2px); color: #2563eb; }
+
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        #cursor-glow {
+            position: fixed; width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0) 60%);
+            border-radius: 50%; pointer-events: none; z-index: 9998;
+            transform: translate(-50%, -50%); transition: opacity 0.3s ease;
+        }
+
+        .star-particle {
+            position: fixed; width: 5px; height: 5px; background-color: #ffffff;
+            box-shadow: 0 0 10px 2px rgba(147, 197, 253, 0.9), 0 0 20px 5px rgba(59, 130, 246, 0.6);
+            border-radius: 50%; pointer-events: none; z-index: 9997;
+            transform: translate(-50%, -50%);
+            animation: starFade 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        @keyframes starFade {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+        }
+
+        .fade-up-element { opacity: 0; transform: translateY(20px); transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .workspace-animate .fade-up-element { opacity: 1; transform: translateY(0); }
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+        .delay-4 { transition-delay: 0.4s; }
+
+        #searchPopup::-webkit-scrollbar { width: 4px; }
+        #searchPopup::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="cursor-glow"></div>
+
+    <div id="initial-loader" class="view-section active w-full flex flex-col items-center justify-center bg-[#0f172a]" style="height: 100vh; z-index: 9999; position: absolute; top: 0; left: 0;">
+        <div class="spinner border-t-blue-500 w-12 h-12 mb-4"></div>
+        <p class="text-blue-200 text-xs font-bold tracking-widest uppercase animate-pulse">Initializing System...</p>
+    </div>
+
+    <div id="auth-view" class="view-section w-full">
+        <div class="auth-content">
+            <div class="hidden md:flex w-1/2 h-full flex-col items-start justify-center px-16 lg:px-24">
+                <img src="logo.png" alt="WOF Logo" onerror="this.src='https://placehold.co/128x128/transparent/ffffff?text=WOF'" class="w-32 h-auto max-h-32 object-contain mb-8 drop-shadow-2xl hover:scale-105 transition-transform duration-500 cursor-pointer">
+                <h1 class="text-6xl lg:text-7xl font-black tracking-tighter text-white mb-4 leading-tight drop-shadow-2xl">
+                    WORLD OUT <br><span class="text-blue-400">FASHION</span>
+                </h1>
+                <p class="text-blue-100/70 font-medium tracking-wide max-w-md text-lg leading-relaxed">
+                    Enterprise Operations System & Workspace Control Center.
+                </p>
+            </div>
+
+            <div class="w-full md:w-1/2 h-full flex flex-col justify-center items-center py-10 px-6">
+                <div class="md:hidden text-center mb-8 w-full flex flex-col items-center">
+                    <img src="logo.png" alt="WOF Logo" onerror="this.src='https://placehold.co/80x80/transparent/ffffff?text=WOF'" class="w-20 h-auto max-h-20 object-contain mx-auto mb-3 drop-shadow-xl">
+                    <h1 class="text-3xl font-black tracking-tighter text-white drop-shadow-lg">WORLD OUT <span class="text-blue-400">FASHION</span></h1>
+                </div>
+
+                <div class="flip-container" id="auth-flip-container">
+                    <div class="flipper">
+                        <!-- FRONT: LOGIN -->
+                        <div class="front bg-white/10 backdrop-blur-xl border border-white/20 p-8 shadow-2xl flex flex-col justify-center">
+                            <div class="text-center mb-8">
+                                <h2 class="text-3xl font-black text-white tracking-tight mb-2 drop-shadow-md">Welcome Back</h2>
+                                <p class="text-blue-100/80 font-medium text-sm">Sign in to your workspace.</p>
+                            </div>
+                            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
+                                <div>
+                                    <label class="block text-[10px] font-black text-blue-200 uppercase tracking-widest mb-2 ml-1">Email Address</label>
+                                    <div class="relative w-full">
+                                        <!-- Note: bg-transparent removed so the input box background works -->
+                                        <input type="email" id="loginEmail" required class="custom-input relative z-10" placeholder="Email" autocomplete="off">
+                                        <div class="absolute inset-0 pointer-events-none flex items-center z-20 overflow-hidden" style="padding-left: 22px;">
+                                            <span id="loginEmailGhost" class="text-transparent font-bold text-[16px]"></span>
+                                            <span id="loginEmailSuffix" class="text-slate-400/80 font-bold text-[16px] transition-opacity duration-200" style="opacity: 0; display: none;">@gmail.com</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-black text-blue-200 uppercase tracking-widest mb-2 ml-1">4-Digit PIN</label>
+                                    <input type="password" id="loginPin" required pattern="[0-9]{4}" maxlength="4" class="custom-input tracking-[0.5em] text-center text-xl font-black" placeholder="••••">
+                                </div>
+                                <button type="submit" id="loginBtn" class="w-full py-4 mt-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-lg transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] flex justify-center items-center gap-2 border border-blue-400/30">
+                                    <span>Sign In</span> <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                                </button>
+                            </form>
+                            <p class="text-center mt-8 text-sm font-medium text-blue-100/70">
+                                New employee? <button type="button" onclick="toggleAuth()" class="text-blue-400 font-bold hover:text-blue-300 transition-colors">Request Access</button>
+                            </p>
+                        </div>
+
+                        <!-- BACK: REGISTER -->
+                        <div class="back bg-white p-8 shadow-2xl flex flex-col justify-center border border-slate-100">
+                            <div class="text-center mb-6">
+                                <h2 class="text-3xl font-black text-slate-900 tracking-tight mb-2">Request Access</h2>
+                                <p class="text-slate-500 font-medium text-sm">Create an account for admin approval.</p>
+                            </div>
+                            <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-4">
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Full Name</label>
+                                    <input type="text" id="regName" required class="custom-input !bg-slate-50 focus:!bg-white border-slate-200" placeholder="John Doe">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Email Address</label>
+                                    <div class="relative w-full">
+                                        <input type="email" id="regEmail" required class="custom-input !bg-slate-50 focus:!bg-white border-slate-200 relative z-10" placeholder="Email" autocomplete="off">
+                                        <div class="absolute inset-0 pointer-events-none flex items-center z-20 overflow-hidden" style="padding-left: 22px;">
+                                            <span id="regEmailGhost" class="text-transparent font-bold text-[16px]"></span>
+                                            <span id="regEmailSuffix" class="text-slate-400/80 font-bold text-[16px] transition-opacity duration-200" style="opacity: 0; display: none;">@gmail.com</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Set 4-Digit PIN</label>
+                                    <input type="password" id="regPin" required pattern="[0-9]{4}" maxlength="4" class="custom-input !bg-slate-50 focus:!bg-white border-slate-200 tracking-[0.5em] text-center text-xl font-black" placeholder="••••">
+                                </div>
+                                <button type="submit" id="regBtn" class="w-full py-4 mt-2 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-lg transition-all shadow-xl flex justify-center items-center gap-2">
+                                    Submit Request
+                                </button>
+                            </form>
+                            <p class="text-center mt-6 text-sm font-medium text-slate-500">
+                                Have an account? <button type="button" onclick="toggleAuth()" class="text-blue-600 font-bold hover:text-blue-700 transition-colors">Sign In here</button>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="absolute bottom-6 left-0 w-full text-center px-4 flex flex-col items-center justify-center z-20 pointer-events-none">
+            <p class="text-[10px] font-medium text-white/60 tracking-wider pointer-events-auto">
+                © 2026 <a href="https://www.facebook.com/sandu.malli2/" target="_blank" class="text-blue-400 font-bold hover:text-blue-300 hover:underline transition-colors">CraftGrid</a> by <a href="#" target="_blank" class="text-blue-400 font-bold hover:text-blue-300 hover:underline transition-colors">Sandusha Avishkh</a>. All rights reserved.
+            </p>
+        </div>
+    </div>
+
+    <div id="workspace-view" class="view-section flex-col w-full bg-white overflow-y-auto" style="height: calc(100vh - 40px);">
+        <header class="fade-up-element delay-1 w-full px-4 md:px-8 py-4 flex justify-between items-center bg-white z-10 shrink-0 border-b border-slate-100 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="border-2 border-slate-100 rounded-xl px-4 py-2 flex flex-col bg-slate-50/50">
+                    <span class="text-sm font-black text-blue-600 leading-none" id="userNameDisplay">Name</span>
+                    <span class="text-[10px] font-bold text-slate-400 mt-1" id="userIdDisplay">user id 1234.</span>
+                </div>
+                <div id="adminShieldContainer" class="hidden">
+                    <button onclick="window.location.href='admin.html'" class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center border-2 border-emerald-100 hover:border-emerald-500 hover:bg-emerald-500 hover:text-white transition-all duration-300 hover:shadow-lg hover:shadow-emerald-200" title="Admin Control Center">
+                        <i data-lucide="shield" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-3">
+                <img src="logo.png" alt="Logo" onerror="this.style.display='none'" class="h-8 w-auto object-contain">
+                <h1 class="text-xl font-black tracking-widest uppercase text-slate-800">
+                    WORLD OUT FASHION
+                </h1>
+            </div>
+
+            <button onclick="handleLogout()" class="px-5 py-2.5 bg-red-50 hover:bg-red-500 border border-red-100 hover:border-red-500 text-red-600 hover:text-white rounded-xl font-bold text-xs transition-all flex items-center gap-2 group shadow-sm">
+                Logout <i data-lucide="log-out" class="w-4 h-4 text-red-400 group-hover:text-white"></i>
+            </button>
+        </header>
+
+        <main id="workspace-content" class="flex-grow flex flex-col items-center px-4 md:px-8 max-w-5xl mx-auto w-full min-h-0 pt-6 pb-6">
+            
+            <div class="fade-up-element delay-2 w-full relative shrink-0 mb-8 z-50">
+                <input type="text" id="appSearch" onfocus="handleSearch()" onkeyup="handleSearch()" placeholder="Search tools, reports & apps..." class="w-full px-6 py-4 pl-14 rounded-2xl border-2 border-slate-200 focus:border-blue-500 outline-none transition-all font-semibold text-slate-700 shadow-sm focus:shadow-md bg-white text-base placeholder-slate-400">
+                <i data-lucide="search" class="w-6 h-6 text-slate-400 absolute left-5 top-1/2 -translate-y-1/2"></i>
+                
+                <div id="searchPopup" class="hidden absolute top-full left-0 w-full mt-3 bg-white rounded-2xl shadow-2xl border border-slate-100 flex-col max-h-[50vh] overflow-y-auto transform origin-top transition-all">
+                </div>
+            </div>
+
+            <div class="fade-up-element delay-3 w-full grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5 shrink-0 mb-6" id="appsGrid">
+                <a href="dispatch.html" data-app="dispatch" class="app-card bg-white p-6 rounded-2xl items-center text-center">
+                    <div class="icon-wrapper w-14 h-14 bg-blue-50 rounded-2xl text-blue-500 flex items-center justify-center mb-3"><i data-lucide="truck" class="w-7 h-7"></i></div>
+                    <h3 class="font-black text-slate-800 text-sm md:text-base mb-1">Dispatch</h3>
+                    <p class="text-[10px] md:text-xs font-medium text-slate-400 line-clamp-1">Track product dispatches</p>
+                </a>
+                <a href="return.html" data-app="return" class="app-card bg-white p-6 rounded-2xl items-center text-center">
+                    <div class="icon-wrapper w-14 h-14 bg-indigo-50 rounded-2xl text-indigo-500 flex items-center justify-center mb-3"><i data-lucide="undo-2" class="w-7 h-7"></i></div>
+                    <h3 class="font-black text-slate-800 text-sm md:text-base mb-1">Return</h3>
+                    <p class="text-[10px] md:text-xs font-medium text-slate-400 line-clamp-1">Process product returns</p>
+                </a>
+                <a href="stock.html" data-app="stock" class="app-card bg-white p-6 rounded-2xl items-center text-center">
+                    <div class="icon-wrapper w-14 h-14 bg-emerald-50 rounded-2xl text-emerald-500 flex items-center justify-center mb-3"><i data-lucide="package-open" class="w-7 h-7"></i></div>
+                    <h3 class="font-black text-slate-800 text-sm md:text-base mb-1">Stock</h3>
+                    <p class="text-[10px] md:text-xs font-medium text-slate-400 line-clamp-1">Manage inventory</p>
+                </a>
+                <a href="Report.html" data-app="report" class="app-card bg-white p-6 rounded-2xl items-center text-center">
+                    <div class="icon-wrapper w-14 h-14 bg-purple-50 rounded-2xl text-purple-500 flex items-center justify-center mb-3"><i data-lucide="bar-chart-2" class="w-7 h-7"></i></div>
+                    <h3 class="font-black text-slate-800 text-sm md:text-base mb-1">Report</h3>
+                    <p class="text-[10px] md:text-xs font-medium text-slate-400 line-clamp-1">Analytics and reports</p>
+                </a>
+                <a href="Custoemersbill.html" data-app="customerbill" class="app-card bg-white p-6 rounded-2xl items-center text-center">
+                    <div class="icon-wrapper w-14 h-14 bg-rose-50 rounded-2xl text-rose-500 flex items-center justify-center mb-3"><i data-lucide="receipt" class="w-7 h-7"></i></div>
+                    <h3 class="font-black text-slate-800 text-sm md:text-base mb-1">Customer Bill</h3>
+                    <p class="text-[10px] md:text-xs font-medium text-slate-400 line-clamp-1">Generate bills</p>
+                </a>
+                <a href="lableprint.html" data-app="label" class="app-card bg-white p-6 rounded-2xl items-center text-center">
+                    <div class="icon-wrapper w-14 h-14 bg-amber-50 rounded-2xl text-amber-500 flex items-center justify-center mb-3"><i data-lucide="tags" class="w-7 h-7"></i></div>
+                    <h3 class="font-black text-slate-800 text-sm md:text-base mb-1">Label Generate</h3>
+                    <p class="text-[10px] md:text-xs font-medium text-slate-400 line-clamp-1">Excel label printing</p>
+                </a>
+                <a href="payslip.html" data-app="payslip" class="app-card bg-white p-6 rounded-2xl items-center text-center">
+                    <div class="icon-wrapper w-14 h-14 bg-teal-50 rounded-2xl text-teal-500 flex items-center justify-center mb-3"><i data-lucide="credit-card" class="w-7 h-7"></i></div>
+                    <h3 class="font-black text-slate-800 text-sm md:text-base mb-1">PaySlip Gen</h3>
+                    <p class="text-[10px] md:text-xs font-medium text-slate-400 line-clamp-1">Generate payslips</p>
+                </a>
+                <a href="inventory.html" data-app="inventory" class="app-card bg-white p-6 rounded-2xl items-center text-center">
+                    <div class="icon-wrapper w-14 h-14 bg-cyan-50 rounded-2xl text-cyan-500 flex items-center justify-center mb-3"><i data-lucide="shopping-bag" class="w-7 h-7"></i></div>
+                    <h3 class="font-black text-slate-800 text-sm md:text-base mb-1">Bag Inventory</h3>
+                    <p class="text-[10px] md:text-xs font-medium text-slate-400 line-clamp-1">Smart stock management</p>
+                </a>
+            </div>
+
+            <div id="chartContainer" class="fade-up-element delay-4 w-full flex-grow min-h-[180px] relative transition-opacity duration-1000 border border-slate-100 bg-slate-50/50 rounded-2xl p-5 shadow-sm flex flex-col">
+                <div class="flex justify-between items-center mb-3">
+                    <p class="text-xs font-black text-slate-700 uppercase tracking-widest">System Activity</p>
+                    <span class="text-[10px] font-bold text-blue-500 bg-blue-100 px-2 py-1 rounded-md">Live Analytics</span>
+                </div>
+                <div class="flex-grow relative w-full h-full">
+                    <canvas id="activityChart"></canvas>
+                </div>
+            </div>
+
+            <div class="fade-up-element delay-4 shrink-0 mt-6 mb-2 w-full flex justify-center items-center">
+                <p class="text-[10px] font-bold text-slate-300 uppercase tracking-widest text-center">Powered by Smart Solution</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAoSYrsejL1tY4l8nDehUqdfUeJ4EhvnOM",
+            authDomain: "world-out-fashion-system.firebaseapp.com",
+            projectId: "world-out-fashion-system",
+            storageBucket: "world-out-fashion-system.firebasestorage.app",
+            messagingSenderId: "694294353239",
+            appId: "1:694294353239:web:7d5b5b05b475a3ea5e5a12"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        function setupEmailAutocomplete(inputId, ghostId, suffixId) {
+            const input = document.getElementById(inputId);
+            const ghost = document.getElementById(ghostId);
+            const suffix = document.getElementById(suffixId);
+            
+            function update() {
+                const val = input.value;
+                ghost.textContent = val;
+                if (val.length > 0 && !val.includes('@')) {
+                    suffix.style.display = 'inline';
+                    suffix.style.opacity = '1';
+                } else {
+                    suffix.style.opacity = '0';
+                    setTimeout(() => {
+                        if(suffix.style.opacity === '0') suffix.style.display = 'none';
+                    }, 200);
+                }
+            }
+            
+            function commitSuffix() {
+                const val = input.value;
+                if (val.length > 0 && !val.includes('@')) {
+                    input.value = val + '@gmail.com';
+                    update(); 
+                }
+            }
+            
+            input.addEventListener('input', update);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === 'Tab') commitSuffix();
+            });
+            input.addEventListener('blur', commitSuffix);
+            update();
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (!sessionStorage.getItem("wof_app_started")) {
+                auth.signOut().catch(e => console.log(e));
+                sessionStorage.setItem("wof_app_started", "true");
+            }
+            const savedEmail = localStorage.getItem("wof_saved_email");
+            if(savedEmail) document.getElementById("loginEmail").value = savedEmail;
+
+            setupEmailAutocomplete('loginEmail', 'loginEmailGhost', 'loginEmailSuffix');
+            setupEmailAutocomplete('regEmail', 'regEmailGhost', 'regEmailSuffix');
+        });
+
+        lucide.createIcons();
+        const SECRET_SALT = "WofEnterprise@26_"; 
+
+        const swalOptions = {
+            heightAuto: false, scrollbarPadding: false, confirmButtonColor: '#3b82f6',
+            customClass: {
+                popup: 'rounded-[24px] border border-slate-100 shadow-2xl',
+                title: 'font-black text-slate-800 text-xl tracking-tight',
+                htmlContainer: 'font-medium text-slate-500 text-sm',
+                confirmButton: 'font-bold rounded-xl px-8 py-2.5 shadow-md transition-transform hover:scale-[1.02]'
+            }
+        };
+
+        let lastParticleTime = 0;
+        document.addEventListener('mousemove', (e) => {
+            const glow = document.getElementById('cursor-glow');
+            if (glow) { glow.style.left = e.clientX + 'px'; glow.style.top = e.clientY + 'px'; }
+            const now = Date.now();
+            if (now - lastParticleTime > 30) {
+                createStarParticle(e.clientX, e.clientY);
+                lastParticleTime = now;
+            }
+        });
+
+        function createStarParticle(x, y) {
+            const particle = document.createElement('div');
+            particle.className = 'star-particle';
+            particle.style.left = x + 'px';
+            particle.style.top = y + 'px';
+            document.body.appendChild(particle);
+            setTimeout(() => particle.remove(), 600);
+        }
+
+        function showView(viewId) {
+            const loader = document.getElementById('initial-loader');
+            if (loader) loader.style.display = 'none';
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById(viewId);
+            if (target) target.classList.add('active');
+        }
+
+        function toggleAuth() { document.getElementById('auth-flip-container').classList.toggle('flipped'); }
+
+        function handleSearch() {
+            const popup = document.getElementById('searchPopup');
+            popup.innerHTML = `
+                <div class="p-10 flex flex-col items-center text-center">
+                    <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 border-2 border-dashed border-blue-200">
+                        <i data-lucide="hourglass" class="w-8 h-8 text-blue-500 animate-pulse"></i>
+                    </div>
+                    <h4 class="text-lg font-black text-slate-800">Coming Soon</h4>
+                    <p class="text-sm font-medium text-slate-500 mt-2">Search processing is currently under development.<br>Please wait for the next update.</p>
+                </div>`;
+            popup.classList.remove('hidden');
+            popup.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        document.addEventListener('click', (e) => {
+            const searchContainer = document.querySelector('.relative.shrink-0');
+            if (searchContainer && !searchContainer.contains(e.target)) {
+                document.getElementById('searchPopup')?.classList.add('hidden');
+            }
+        });
+
+        let isRegistering = false;
+
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                if (isRegistering) return; // Prevent auto-login interference during registration
+                try {
+                    const doc = await db.collection('users').doc(user.uid).get();
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        
+                        if (userData.status === 'pending') {
+                            await auth.signOut();
+                            Swal.fire({...swalOptions, icon: 'info', title: 'Account Pending', text: 'Your account is pending Administrator approval.'});
+                            showView('auth-view'); return;
+                        }
+
+                        if (userData.status === 'blocked') {
+                            await auth.signOut();
+                            Swal.fire({...swalOptions, icon: 'error', title: 'Access Denied', text: 'Your account has been suspended.'});
+                            showView('auth-view'); return;
+                        }
+
+                        document.getElementById('userNameDisplay').innerText = userData.name;
+                        document.getElementById('userIdDisplay').innerText = "user id " + (userData.employeeId || 'none');
+                        
+                        if (userData.role === 'admin' || userData.role === 'owner') {
+                            document.getElementById('adminShieldContainer').classList.remove('hidden');
+                            document.getElementById('adminShieldContainer').classList.add('block');
+                        } else {
+                            document.getElementById('adminShieldContainer').classList.add('hidden');
+                        }
+
+                        // App Card Permission Filtering Logic
+                        const userRole = userData.role || 'user';
+                        const userPermissions = userData.permissions || [];
+                        
+                        // Admin panel එකෙන් එන නම් වල හිස්තැන් මකා සිම්පල් අකුරු බවට පත්කිරීම (පහසුවෙන් මැච් කිරීම සඳහා)
+                        const normalizedPerms = userPermissions.map(p => p.toLowerCase().replace(/\s+/g, ''));
+                        const appCards = document.querySelectorAll('.app-card');
+                        
+                        appCards.forEach(card => {
+                            const appName = card.getAttribute('data-app').toLowerCase();
+                            
+                            // අදාල කාඩ් එකට Admin Panel එකෙන් එන්න පුළුවන් නම් (Aliases) ඇතුලත් කිරීම
+                            const validMatches = [appName];
+                            if(appName === 'return') validMatches.push('returns', 'returnsmgmt');
+                            if(appName === 'report') validMatches.push('analytics', 'reports');
+                            if(appName === 'customerbill') validMatches.push('customerbill', 'bill', 'billing');
+                            if(appName === 'label') validMatches.push('labels', 'labelmaker');
+                            if(appName === 'payslip') validMatches.push('payslips');
+                            if(appName === 'inventory') validMatches.push('baginventory');
+                            if(appName === 'stock') validMatches.push('itemstock');
+                            if(appName === 'dispatch') validMatches.push('dispatchcenter');
+
+                            if (userRole === 'admin' || userRole === 'owner') {
+                                card.style.display = 'flex'; // Admins see everything
+                            } else {
+                                // User ගේ permissions වල මේ නම් වලින් එකක් හෝ තියෙනවද බැලීම
+                                const hasAccess = validMatches.some(match => 
+                                    normalizedPerms.includes(match) || normalizedPerms.some(p => p.includes(match))
+                                );
+                                
+                                if (hasAccess) {
+                                    card.style.display = 'flex'; // Permitted apps
+                                } else {
+                                    card.style.display = 'none'; // Hidden apps
+                                }
+                            }
+                        });
+
+                        db.collection('users').doc(user.uid).collection('login_history').add({
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                            dateString: new Date().toLocaleDateString('en-GB'),
+                            timeString: new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})
+                        });
+                        
+                        showView('workspace-view');
+                        const workspaceView = document.getElementById('workspace-view');
+                        
+                        setTimeout(() => { workspaceView.classList.add('workspace-animate'); }, 50);
+                        setTimeout(fetchChartDataAndRender, 800); 
+                        
+                    } else {
+                        await auth.signOut(); showView('auth-view');
+                    }
+                } catch (error) { showView('auth-view'); }
+            } else { 
+                showView('auth-view'); 
+                document.getElementById('workspace-view').classList.remove('workspace-animate');
+            }
+        });
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const pin = document.getElementById('loginPin').value.trim();
+            const btn = document.getElementById('loginBtn');
+            const originalHTML = btn.innerHTML;
+            
+            btn.innerHTML = '<div class="spinner w-6 h-6"></div>'; btn.disabled = true;
+
+            try {
+                localStorage.setItem("wof_saved_email", email);
+                await auth.signInWithEmailAndPassword(email, SECRET_SALT + pin);
+                btn.innerHTML = originalHTML; btn.disabled = false; document.getElementById('loginPin').value = '';
+            } catch (error) {
+                let errorMsg = 'Incorrect Email or PIN.';
+                if (error.code === 'auth/network-request-failed') errorMsg = 'No internet connection.';
+                if (error.code === 'auth/too-many-requests') errorMsg = 'Too many attempts. Try again later.';
+                Swal.fire({...swalOptions, icon: 'error', title: 'Login Failed', text: errorMsg});
+                btn.innerHTML = originalHTML; btn.disabled = false; document.getElementById('loginPin').value = '';
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const pin = document.getElementById('regPin').value.trim();
+            const securePassword = SECRET_SALT + pin;
+
+            isRegistering = true;
+
+            Swal.fire({
+                ...swalOptions, title: 'Creating Account...', text: 'Please wait while we set up your workspace.', allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, securePassword);
+                await db.collection('users').doc(userCredential.user.uid).set({
+                    name: name, email: email, role: 'user', status: 'pending', employeeId: 'Pending', permissions: [],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await auth.signOut();
+                isRegistering = false;
+                
+                // Show success, and upon closing (whether OK or dismiss), safely clear and flip.
+                Swal.fire({
+                    ...swalOptions, icon: 'success', title: 'Request Sent!', text: 'Your account has been created and is pending admin approval.',
+                    confirmButtonText: 'Back to Login', confirmButtonColor: '#3b82f6', allowOutsideClick: false
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Reset all input fields completely
+                        document.getElementById('registerForm').reset();
+                        document.getElementById('regName').value = '';
+                        document.getElementById('regEmail').value = '';
+                        document.getElementById('regPin').value = '';
+                        document.getElementById('regEmail').dispatchEvent(new Event('input'));
+                        
+                        // Immediately flip back to the front (Login page)
+                        document.getElementById('auth-flip-container').classList.remove('flipped');
+                    }
+                });
+
+            } catch (error) {
+                isRegistering = false;
+                let errorMsg = error.message;
+                if (error.code === 'auth/email-already-in-use') errorMsg = 'This email is already registered! Please sign in instead.';
+                Swal.fire({...swalOptions, icon: 'error', title: 'Registration Failed', text: errorMsg});
+            }
+        }
+
+        async function handleLogout() { 
+            try {
+                const workspaceView = document.getElementById('workspace-view');
+                if (workspaceView) workspaceView.classList.remove('workspace-animate');
+                document.getElementById('loginPin').value = '';
+                await auth.signOut(); showView('auth-view');
+            } catch (error) { console.error("Logout Error: ", error); }
+        }
+
+        let activityChartInstance = null;
+
+        function aggregateByDayOfWeek(rawData) {
+            let counts = [0, 0, 0, 0, 0, 0, 0];
+            let data = rawData;
+            if (rawData && rawData.data) data = rawData.data;
+            if (rawData && rawData.items) data = rawData.items;
+            if (!Array.isArray(data)) return counts;
+
+            let parsedAnyDate = false;
+            data.forEach(row => {
+                let dateVal = null;
+                if (typeof row === 'object' && !Array.isArray(row)) {
+                    for (let key in row) {
+                        let k = key.toLowerCase();
+                        if (k.includes('date') || k.includes('time') || key === 'Timestamp' || k === 'createdat') {
+                            dateVal = row[key]; break;
+                        }
+                    }
+                    if (!dateVal && Object.keys(row).length > 0) dateVal = row[Object.keys(row)[0]];
+                } else if (Array.isArray(row)) { dateVal = row[0]; }
+
+                if (dateVal) {
+                    let d = new Date(dateVal);
+                    if (isNaN(d.getTime()) && typeof dateVal === 'string' && dateVal.includes('/')) {
+                        let parts = dateVal.split(/[\/\-\s]/);
+                        if(parts.length >= 3) d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`); // Assume DD/MM/YYYY
+                    }
+                    if (!isNaN(d.getTime())) {
+                        parsedAnyDate = true;
+                        let day = d.getDay(); 
+                        let index = day === 0 ? 6 : day - 1; // Map 0=Sun to 6=Sun, Mon=0
+                        counts[index]++;
+                    }
+                }
+            });
+            return { counts, parsedAnyDate, totalLength: data.length };
+        }
+
+        // Failsafe generator to visualize chart if sheet has no specific Date column but DOES have items
+        function generateDistribution(total) {
+            let arr = [0,0,0,0,0,0,0];
+            let base = Math.floor(total / 7);
+            let remainder = total % 7;
+            for(let i=0; i<7; i++) arr[i] = base + (i < remainder ? 1 : 0);
+            return arr.sort(() => Math.random() - 0.5); // Randomize slight differences across week
+        }
+
+        async function fetchChartDataAndRender() {
+            renderChart([0,0,0,0,0,0,0], [0,0,0,0,0,0,0]);
+
+            try {
+                const [ordersRes, dispatchRes] = await Promise.all([
+                    fetch('https://script.google.com/macros/s/AKfycbwcndXsqwlWUkemvdDk6JIITPdGzd4DaeOqWHe8Ub8leKju8-HpOnaPpjCXzCD1gjdB/exec').catch(() => null),
+                    fetch('https://script.google.com/macros/s/AKfycbzO14gZ2J437vkJlbxzrQh0ZNd1wbYX6lgnPcALvHLrNL2B6AnLkhYePNbDQm5Onio/exec').catch(() => null)
+                ]);
+
+                let ordersData = [0,0,0,0,0,0,0], dispatchData = [0,0,0,0,0,0,0];
+                
+                if (ordersRes && ordersRes.ok) {
+                    try {
+                        const json = await ordersRes.json();
+                        let result = aggregateByDayOfWeek(json);
+                        ordersData = result.counts;
+                        // Failsafe: if sheet is parsed but dates were unreadable, map total count beautifully
+                        if (!result.parsedAnyDate && result.totalLength > 0) ordersData = generateDistribution(result.totalLength);
+                    } catch(e) { console.error('Orders API Parse Error', e); }
+                }
+                
+                if (dispatchRes && dispatchRes.ok) {
+                    try {
+                        const json = await dispatchRes.json();
+                        let result = aggregateByDayOfWeek(json);
+                        dispatchData = result.counts;
+                        // Failsafe: map total count beautifully
+                        if (!result.parsedAnyDate && result.totalLength > 0) dispatchData = generateDistribution(result.totalLength);
+                    } catch(e) { console.error('Dispatch API Parse Error', e); }
+                }
+
+                renderChart(ordersData, dispatchData);
+            } catch (error) {
+                console.error("Failed to connect to Google Sheets:", error);
+            }
+        }
+
+        function renderChart(ordersArray, dispatchArray) {
+            const ctx = document.getElementById('activityChart').getContext('2d');
+            if (activityChartInstance) activityChartInstance.destroy();
+
+            activityChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [
+                        { label: 'Orders Received', data: ordersArray, borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, tension: 0.4 },
+                        { label: 'Dispatched', data: dispatchArray, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 3, pointBackgroundColor: '#ffffff', pointBorderColor: '#3b82f6', pointBorderWidth: 2, pointRadius: 4, fill: true, tension: 0.4 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: {
+                        y: { display: true, beginAtZero: true, grid: { color: '#f1f5f9' }, border: { dash: [4, 4] }, ticks: { font: { size: 10 }, color: '#94a3b8', maxTicksLimit: 5, precision: 0 } },
+                        x: { grid: { display: false }, ticks: { font: { family: 'Inter', weight: 'bold', size: 10 }, color: '#94a3b8' } }
+                    },
+                    interaction: { intersect: false, mode: 'index' },
+                }
+            });
+        }
+    </script>
+  <!-- --- Custom Auto Updater UI --- -->
+    <div id="custom-update-screen" class="fixed inset-0 z-[10005] hidden items-center justify-center bg-[#0f172a]/90 backdrop-blur-md">
+        <!-- Main Card -->
+        <div class="relative w-[700px] h-[450px] rounded-[24px] shadow-2xl overflow-hidden flex flex-col justify-end p-8" style="background: url('wofupdate.jpg') center/cover no-repeat;">
+            <!-- Dark overlay for text readability -->
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/70 to-transparent"></div>
+            
+            <div class="relative z-10 w-full">
+                <!-- State 1: Update Available -->
+                <div id="update-state-available" class="flex flex-col items-start w-full">
+                    <p class="text-white font-black text-sm tracking-widest uppercase mb-4">Software Update Available</p>
+                    <button id="btn-download-update" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-sm uppercase tracking-wide shadow-lg transition-all flex items-center gap-2">
+                        <i data-lucide="arrow-down-circle" class="w-5 h-5"></i> Download
+                    </button>
+                </div>
+
+                <!-- State 2: Downloading -->
+                <div id="update-state-downloading" class="hidden flex-col items-start w-full">
+                    <p class="text-white font-black text-sm tracking-widest uppercase mb-3">Software Downloading........</p>
+                    <div class="w-full bg-white/20 rounded-full h-2 mb-2">
+                        <div id="custom-progress-bar" class="bg-cyan-400 h-2 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(34,211,238,0.8)]" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between w-full text-xs font-medium text-white">
+                        <span id="custom-progress-details">0MB | 0 MB/s Speed</span>
+                        <span id="custom-progress-text" class="font-bold text-sm">0%</span>
+                    </div>
+                </div>
+
+                <!-- State 3: Ready to Install -->
+                <div id="update-state-ready" class="hidden flex-col items-start w-full">
+                    <p class="text-emerald-400 font-black text-sm tracking-widest uppercase mb-4">Update Ready to Install!</p>
+                    <button id="btn-install-update" class="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl font-bold text-sm uppercase tracking-wide shadow-lg transition-all flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-5 h-5"></i> Install & Restart
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+       (() => {
+       const { ipcRenderer } = require('electron');
+
+        function formatBytes(bytes, decimals = 2) {
+            if (!+bytes) return '0 Bytes';
+            const k = 1024, dm = decimals < 0 ? 0 : decimals, sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+        }
+
+        const updateScreen = document.getElementById('custom-update-screen');
+        const stateAvailable = document.getElementById('update-state-available');
+        const stateDownloading = document.getElementById('update-state-downloading');
+        const stateReady = document.getElementById('update-state-ready');
+        
+        const btnDownload = document.getElementById('btn-download-update');
+        const btnInstall = document.getElementById('btn-install-update');
+        
+        const progressBar = document.getElementById('custom-progress-bar');
+        const progressText = document.getElementById('custom-progress-text');
+        const progressDetails = document.getElementById('custom-progress-details');
+
+        // 1. Update ආවම UI එක පෙන්නනවා
+        ipcRenderer.on('update_available', (event, version) => {
+            updateScreen.classList.remove('hidden');
+            updateScreen.classList.add('flex');
+            lucide.createIcons();
+        });
+
+        // 2. Download බටන් එක එබුවම
+        btnDownload.addEventListener('click', () => {
+            ipcRenderer.send('start_download');
+            stateAvailable.classList.add('hidden');
+            stateDownloading.classList.remove('hidden');
+            stateDownloading.classList.add('flex');
+        });
+
+        // 3. Progress Bar එක අප්ඩේට් වීම
+        ipcRenderer.on('update_progress', (event, progress) => {
+            progressBar.style.width = `${progress.percent}%`;
+            progressText.innerText = `${Math.floor(progress.percent)}%`;
+            
+            const downloadedMB = (progress.transferred / (1024 * 1024)).toFixed(1);
+            const speedFormat = formatBytes(progress.bytesPerSecond);
+            
+            // "70MB | 2.5MB Speed" විදියට පෙන්නන්න
+            progressDetails.innerText = `${downloadedMB}MB | ${speedFormat}/s Speed`;
+        });
+
+        // 4. ඩවුන්ලෝඩ් ඉවර වුණාම Install බටන් එක පෙන්නනවා
+        ipcRenderer.on('update_downloaded', () => {
+            stateDownloading.classList.add('hidden');
+            stateDownloading.classList.remove('flex');
+            
+            stateReady.classList.remove('hidden');
+            stateReady.classList.add('flex');
+        });
+
+        // 5. Install බටන් එක එබුවම
+        btnInstall.addEventListener('click', () => {
+            btnInstall.innerHTML = '<div class="spinner w-5 h-5 border-2 border-white mr-2"></div> Installing...';
+            ipcRenderer.send('restart_app');
+        });
+    })();
+    </script>
+    <!-- ----------------------------------- --> 
+    <script src="titlebar.js"></script>
+</body>
+</html>
